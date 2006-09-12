@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="DocBook Build" default="help">
+	<property environment="env"/>
+	<!--customize these properties and configuration targets-->
+	<!--base directory-->
+	<property name="basedir" location="."/>
+	<!--documentation directory (most stuff is in a
+	    subdirectory of this unless you say otherwise)-->
+	<property name="documentation" location="Documentation"/>
+	<!--build directory-->
+	<property name="build" location="${documentation}/build"/>
+	<!--css directory-->
+	<property name="css" location="${env.MaDE_HOME}/css"/>
+	<!--output distribution directory-->
+	<property name="dist" location="${documentation}/English"/>
+	<!--xml source directory-->
+	<property name="src" location="${documentation}/src"/>
+	<!--xml file (must be directly beneath src
+	    use value, not location)-->
+	<property name="xml" value="Engineering_Optimization.xml"/>
+	<!--xsl directory (must exist)-->
+	<property name="xsl" location="${env.MaDE_HOME}/xsl"/>
+	<!--xsl transformation files (may have any path)-->
+	<property name="html.xsl" location="${xsl}/html.xsl"/>
+	<property name="html_chunk.xsl" location="${xsl}/html_chunk.xsl"/>
+	<property name="fo.xsl" location="${xsl}/fo.xsl"/>
+	<property name="xhtml.xsl" location="${xsl}/xhtml.xsl"/>
+	<property name="xhtml_chunk.xsl" location="${xsl}/xhtml_chunk.xsl"/>
+	<!--formatting objects processor-->
+	<property name="fo-processor" value="xep"/>
+	<!--fo transform target-->
+	<property name="ps-intermediate" value="true"/>
+	<!--ghostscript's ps2pdf location-->
+	<property name="ps2pdf" location="/usr/bin/ps2pdf"/>		
+	<!--RenderX's XEP configuration-->
+	<target name="config-XEP" depends="init">
+		<!--path to RenderX's XEP-->
+		<property name="XEP-path" location="/var/xml/XEP"/>
+		<!--XEP config file-->
+		<property name="xep.xml" value="${XEP-path}/xep.xml"/>		
+	</target>
+	<!--configure xsl-->
+	<target name="config-xsl">
+		<!--choose an xslt engine-->
+		<!--xslt styler class possible values-->
+		<!--com.icl.saxon.StyleSheet saxon 6-->
+		<!--net.sf.saxon.Transform saxon 8-->
+		<property name="xsltproc" location="/usr/bin/xsltproc"/>
+	</target>
+
+	<!--beyond here is code that should only be reconfigured if you want to
+		change the logic of the build-->
+	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
+	<!--initialization-->
+	<target name="init">
+		<!--timestamp-->
+		<tstamp/>
+	</target>
+	<!--xsl initialization-->
+	<target name="init-xsl" depends="init,config-xsl">
+		<!--copy the source to the build directory-->
+		<copy todir="${build}">
+			<fileset dir="${src}"/>
+		</copy>
+		<!--fix EOL markers and tabs-->
+		<fixcrlf srcdir="${build}" eol="lf" tab="remove" tablength="4"
+			includes="**/*.m"/>
+	</target>
+	<!--check stylesheets directory-->
+	<target name="check-xsl">
+		<available property="xsl-available" file="${xsl}" type="dir"/>
+		<fail message="${xsl} unavailable" unless="xsl-available"/>
+	</target>
+	<!--check html.xsl stylesheet-->
+	<target name="check-html.xsl" depends="check-xsl">
+		<available property="html.xsl-available" file="${html.xsl}" type="file"/>
+		<fail message="${html.xsl} unavailable" unless="html.xsl-available"/>
+	</target>
+	<!--check html_chunk.xsl stylesheet-->
+	<target name="check-html_chunk.xsl" depends="check-xsl">
+		<available property="html_chunk.xsl-available" file="${html_chunk.xsl}" type="file"/>
+		<fail message="${html_chunk.xsl} unavailable" unless="html_chunk.xsl-available"/>
+	</target>
+	<!--check fo.xsl stylesheet-->
+	<target name="check-fo.xsl" depends="check-xsl">
+		<available property="fo.xsl-available" file="${fo.xsl}" type="file"/>
+		<fail message="${fo.xsl} unavailable" unless="fo.xsl-available"/>
+	</target>
+	<!--check xhtml.xsl stylesheet-->
+	<target name="check-xhtml.xsl" depends="check-xsl">
+		<available property="xhtml.xsl-available" file="${xhtml.xsl}" type="file"/>
+		<fail message="${xhtml.xsl} unavailable" unless="xhtml.xsl-available"/>
+	</target>
+	<!--check xhtml_chunk.xsl stylesheet-->
+	<target name="check-xhtml_chunk.xsl" depends="check-xsl">
+		<available property="xhtml_chunk.xsl-available" file="${xhtml_chunk.xsl}" type="file"/>
+		<fail message="${xhtml_chunk.xsl} unavailable" unless="xhtml_chunk.xsl-available"/>
+	</target>
+	<!--check xml sources directory and xml file-->
+	<target name="check-src-xml">
+		<available property="src-available" file="${src}" type="dir"/>
+		<fail message="${src} unavailable" unless="src-available"/>
+		<available property="xml-available"	file="${src}/${xml}" type="file"/>
+		<fail message="${src}/${xml} unavailable" unless="xml-available"/>
+	</target>
+	<!--transformation to formatting objects-->
+	<target name="to-fo"
+		depends="init-xsl,check-fo.xsl,check-src-xml">
+		<exec executable="${xsltproc}" dir="${build}">
+			<arg value="--xinclude"/>
+			<arg value="--nonet"/>
+			<arg value="-o"/>
+			<arg value="${xml-stem}.fo"/>
+			<arg value="${fo.xsl}"/>
+			<arg value="${xml}"/>
+		</exec>
+	</target>
+	<!--xep initialization-->
+	<target name="init-xep" depends="init-xsl,config-XEP">
+		<path id="xep-classpath">
+			<fileset dir="${env.JAVA_HOME}/lib">
+				<include name="tools.jar"/>
+			</fileset>
+			<fileset dir="${XEP-path}/lib">
+				<include name="xep*.jar"/>
+				<include name="xt.jar"/>
+				<include name="saxon.jar"/>
+				<include name="XEPTask.jar"/>
+			</fileset>
+		</path>
+		<!--xep task definition-->
+		<taskdef name="xep" classname="com.renderx.xepx.ant.XEPTask"
+			classpathref="xep-classpath"/>
+	</target>
+	<!--transformation to post script if specified by ps-intermediate-->
+	<target name="to-ps-if-ps-intermediate"
+		if="ps-intermediate"
+		depends="to-fo,init-xep">
+		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.ps"
+			format="PostScript">
+			<sysproperty key="com.renderx.xep.CONFIG" value="${xep.xml}"/>
+		</xep>
+		<available property="fo-ps-available" file="${build}/${xml-stem}.ps"/>
+		<fail message="${build}/${xml-stem}.ps not created from fo"
+			unless="fo-ps-available"/>
+	</target>
+	<!--transformation to pdf after postscript-->
+	<target name="to-pdf-if-ps-intermediate"
+		if="ps-intermediate"
+		depends="to-ps-if-ps-intermediate">
+		<exec executable="${ps2pdf}" dir="${build}">
+			<arg value="${xml-stem}.ps"/>
+			<arg value="${xml-stem}.pdf"/>
+		</exec>
+		<available property="ps-pdf-available" file="${build}/${xml-stem}.pdf"/>
+		<fail message="${build}/${xml-stem}.pdf not created from ps"
+			unless="ps-pdf-available"/>
+	</target>
+	<!--transformation to pdf if post script isn't desired-->
+	<target name="to-pdf-unless-ps-intermediate"
+			unless="ps-intermediate"
+			depends="to-fo,init-xep">
+		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.pdf"
+			format="PDF"/>
+		<available property="fo-pdf-available" file="${build}/${xml-stem}.pdf"/>
+		<fail message="${build}/${xml-stem}.pdf not created from fo"
+			unless="fo-pdf-available"/>
+	</target>
+	<!--transformation to pdf-->
+	<target name="to-pdf"
+		depends="to-pdf-if-ps-intermediate,to-pdf-unless-ps-intermediate"/>
+	<!--transformation to html-->
+	<target name="to-html"
+		depends="init-xsl,check-html.xsl,check-src-xml">
+		<exec executable="${xsltproc}" dir="${build}">
+			<arg value="--xinclude"/>
+			<arg value="--nonet"/>
+			<arg value="-o"/>
+			<arg value="${xml-stem}.html"/>
+			<arg value="${html.xsl}"/>
+			<arg value="${xml}"/>
+		</exec>	
+	</target>
+	<!--transformation to chunked html-->
+	<target name="to-html_chunk"
+		depends="init-xsl,check-html_chunk.xsl,check-src-xml">
+		<exec executable="${xsltproc}" dir="${build}">
+			<arg value="--xinclude"/>
+			<arg value="--nonet"/>
+			<arg value="${html_chunk.xsl}"/>
+			<arg value="${xml}"/>
+		</exec>	
+	</target>
+	<!--transformation to xhtml-->
+	<target name="to-xhtml"
+		depends="init-xsl,check-xhtml.xsl,check-src-xml">
+		<exec executable="${xsltproc}" dir="${build}">
+			<arg value="--xinclude"/>
+			<arg value="--nonet"/>
+			<arg value="-o"/>
+			<arg value="${xml-stem}.xhtml"/>
+			<arg value="${xhtml.xsl}"/>
+			<arg value="${xml}"/>
+		</exec>	
+	</target>
+	<!--transformation to chunked xhtml-->
+	<target name="to-xhtml_chunk"
+		depends="init-xsl,check-xhtml_chunk.xsl,check-src-xml">
+		<exec executable="${xsltproc}" dir="${build}">
+			<arg value="--xinclude"/>
+			<arg value="--nonet"/>
+			<arg value="${xhtml_chunk.xsl}"/>
+			<arg value="${xml}"/>
+		</exec>	
+	</target>
+	<!--move to dist-->
+	<target name="move-build-to-dist" depends="to-pdf,to-html,to-xhtml,to-html_chunk,to-xhtml_chunk">
+		<move todir="${dist}">
+			<fileset dir="${build}"/>
+		</move>
+	</target>
+	<!--all-->
+	<target name="all" depends="move-build-to-dist"/>
+	<!--cleaning-->
+	<target name="clean">
+		<delete dir="${build}" includeemptydirs="true"/>
+	</target>
+	<!--cleaning everything-->
+	<target name="dist-clean" depends="clean">
+		<delete dir="${dist}" includeemptydirs="true"/>
+	</target>
+	<target name="help" description="Displays help about the project.">
+		<echo>
+			project: ${ant.project.name}
+			java: ${ant.java.version}
+			base directory: ${basedir}
+			Try ant -projecthelp</echo>
+	</target>
+</project>
