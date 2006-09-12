@@ -10,7 +10,7 @@
 	<!--build directory-->
 	<property name="build" location="${documentation}/build"/>
 	<!--css directory-->
-	<property name="css" location="${env.MMADE_HOME}/css"/>
+	<property name="css" location="${env.MMADE_DOCBOOK_DIR}/css"/>
 	<!--output distribution directory-->
 	<property name="dist" location="${documentation}/English"/>
 	<!--xml source directory-->
@@ -19,7 +19,7 @@
 	    use value, not location)-->
 	<property name="xml" value="Engineering_Optimization.xml"/>
 	<!--xsl directory (must exist)-->
-	<property name="xsl" location="${env.MMADE_HOME}/xsl"/>
+	<property name="xsl" location="${env.MMADE_DOCBOOK_DIR}/xsl"/>
 	<!--xsl transformation files (may have any path)-->
 	<property name="html.xsl" location="${xsl}/html.xsl"/>
 	<property name="html_chunk.xsl" location="${xsl}/html_chunk.xsl"/>
