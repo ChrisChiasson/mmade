@@ -10,7 +10,7 @@
 	<!--build directory-->
 	<property name="build" location="${documentation}/build"/>
 	<!--css directory-->
-	<property name="css" location="${env.MaDE_HOME}/css"/>
+	<property name="css" location="${env.MMADE_HOME}/css"/>
 	<!--output distribution directory-->
 	<property name="dist" location="${documentation}/English"/>
 	<!--xml source directory-->
@@ -19,7 +19,7 @@
 	    use value, not location)-->
 	<property name="xml" value="Engineering_Optimization.xml"/>
 	<!--xsl directory (must exist)-->
-	<property name="xsl" location="${env.MaDE_HOME}/xsl"/>
+	<property name="xsl" location="${env.MMADE_HOME}/xsl"/>
 	<!--xsl transformation files (may have any path)-->
 	<property name="html.xsl" location="${xsl}/html.xsl"/>
 	<property name="html_chunk.xsl" location="${xsl}/html_chunk.xsl"/>
@@ -55,6 +55,9 @@
 	<target name="init">
 		<!--timestamp-->
 		<tstamp/>
+		<copy todir="${dist}">
+		  <fileset dir="${build}"/>
+		</copy>
 	</target>
 	<!--xsl initialization-->
 	<target name="init-xsl" depends="init,config-xsl">
@@ -161,7 +164,9 @@
 			unless="ps-intermediate"
 			depends="to-fo,init-xep">
 		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.pdf"
-			format="PDF"/>
+			format="PDF">
+			<sysproperty key="com.renderx.xep.CONFIG" value="${xep.xml}"/>
+		</xep>
 		<available property="fo-pdf-available" file="${build}/${xml-stem}.pdf"/>
 		<fail message="${build}/${xml-stem}.pdf not created from fo"
 			unless="fo-pdf-available"/>
