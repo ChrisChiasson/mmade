@@ -1,31 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="DocBook Build" default="help">
+        <!--The MMADE_XML_PARENT_DIR environment variable is the parent directory
+	    of the MMADE XML directory. The default location for this is your
+	    Mathematica Applications folder. You need to set that outside this build.-->
 	<property environment="env"/>
-	<!--customize these properties and configuration targets-->
+	<!--these are the default properties - 
+	    you will almost always want to override
+	    basedir, documentation, mpath, mfile, and xml
+	    when you call this build file remotely,
+	    unless you feel like building the XML`DocBook
+	    documentation-->
 	<!--base directory-->
 	<property name="basedir" location="."/>
-	<!--documentation directory (most stuff is in a
-	    subdirectory of this unless you say otherwise)-->
-	<property name="documentation" location="Documentation"/>
 	<!--build directory-->
-	<property name="build" location="${documentation}/build"/>
-	<!--css directory-->
-	<property name="css" location="${env.MMADE_DOCBOOK_DIR}/css"/>
-	<!--output distribution directory-->
-	<property name="dist" location="${documentation}/English"/>
-	<!--xml source directory-->
-	<property name="src" location="${documentation}/src"/>
-	<!--xml file (must be directly beneath src
-	    use value, not location)-->
-	<property name="xml" value="Engineering_Optimization.xml"/>
-	<!--xsl directory (must exist)-->
-	<property name="xsl" location="${env.MMADE_DOCBOOK_DIR}/xsl"/>
-	<!--xsl transformation files (may have any path)-->
-	<property name="html.xsl" location="${xsl}/html.xsl"/>
-	<property name="html_chunk.xsl" location="${xsl}/html_chunk.xsl"/>
-	<property name="fo.xsl" location="${xsl}/fo.xsl"/>
-	<property name="xhtml.xsl" location="${xsl}/xhtml.xsl"/>
-	<property name="xhtml_chunk.xsl" location="${xsl}/xhtml_chunk.xsl"/>
+	<property name="build" location="build"/>
+	<!--documentation directory (most stuff is in a
+	    subdirectory of this unless you say otherwise)
+	    if you follow the default layout for this directory,
+	    you don't have to change src-->
+	<property name="documentation" location="DocBook/Documentation"/>
+	<!--The xml file to be turned into documentation
+	    must be directly beneath src.
+	    Use the value attribute not the location attribute.-->
+	<property name="xml" value="MMADE.xml"/>
+	<!--configure xvnc-->
+	<target name="config-xnvc">
+	  <!--if set (to any value) usexvnc will cause MMADEconfig.m to 
+	      prepend a -display :1 flag to the Developer`LaunchFlags 
+	      option of Developer`InstallFrontEnd
+	      it also controls wether the vncserver is started and stopped
+	      (by this script) on :1-->
+	  <property name="usexvnc" value="true"/>
+	  <property name="xvncgeometry" value="1024x768"/>
+	  <property name="xvncdepth" value="24"/>
+	</target>
+	<!--configure Mathematica-->
+	<target name="config-math">
+	  <property name="math" location="/usr/local/bin/math"/>
+	  <!--mpath is prepended to $Path in Mathematica
+	      so that you can load your package-->
+	  <property name="mpath" location="${basedir}"/>
+	  <!--mfiles is a pathlike ant variable that should contain
+	      files you want to Get in Mathematica (to generate your
+	      documentation)
+	      if you build your documentation by executing Get on a
+	      context, then make mfiles include the init.m for that
+	      context or the .m file that corresponds to that context--> 
+	  <property name="mfiles" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/Documentation/Build/Build.m"/>
+	  <taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
+		   classpath="/usr/local/Wolfram/Mathematica/5.2/AddOns/JLink/JLink.jar"/>
+	</target>
+	<!--configure xsl-->
+	<target name="config-xsl">
+	        <!--css directory (contents are copied to dist)
+		    (defaults to the files that come with MMADE)-->
+		<property name="css" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/css"/>
+		<!--output distribution directory-->
+		<property name="dist" location="${documentation}/English"/>
+		<!--xml source directory-->
+		<property name="src" location="${documentation}/src"/>
+		<!--xsl directory (defaults to the files that come with MMADE)
+		    however, these files in turn depend on your xml catalog-->
+		<property name="xsl" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/xsl"/>
+		<!--xsl transformation files (may have any path)-->
+		<property name="html.xsl" location="${xsl}/html.xsl"/>
+		<property name="html_chunk.xsl" location="${xsl}/html_chunk.xsl"/>
+		<property name="fo.xsl" location="${xsl}/fo.xsl"/>
+		<property name="xhtml.xsl" location="${xsl}/xhtml.xsl"/>
+		<property name="xhtml_chunk.xsl" location="${xsl}/xhtml_chunk.xsl"/>
+		<!--xslt styler class possible values (not used yet)-->
+		<!--com.icl.saxon.StyleSheet saxon 6-->
+		<!--net.sf.saxon.Transform saxon 8-->
+		<property name="xsltproc" location="/usr/bin/xsltproc"/>
+	</target>
 	<!--formatting objects processor-->
 	<property name="fo-processor" value="xep"/>
 	<!--fo transform target-->
@@ -39,14 +86,6 @@
 		<!--XEP config file-->
 		<property name="xep.xml" value="${XEP-path}/xep.xml"/>		
 	</target>
-	<!--configure xsl-->
-	<target name="config-xsl">
-		<!--choose an xslt engine-->
-		<!--xslt styler class possible values-->
-		<!--com.icl.saxon.StyleSheet saxon 6-->
-		<!--net.sf.saxon.Transform saxon 8-->
-		<property name="xsltproc" location="/usr/bin/xsltproc"/>
-	</target>
 
 	<!--beyond here is code that should only be reconfigured if you want to
 		change the logic of the build-->
@@ -59,8 +98,35 @@
 		  <fileset dir="${build}"/>
 		</copy>
 	</target>
+	<!--xvnc-->
+	<target name="start-xvnc" depends="config-xvnc" if="usexvnc">
+	  <exec executable="${vncserver}">
+	    <arg value=":1"/>
+	    <arg value="geometry"/>
+	    <arg value="${xnvcgeometry}"/>
+	    <arg value="-depth"/>
+	    <arg value="${xvncdepth}"/>
+	  </exec>
+	</target>
+	<target name="stop-xvnc" depends="stop-xvnc" if="usexvnc">
+	  <exec executable="${vncserver}">
+	    <arg value="-kill"/>
+	    <arg value=":1"/>
+	  </exec>
+	</target>
+	<!--run mathematica-->
+	<target name="exec-math" depends="config-math,start-xvnc">
+	  <property name="MMADEant.m" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/MMADEant.m"/>
+	  <!--MMADEant.m Gets the files in the initfiles path reference.
+	      It also uses the mpath reference, env.MMADE_XML_PARENT_DIR property,
+	      usexvnc property, and usefront end property-->
+	  <mathematica exe="${math}">
+	    <![CDATA[Get@AntProperty["MMADEant.m"]]]>
+	  </mathematica>
+	  <antcall target="stop-xvnc"/>
+	</target>
 	<!--xsl initialization-->
-	<target name="init-xsl" depends="init,config-xsl">
+	<target name="init-xsl" depends="init,exec-math,config-xsl">
 		<!--copy the source to the build directory-->
 		<copy todir="${build}">
 			<fileset dir="${src}"/>
