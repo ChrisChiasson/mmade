@@ -6,7 +6,7 @@
 	<property environment="env"/>
 	<!--these are the default properties - 
 	    you will almost always want to override
-	    basedir, documentation, mpath, mfile, and xml
+	    basedir, documentation, mpath, mfiles, and xml
 	    when you call this build file remotely,
 	    unless you feel like building the XML`DocBook
 	    documentation-->
@@ -39,14 +39,14 @@
 	  <property name="math" location="/usr/local/bin/math"/>
 	  <!--mpath is prepended to $Path in Mathematica
 	      so that you can load your package-->
-	  <property name="mpath" location="${basedir}"/>
+	  <path id="mpath" location="${basedir}"/>
 	  <!--mfiles is a pathlike ant variable that should contain
 	      files you want to Get in Mathematica (to generate your
 	      documentation)
 	      if you build your documentation by executing Get on a
 	      context, then make mfiles include the init.m for that
 	      context or the .m file that corresponds to that context--> 
-	  <property name="mfiles" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/Documentation/Build/Build.m"/>
+	  <path id="mfiles" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/Documentation/Build/Build.m"/>
 	  <taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
 		   classpath="/usr/local/Wolfram/Mathematica/5.2/AddOns/JLink/JLink.jar"/>
 	</target>

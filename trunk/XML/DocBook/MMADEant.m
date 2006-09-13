@@ -9,7 +9,7 @@ $Path=Join[Ant["Project"]@getReference["mpath"]@list[],$Path];
 $DisplayFunction=Identity;
 
 Module[{
-	initFiles=Ant["Project"]@getReference["initfiles"]@list[],
+	mFiles=Ant["Project"]@getReference["mfiles"]@list[],
 	stringTrueQ=StringMatchQ[ToString@#,"True",IgnoreCase->True]&},
 	If[stringTrueQ@AntProperty["usexvnc"],
 		SetOptions[Developer`InstallFrontEnd,
@@ -22,7 +22,7 @@ Module[{
 			]
 		];
 	If[stringTrueQ@AntProperty["usefrontend"],
-		Get/@initFiles,
-		Developer`UseFrontEnd[Get[#]]&/@initFiles
+		Get/@mFiles,
+		Developer`UseFrontEnd[Get[#]]&/@mFiles
 		]
 	]
