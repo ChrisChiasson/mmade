@@ -105,8 +105,8 @@
 	<target name="start-xvnc" depends="config-xvnc" if="usexvnc">
 	  <exec executable="${vncserver}">
 	    <arg value=":1"/>
-	    <arg value="geometry"/>
-	    <arg value="${xnvcgeometry}"/>
+	    <arg value="-geometry"/>
+	    <arg value="${xvncgeometry}"/>
 	    <arg value="-depth"/>
 	    <arg value="${xvncdepth}"/>
 	    <arg value="-fp"/>
