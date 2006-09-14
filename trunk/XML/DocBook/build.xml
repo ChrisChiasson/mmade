@@ -22,6 +22,11 @@
 	<!--The xml file to be turned into documentation
 	    must be directly beneath src.
 	    Use the value attribute not the location attribute.-->
+	<property name="dist" location="${documentation}/English"/>
+	<!--xml source directory-->
+	<property name="src" location="${documentation}/src"/>
+	<!--xsl directory (defaults to the files that come with MMADE)
+	    however, these files in turn depend on your xml catalog-->
 	<property name="xml" value="MMADE.xml"/>
 	<!--configure xvnc-->
 	<target name="config-xvnc">
@@ -56,11 +61,6 @@
 		    (defaults to the files that come with MMADE)-->
 		<property name="css" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/css"/>
 		<!--output distribution directory-->
-		<property name="dist" location="${documentation}/English"/>
-		<!--xml source directory-->
-		<property name="src" location="${documentation}/src"/>
-		<!--xsl directory (defaults to the files that come with MMADE)
-		    however, these files in turn depend on your xml catalog-->
 		<property name="xsl" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/xsl"/>
 		<!--xsl transformation files (may have any path)-->
 		<property name="html.xsl" location="${xsl}/html.xsl"/>
@@ -91,7 +91,7 @@
 		change the logic of the build-->
 	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
 	<!--initialization-->
-	<target name="init">
+	<target name="init" depends="">
 		<!--timestamp-->
 		<tstamp/>
 		<copy todir="${build}">
