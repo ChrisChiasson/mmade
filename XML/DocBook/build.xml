@@ -39,8 +39,8 @@
 	  <property name="vncserver" location="/usr/bin/vncserver"/>
 	  <property name="xvncgeometry" value="1024x768"/>
 	  <property name="xvncdepth" value="24"/>
-	  <path id="xvncfontpath" path="/usr/share/fonts/75dpi:/usr/share/fonts/misc"/>
-	  <path id="xvncrgb" path="/usr/share/X11/rgb"/>
+	  <!--path id="xvncfontpath" path="/usr/share/fonts/75dpi:/usr/share/fonts/misc"/>
+	  <path id="xvncrgb" path="/usr/share/X11/rgb"/-->
 	</target>
 	<!--configure Mathematica-->
 	<target name="config-math">
@@ -109,10 +109,6 @@
 	    <arg value="${xvncgeometry}"/>
 	    <arg value="-depth"/>
 	    <arg value="${xvncdepth}"/>
-	    <arg value="-fp"/>
-	    <arg pathref="xvncfontpath"/>
-	    <arg value="-co"/>
-	    <arg pathref="xvncrgb"/>
 	  </exec>
 	</target>
 	<target name="stop-xvnc" if="usexvnc">
