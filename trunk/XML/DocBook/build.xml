@@ -38,6 +38,7 @@
 	  <property name="usexvnc" value="true"/>
 	  <property name="xvncgeometry" value="1024x768"/>
 	  <property name="xvncdepth" value="24"/>
+	  <property name="vncserver" location="/usr/bin/vncserver"/>
 	</target>
 	<!--configure Mathematica-->
 	<target name="config-math">
