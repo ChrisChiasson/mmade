@@ -108,7 +108,7 @@
 	    <arg value="${xvncdepth}"/>
 	  </exec>
 	</target>
-	<target name="stop-xvnc" depends="stop-xvnc" if="usexvnc">
+	<target name="stop-xvnc" if="usexvnc">
 	  <exec executable="${vncserver}">
 	    <arg value="-kill"/>
 	    <arg value=":1"/>
