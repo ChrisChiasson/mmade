@@ -24,7 +24,7 @@
 	    Use the value attribute not the location attribute.-->
 	<property name="xml" value="MMADE.xml"/>
 	<!--configure xvnc-->
-	<target name="config-xnvc">
+	<target name="config-xvnc">
 	  <!--if set (to any value) usexvnc will cause MMADEconfig.m to 
 	      prepend a -display :1 flag to the Developer`LaunchFlags 
 	      option of Developer`InstallFrontEnd
