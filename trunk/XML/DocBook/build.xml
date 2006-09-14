@@ -94,8 +94,8 @@
 	<target name="init">
 		<!--timestamp-->
 		<tstamp/>
-		<copy todir="${dist}">
-		  <fileset dir="${build}"/>
+		<copy todir="${build}">
+		  <fileset dir="${src}"/>
 		</copy>
 	</target>
 	<!--xvnc-->
