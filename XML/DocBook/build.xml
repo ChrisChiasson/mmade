@@ -94,7 +94,7 @@
 		change the logic of the build-->
 	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
 	<!--initialization-->
-	<target name="init" depends="">
+	<target name="init" depends="guess-os">
 		<!--timestamp-->
 		<tstamp/>
 		<copy todir="${build}">
@@ -305,6 +305,7 @@
 	</target>
 	<target name="help" description="Displays help about the project.">
 		<echo>
+			os: ${os.name}
 			project: ${ant.project.name}
 			java: ${ant.java.version}
 			base directory: ${basedir}
