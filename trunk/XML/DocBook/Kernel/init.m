@@ -1,3 +1,3 @@
 (* Mathematica Init File *)
 
-Get["XML`DocBook`Docbook`"]
+Get["XML`DocBook`DocBook`"]
