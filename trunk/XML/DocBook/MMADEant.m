@@ -1,5 +1,5 @@
 (*this file is described in the exec-math task of build.xml*)
-Prepend[$Path,
+PrependTo[$Path,
 	AntProperty["env.MMADE_XML_PARENT_DIR"]];
 
 AntLog[$Path];
