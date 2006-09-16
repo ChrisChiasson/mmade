@@ -41,21 +41,19 @@
 	  <property name="xvncdepth" value="24"/>
 	</target>
 	<!--configure Mathematica-->
-	<target name="config-math">
-	  <property name="math" location="/usr/local/bin/math"/>
-	  <!--mpath is prepended to $Path in Mathematica
-	      so that you can load your package-->
-	  <path id="mpath" location="${basedir}"/>
-	  <!--mfiles is a pathlike ant variable that should contain
-	      files you want to Get in Mathematica (to generate your
-	      documentation)
-	      if you build your documentation by executing Get on a
-	      context, then make mfiles include the init.m for that
-	      context or the .m file that corresponds to that context--> 
-	  <path id="mfiles" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/Documentation/Build/Build.m"/>
-	  <taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
-		   classpath="/usr/local/Wolfram/Mathematica/5.2/AddOns/JLink/JLink.jar"/>
-	</target>
+	<property name="math" location="/usr/local/bin/math"/>
+	<!--mpath is prepended to $Path in Mathematica
+	    so that you can load your package-->
+	<path id="mpath" location="${basedir}"/>
+	<!--mfiles is a pathlike ant variable that should contain
+	    files you want to Get in Mathematica (to generate your
+	    documentation)
+	    if you build your documentation by executing Get on a
+	    context, then make mfiles include the init.m for that
+	    context or the .m file that corresponds to that context--> 
+	<path id="mfiles" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/Documentation/Build/Build.m"/>
+	<taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
+		 classpath="/usr/local/Wolfram/Mathematica/5.2/AddOns/JLink/JLink.jar"/>
 	<!--configure xsl-->
 	<target name="config-xsl">
 	        <!--css directory (contents are copied to dist)
@@ -116,7 +114,7 @@
 	  </exec>
 	</target>
 	<!--run mathematica-->
-	<target name="exec-math" depends="config-math,start-xvnc">
+	<target name="exec-math" depends="start-xvnc">
 	  <property name="MMADEant.m" location="${env.MMADE_XML_PARENT_DIR}/XML/DocBook/MMADEant.m"/>
 	  <!--MMADEant.m Gets the files in the initfiles path reference.
 	      It also uses the mpath reference, env.MMADE_XML_PARENT_DIR property,
