@@ -92,7 +92,7 @@
 		change the logic of the build-->
 	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
 	<!--initialization-->
-	<target name="init" depends="guess-os">
+	<target name="init" depends="">
 		<!--timestamp-->
 		<tstamp/>
 		<copy todir="${build}">
