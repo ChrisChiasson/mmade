@@ -124,7 +124,7 @@
 	  <mathematica exe="${math}">
 	    <![CDATA[Get@AntProperty["MMADEant.m"]]]>
 	  </mathematica>
-	  <antcall target="stop-xvnc"/>
+	  <!--antcall target="stop-xvnc"/-->
 	</target>
 	<!--xsl initialization-->
 	<target name="init-xsl" depends="init,exec-math,config-xsl">
