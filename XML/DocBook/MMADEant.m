@@ -17,9 +17,9 @@ Module[{failedmFiles,
        AntLog[mFiles];
        AntLog[failedmFiles];
 	If[failedmFiles=!={},
-		"The following mfile(s) that you wanted me "<>
+		AntFail["The following mfile(s) that you wanted me "<>
 			"to execute do(es) not exist: "<>
-			ToString@failedmFiles];
+			ToString@failedmFiles]];
 	If[stringTrueQ@AntProperty["usexvnc"],
 		SetOptions[Developer`InstallFrontEnd,
 			Developer`LaunchFlags->
