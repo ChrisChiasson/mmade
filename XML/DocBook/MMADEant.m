@@ -2,7 +2,9 @@
 Prepend[$Path,
 	AntProperty["env.MMADE_XML_PARENT_DIR"]];
 
-<<XML`DocBook`;
+AntLog[$Path];
+
+<<"XML`DocBook`";
 
 $Path=Join[Ant["Project"]@getReference["mpath"]@list[],$Path];
 
