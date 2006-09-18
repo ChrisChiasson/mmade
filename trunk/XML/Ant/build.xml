@@ -10,13 +10,13 @@
 	<property environment="env"/>
 	<xmlproperty file="${os.name} properties.xml" keeproot="false" semanticattributes="yes"/>
 	<xmlproperty file="common properties.xml" keeproot="false" semanticattributes="yes"/>
-	<taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
-		classpathref="jlink"/>
 	<!--configure xml parsing-->
+	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
 	<taskdef name="xclude"
 		classname="com.geekologue.tasks.xinclude.XercesXcluder" 
 		classpathref="xcluder"/>
-	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
+	<taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
+		classpathref="jlink"/>
 	<!--initialization-->
 	<target name="init">
 		<!--timestamp-->
