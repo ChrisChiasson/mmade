@@ -55,7 +55,7 @@
 		context, then make mfiles include the init.m for that
 		context or, alternatively, the .m file that corresponds
 		to that context-->
-	<path id="mfiles"
+	<path pathid="mfiles"
 		location="${mmade_xml_parent_dir}/XML/DocBook/Documentation/Build/Build.m"/>
 	<classpath pathid="jlink"
 		location="${math_top_dir}/AddOns/JLink/JLink.jar"/>	
