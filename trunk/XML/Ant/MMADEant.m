@@ -17,6 +17,9 @@ Print[stuff__]:=AntLog[SequenceForm[stuff]];
 Protect[Print];
 Update[Print];
 
+(*check that the m files exist and then execute them
+in a notebook or non-notebook environment (user chooses)*)
+
 Module[{failedmFiles,
 	mFiles=Ant["Project"]@getReference["mfiles"]@list[],
 	stringTrueQ=StringMatchQ[ToString@#,"True",IgnoreCase->True]&},
