@@ -13,7 +13,7 @@
 	<!--The (master) xml file to be turned into documentation
 		must be directly beneath src.
 		Use the value attribute not the location attribute.-->
-	<xml value="MMADE.xml"/>	
+	<xml value="MMADE.xml"/>
 	<!--build directory-->
 	<build location="build"/>
 	<!--output distribution directory-->
