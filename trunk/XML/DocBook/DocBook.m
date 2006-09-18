@@ -410,9 +410,9 @@ InputFileName[]:=
 		$Input=="",
 		"",
 		First[
-			(Pick[#,FileType/@#,File]&)[
+			(Pick[#,FileType/@#,File]&)[Prepend[
 				(#<>$PathnameSeparator<>$Input&)/@
-					$Path]
+					$Path,$Input]]
 			]
 		];
 
