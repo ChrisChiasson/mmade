@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <whatever>
+	<!--As the name implies, this should be set to the directory *above*
+		MMADE's XML directory.-->
+	<mmade_xml_parent_dir location="C:\workspace\MMADE\"/>
 	<!--ant's idea of xinclude processing...-->
 	<classpath id="xcluder" location="C:\Program Files\xcluder\xcluder-0.9.1\xcluder.jar"/>
 	<!--path to RenderX's XEP-->
