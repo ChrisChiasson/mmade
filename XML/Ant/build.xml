@@ -50,12 +50,12 @@
 	</target>
 	<!--run mathematica-->
 	<target name="exec-math" depends="start-xvnc">
-		<property name="MMADEant.m" location="${mmade_xml_parent_dir}/XML/Ant/MMADEant.m"/>
-		<!--MMADEant.m Gets the files in the initfiles path reference.
+		<property name="Ant.m" location="${mmade_xml_parent_dir}/XML/Ant/Ant.m"/>
+		<!--Ant.m Gets the files in the initfiles path reference.
 			It also uses the mpath reference, env.MMADE_XML_PARENT_DIR property,
 			usexvnc property, and usefront end property-->
 		<mathematica exe="${math}">
-			<![CDATA[Get@AntProperty["MMADEant.m"]]]>
+			<![CDATA[Get@AntProperty["Ant.m"]]]>
 		</mathematica>
 		<!--antcall target="stop-xvnc"/-->
 	</target>
