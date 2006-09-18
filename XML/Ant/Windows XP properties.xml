@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<whatever>
+	<!--ant's idea of xinclude processing...-->
+	<classpath id="xcluder" location="C:\Program Files\xcluder\xcluder-0.9.1\xcluder.jar"/>
+	<!--path to RenderX's XEP-->
+	<XEP-path location="C:\Program Files\RenderX\XEP"/>
+	<!--ghostscript's ps2pdf location-->
+	<ps2pdf	location="C:\Program Files\gs\gs8.54\lib\ps2pdf.cmd"/>			
+	<!--configure Mathematica-->
+	<math_top_dir location="C:\Program Files\Wolfram Research\Mathematica\5.2\"/>
+</whatever>

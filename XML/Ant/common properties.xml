@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<whatever>
+	<!--file format info:
+		http://ant.apache.org/manual/CoreTasks/xmlproperty.html
+		-->
+	<!--documentation directory (most stuff is in a
+		subdirectory of this unless you say otherwise)
+		if you follow the default layout for this directory,
+		you don't have to change src-->
+	<documentation location="DocBook/Documentation"/>
+	<!--xml source directory-->
+	<src location="${documentation}/src"/>
+	<!--The (master) xml file to be turned into documentation
+		must be directly beneath src.
+		Use the value attribute not the location attribute.-->
+	<xml value="MMADE.xml"/>	
+	<!--build directory-->
+	<build location="build"/>
+	<!--output distribution directory-->
+	<dist location="${documentation}/English"/>
+	<!--MMADE_XML_PARENT_DIR is an environment variable you need to set.
+		It can't be set in this script because a relative path will not
+		work when you change basedir via <antcall>.
+		As the name implies, it should be set to the directory *above*
+		MMADE's XML directory.
+		If you are not going to move MMADE, you may set the absolute
+		location directly in this file.-->
+	<mmade_xml_parent_dir location="${env.MMADE_XML_PARENT_DIR}"/>
+	<!--configure xsl-->
+	<!--xsl directory (defaults to the files that come with MMADE)
+		however, these files in turn depend on your xml catalog
+		MMADE checks that this directory exists-->
+	<xsl location="${mmade_xml_parent_dir}/XML/DocBook/xsl"/>
+	<!--xsl transformation files (may have any path)-->
+	<html.xsl location="${xsl}/html.xsl"/>
+	<html_chunk.xsl location="${xsl}/html_chunk.xsl"/>
+	<fo.xsl location="${xsl}/fo.xsl"/>
+	<xhtml.xsl location="${xsl}/xhtml.xsl"/>
+	<xhtml_chunk.xsl location="${xsl}/xhtml_chunk.xsl"/>
+	<!--css directory (contents are copied to dist)
+		(defaults to the files that come with MMADE)-->
+	<css location="${mmade_xml_parent_dir}/XML/DocBook/css"/>
+	<!--xslt styler class possible values (not used yet)-->
+	<!--com.icl.saxon.StyleSheet saxon 6-->
+	<!--net.sf.saxon.Transform saxon 8-->
+	<!--formatting objects processor-->
+	<fo-processor value="xep"/>
+	<!--fo transform target-->
+	<ps-intermediate value="true"/>
+	<!--RenderX's XEP configuration-->
+	<!--XEP config file-->
+	<property name="xep.xml" value="${XEP-path}/xep.xml"/>
+	<!--configure Mathematica-->
+	<!--mpath is prepended to $Path in Mathematica
+		so that you can load your package
+		you can override it with <reference> in
+		<antcall>-->
+	<path id="mpath" location="${basedir}"/>
+	<!--mfiles is a pathlike ant variable that should contain
+		files you want to Get in Mathematica (to generate your
+		documentation)
+		if you build your documentation by executing Get on a
+		context, then make mfiles include the init.m for that
+		context or, alternatively, the .m file that corresponds
+		to that context-->
+	<path id="mfiles"
+		location="${mmade_xml_parent_dir}/XML/DocBook/Documentation/Build/Build.m"/>
+	<classpath pathid="jlink"
+		location="${math_top_dir}/AddOns/JLink/JLink.jar"/>	
+</whatever>
