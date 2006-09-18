@@ -2,7 +2,7 @@
 <project name="DocBook Build" default="help" dir=".">
 	<!--you will almost always want to override
 		dir, documentation, mfiles, and xml
-		when you <antcall> this build file,
+		when you <ant> this build file,
 		unless you feel like building the XML`DocBook
 		documentation-->
 	<!--beyond here is code that should only be reconfigured if you want to
