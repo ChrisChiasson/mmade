@@ -46,7 +46,7 @@
 	<!--mpath is prepended to $Path in Mathematica
 		so that you can load your package
 		you can override it with <reference> in
-		<antcall>-->
+		<ant>-->
 	<path id="mpath" location="${basedir}"/>
 	<!--mfiles is a pathlike ant variable that should contain
 		files you want to Get in Mathematica (to generate your
