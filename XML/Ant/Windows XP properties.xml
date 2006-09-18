@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<whatever>
+<project name="Windows_XP_properties">
+	<!--<path> is used for anything that might eventually contain more than one file reference-->
 	<!--ant's idea of xinclude processing...-->
-	<classpath id="xcluder"
+	<path id="xcluder"
 		location="C:\Program Files\xcluder\xcluder-0.9.1\xcluder.jar"/>
 	<!--RenderX's XEP location-->
 	<property name="XEP-path"
@@ -9,7 +10,8 @@
 	<!--ghostscript's ps2pdf location-->
 	<property name="ps2pdf"
 		location="C:\Program Files\gs\gs8.54\lib\ps2pdf.cmd"/>			
-	<!--configure Mathematica-->
+	<!--Mathematica location-->
 	<property name="math_top_dir"
 		location="C:\Program Files\Wolfram Research\Mathematica\5.2\"/>
-</whatever>
+	<property name="math" location="${math_top_dir}\MathKernel.exe"/>
+</project>
