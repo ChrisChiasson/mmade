@@ -1,6 +1,6 @@
 (*this file is described in the exec-math task of build.xml*)
 PrependTo[$Path,
-	AntProperty["env.MMADE_XML_PARENT_DIR"]];
+	AntProperty["mmade_xml_parent_dir"]];
 
 $Path=Join[Ant["Project"]@getReference["mpath"]@list[],$Path];
 
