@@ -8,14 +8,14 @@
 	<property environment="env"/>
 	<!--As the name implies, this should be set to the directory *above*
 		MMADE's XML directory.-->
-	<property name="mmade_xml_parent_dir" location="${env.MMADE_XML_PARENT_DIR}"/>	
-
+	<property name="mmade_xml_parent_dir" location="${env.MMADE_XML_PARENT_DIR}"/>
+	
 	<!--beyond here is code that should only be reconfigured if you want to
 		change the logic of the build-->
 	<import
-		file="${mmade_xml_parent_dir}/Ant/${os.name} properties.xml"/>
+		file="${mmade_xml_parent_dir}/XML/Ant/${os.name} properties.xml"/>
 	<import
-		file="${mmade_xml_parent_dir}/Ant/common properties.xml"/>
+		file="${mmade_xml_parent_dir}/XML/Ant/common properties.xml"/>
 	<echo message="${ps2pdf}"/>		
 	<!--configure xml parsing-->
 	<basename property="xml-stem" file="${xml}" suffix=".xml"/>

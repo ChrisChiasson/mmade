@@ -57,6 +57,6 @@
 		to that context-->
 	<path id="mfiles"
 		location="${mmade_xml_parent_dir}/XML/DocBook/Documentation/Build/Build.m"/>
-	<classpath id="jlink"
+	<path id="jlink"
 		location="${math_top_dir}/AddOns/JLink/JLink.jar"/>	
 </project>
