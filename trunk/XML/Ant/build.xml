@@ -5,9 +5,13 @@
 		when you <ant> this build file,
 		unless you feel like building the XML`DocBook
 		documentation-->
+	<property environment="env"/>
+	<!--As the name implies, this should be set to the directory *above*
+		MMADE's XML directory.-->
+	<property name="mmade_xml_parent_dir" location="C:\workspace\MMADE\"/>	
+
 	<!--beyond here is code that should only be reconfigured if you want to
 		change the logic of the build-->
-	<property environment="env"/>
 	<xmlproperty file="${os.name} properties.xml" keeproot="false" semanticattributes="yes"/>
 	<xmlproperty file="common properties.xml" keeproot="false" semanticattributes="yes"/>
 	<!--configure xml parsing-->

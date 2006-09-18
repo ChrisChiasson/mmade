@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <whatever>
-	<!--As the name implies, this should be set to the directory *above*
-		MMADE's XML directory.-->
-	<mmade_xml_parent_dir location="C:\workspace\MMADE\"/>
 	<!--ant's idea of xinclude processing...-->
-	<classpath pathid="xcluder" location="C:\Program Files\xcluder\xcluder-0.9.1\xcluder.jar"/>
+	<classpath pathid="xcluder">
+		<pathelement location="C:\Program Files\xcluder\xcluder-0.9.1\xcluder.jar"/>
+	</classpath>
 	<!--path to RenderX's XEP-->
 	<XEP-path location="C:\Program Files\RenderX\XEP"/>
 	<!--ghostscript's ps2pdf location-->
