@@ -8,6 +8,8 @@
 	<!--beyond here is code that should only be reconfigured if you want to
 		change the logic of the build-->
 	<property environment="env"/>
+	<xmlproperty file="${os.name} properties.xml" keeproot="false" semanticattributes="yes"/>
+	<xmlproperty file="common properties.xml" keeproot="false" semanticattributes="yes"/>
 	<taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
 		classpathref="jlink"/>
 	<!--configure xml parsing-->
