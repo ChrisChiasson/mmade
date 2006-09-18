@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="DocBook Build" default="help" dir=".">
+<project name="DocBook Build" default="help" basedir=".">
 	<!--you will almost always want to override
-		dir, documentation, mfiles, and xml
+		basedir, documentation, mfiles, and xml
 		when you <ant> this build file,
 		unless you feel like building the XML`DocBook
 		documentation-->
