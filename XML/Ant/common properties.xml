@@ -18,14 +18,6 @@
 	<build location="build"/>
 	<!--output distribution directory-->
 	<dist location="${documentation}/English"/>
-	<!--MMADE_XML_PARENT_DIR is an environment variable you need to set.
-		It can't be set in this script because a relative path will not
-		work when you change basedir via <antcall>.
-		As the name implies, it should be set to the directory *above*
-		MMADE's XML directory.
-		If you are not going to move MMADE, you may set the absolute
-		location directly in this file.-->
-	<mmade_xml_parent_dir location="${env.MMADE_XML_PARENT_DIR}"/>
 	<!--configure xsl-->
 	<!--xsl directory (defaults to the files that come with MMADE)
 		however, these files in turn depend on your xml catalog
