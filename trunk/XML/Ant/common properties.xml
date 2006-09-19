@@ -58,5 +58,15 @@
 	<path id="mfiles"
 		location="${mmade_xml_parent_dir}/XML/DocBook/Documentation/Build/Build.m"/>
 	<path id="jlink"
-		location="${math_top_dir}/AddOns/JLink/JLink.jar"/>	
+		location="${math_top_dir}/AddOns/JLink/JLink.jar"/>
+	<property name="docbuild" value="javax.xml.parsers.DocumentBuilderFactory"/>
+	<property name="docbuildimpl" value="org.apache.xerces.jaxp.DocumentBuilderFactoryImpl"/>
+	<property name="saxparse" value="javax.xml.parsers.SAXParserFactory"/>
+	<property name="saxparseimpl" value="org.apache.xerces.jaxp.SAXParserFactoryImpl"/>
+	<property name="parseconfig" value="org.apache.xerces.xni.parser.XMLParserConfiguration"/>
+	<property name="xercesconfig" value="org.apache.xerces.parsers.XIncludeParserConfiguration"/>
+	<property name="xsltclass" value="com.icl.saxon.StyleSheet"/>
+	<property name="resolverclass" value="org.apache.xml.resolver.tools.CatalogResolver"/>
+	<property name="readerclass" value="org.apache.xml.resolver.tools.ResolvingXMLReader"/>
+	<property name="xsltmem" value="128m"/>
 </project>
