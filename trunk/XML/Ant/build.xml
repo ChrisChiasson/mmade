@@ -20,7 +20,6 @@
 	<pathconvert dirsep="/" property="buildwithforwardslashes">
 		<path location="${build}"/>
 	</pathconvert>
-	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
 	<taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
 		classpathref="jlink"/>
 	<!--initialization-->
@@ -64,6 +63,34 @@
 		<!--fix EOL markers and convert tabs-->
 		<fixcrlf srcdir="${build}" eol="lf" tab="remove" tablength="4"
 			includes="**/*.m"/>
+		<!--exec executable="xsltproc" dir="${build}">
+			<arg value="-xinclude"/>
+			<arg value="-nonet"/>
+			<arg value="-o"/>
+			<arg value="${xml-intermediate}"/>
+			<arg value="${db_5_to_db_4.xsl}"/>
+			<arg value="${xml}"/>
+		</exec-->
+		<!--java classname="${xsltclass}"
+			fork="true" dir="${build}"
+			maxmemory="${xsltmem}"
+			classpathref="xsltclasspath">
+			<sysproperty key="${docbuild}" value="${docbuildimpl}"/>
+			<sysproperty key="${saxparse}" value="${saxparseimpl}"/>
+			<sysproperty key="${parseconfig}" value="${xercesconfig}"/>
+			<arg value="-r"/>
+			<arg value="${resolverclass}"/>
+			<arg value="-x"/>
+			<arg value="${readerclass}"/>
+			<arg value="-y"/>
+			<arg value="${readerclass}"/>
+			<arg value="-o"/>
+			<arg value="${xml-intermediate}"/>
+			<arg value="${xml}"/>
+			<arg value="${db_5_to_db_4.xsl}"/>
+			<arg value="target.database.document=file:///${buildwithforwardslashes}/olinkdb.xml"/>
+			<arg value="target.filename=file:///${buildwithforwardslashes}/target.db"/>
+		</java-->		
 	</target>
 	<!--check stylesheets directory-->
 	<target name="check-xsl">
@@ -194,6 +221,14 @@
 	<!--transformation to html-->
 	<target name="to-html"
 		depends="init-xsl,check-html.xsl,check-src-xml">
+		<!--exec executable="xsltproc" dir="${build}">
+			<arg value="--xinclude"/>
+			<arg value="--nonet"/>
+			<arg value="-o"/>
+			<arg value="${xml-stem}.html"/>
+			<arg value="${html.xsl}"/>
+			<arg value="${xml-intermediate}"/>
+		</exec-->
 		<java classname="${xsltclass}"
 			fork="true" dir="${build}"
 			maxmemory="${xsltmem}"
@@ -285,7 +320,7 @@
 	</target>
 	<!--move to dist-->
 	<!--target name="move-build-to-dist" depends="to-pdf,to-html,to-xhtml,to-html_chunk,to-xhtml_chunk"-->
-	<target name="move-build-to-dist" depends="to-pdf,to-html,to-xhtml,to-html_chunk,to-xhtml_chunk">
+	<target name="move-build-to-dist" depends="to-html">
 		<property name="MakePathsRelative.m"
 			location="${mmade_xml_parent_dir}/XML/Ant/MakePathsRelative.m"/>
 		<path id="makepathsrelativefiles">
