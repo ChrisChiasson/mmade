@@ -14,6 +14,8 @@
 		must be directly beneath src.
 		Use the value attribute not the location attribute.-->
 	<property name="xml" value="MMADE.xml"/>
+	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
+	<property name="xml-intermediate" value="${xml}.intermediate"/>
 	<!--build directory-->
 	<property name="build" location="build"/>
 	<!--output distribution directory-->
@@ -29,6 +31,7 @@
 	<property name="fo.xsl" location="${xsl}/fo.xsl"/>
 	<property name="xhtml.xsl" location="${xsl}/xhtml.xsl"/>
 	<property name="xhtml_chunk.xsl" location="${xsl}/xhtml_chunk.xsl"/>
+	<property name="db_5_to_db_4.xsl" location="${xsl}/db_5_to_db_4.xsl"/>
 	<!--css directory (contents are copied to dist)
 		(defaults to the files that come with MMADE)-->
 	<property name="css" location="${mmade_xml_parent_dir}/XML/DocBook/css"/>
