@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Windows_XP_properties">
 	<!--<path> is used for anything that might eventually contain more than one file reference-->
-	<!--ant's idea of xinclude processing...-->
-	<path id="xcluder"
-		location="C:\Program Files\xcluder\xcluder-0.9.1\xcluder.jar"/>
+	<path id="xsltclasspath">
+		<!--saxon xsl transformer-->
+		<fileset dir="C:\Program Files\saxon\saxon6-5-5\" includes="*.jar"/>
+		<!--CatalogManager.properties
+			make it from the .CatalogManager.properties.example file
+			in the property file use the absolute path to catalog.xml
+			escape the path)-->
+		<pathelement location="C:\Program Files\docbook-xsl\docbook-xsl-1.71.0\"/>
+		<!--apache xml commons resolver-->
+		<fileset dir="C:\Program Files\xml-commons-resolver\xml-commons-resolver-1.1\"
+			includes="*.jar"/>
+		<!--apache xerces xml parser-->
+		<fileset dir="C:\Program Files\Xerces\xerces-2_8_1\"
+			includes="*.jar"/>
+	</path>
 	<!--RenderX's XEP location-->
 	<property name="XEP-path"
 		location="C:\Program Files\RenderX\XEP"/>
-	<!--ghostscript's ps2pdf location-->
-	<property name="ps2pdf"
-		location="C:\Program Files\gs\gs8.54\lib\ps2pdf.cmd"/>			
+	<!--ghostscript's location-->
+	<property name="ghostscript"
+		location="C:\Program Files\gs\gs8.54\bin\gswin32c"/>			
 	<!--Mathematica location-->
 	<property name="math_top_dir"
 		location="C:\Program Files\Wolfram Research\Mathematica\5.2\"/>

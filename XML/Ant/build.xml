@@ -16,20 +16,20 @@
 		file="${mmade_xml_parent_dir}/XML/Ant/${os.name} properties.xml"/>
 	<import
 		file="${mmade_xml_parent_dir}/XML/Ant/common properties.xml"/>
-	<echo message="${ps2pdf}"/>		
 	<!--configure xml parsing-->
+	<pathconvert dirsep="/" property="buildwithforwardslashes">
+		<path location="${build}"/>
+	</pathconvert>
 	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
-	<taskdef name="xclude"
-		classname="com.geekologue.tasks.xinclude.XercesXcluder" 
-		classpathref="xcluder"/>
 	<taskdef name="mathematica" classname="com.wolfram.jlink.util.MathematicaTask"
 		classpathref="jlink"/>
 	<!--initialization-->
 	<target name="init">
 		<!--timestamp-->
 		<tstamp/>
+		<!--copy the source to the build directory-->
 		<copy todir="${build}">
-		  <fileset dir="${src}"/>
+			<fileset dir="${src}"/>
 		</copy>
 	</target>
 	<!--xvnc-->
@@ -50,26 +50,20 @@
 	</target>
 	<!--run mathematica-->
 	<target name="exec-math" depends="start-xvnc">
-		<property name="Ant.m" location="${mmade_xml_parent_dir}/XML/Ant/Ant.m"/>
-		<!--Ant.m Gets the files in the initfiles path reference.
-			It also uses the mpath reference, env.MMADE_XML_PARENT_DIR property,
+		<property name="mFiles.m" location="${mmade_xml_parent_dir}/XML/Ant/mFiles.m"/>
+		<!--mFiles.m Gets the files in the initfiles path reference.
+			It also uses the mpath reference, mmade_xml_parent_dir property,
 			usexvnc property, and usefront end property-->
 		<mathematica exe="${math}">
-			<![CDATA[Get@AntProperty["Ant.m"]]]>
+			<![CDATA[Get@AntProperty["mFiles.m"]]]>
 		</mathematica>
 		<!--antcall target="stop-xvnc"/-->
 	</target>
 	<!--xsl initialization-->
 	<target name="init-xsl" depends="init,exec-math">
-		<!--copy the source to the build directory-->
-		<copy todir="${build}">
-			<fileset dir="${src}"/>
-		</copy>
 		<!--fix EOL markers and convert tabs-->
 		<fixcrlf srcdir="${build}" eol="lf" tab="remove" tablength="4"
 			includes="**/*.m"/>
-		<!--perform <xi:include>s-->
-		<xclude in="${build}/${xml}" out="${build}/${xi-xml}"/>
 	</target>
 	<!--check stylesheets directory-->
 	<target name="check-xsl">
@@ -111,14 +105,26 @@
 	<!--transformation to formatting objects-->
 	<target name="to-fo"
 		depends="init-xsl,check-fo.xsl,check-src-xml">
-		<exec executable="${xsltproc}" dir="${build}">
-			<arg value="--xinclude"/>
-			<arg value="--nonet"/>
+		<java classname="${xsltclass}"
+			fork="true" dir="${build}"
+			maxmemory="${xsltmem}"
+			classpathref="xsltclasspath">
+			<sysproperty key="${docbuild}" value="${docbuildimpl}"/>
+			<sysproperty key="${saxparse}" value="${saxparseimpl}"/>
+			<sysproperty key="${parseconfig}" value="${xercesconfig}"/>
+			<arg value="-r"/>
+			<arg value="${resolverclass}"/>
+			<arg value="-x"/>
+			<arg value="${readerclass}"/>
+			<arg value="-y"/>
+			<arg value="${readerclass}"/>
 			<arg value="-o"/>
 			<arg value="${xml-stem}.fo"/>
-			<arg value="${fo.xsl}"/>
 			<arg value="${xml}"/>
-		</exec>
+			<arg value="${fo.xsl}"/>
+			<arg value="target.database.document=file:///${buildwithforwardslashes}/olinkdb.xml"/>
+			<arg value="target.filename=file:///${buildwithforwardslashes}/target.db"/>
+		</java>
 	</target>
 	<!--xep initialization-->
 	<target name="init-xep" depends="init-xsl">
@@ -153,9 +159,18 @@
 	<target name="to-pdf-if-ps-intermediate"
 		if="ps-intermediate"
 		depends="to-ps-if-ps-intermediate">
-		<exec executable="${ps2pdf}" dir="${build}">
+		<exec executable="${ghostscript}" dir="${build}">
+			<arg value="-dCompatibilityLevel=1.4"/>
+			<arg value="-q"/>
+			<arg value="-dSAFER"/>
+			<arg value="-dNOPAUSE"/>
+			<arg value="-dBATCH"/>
+			<arg value="-sDEVICE=pdfwrite"/>
+			<arg value="-sOutputFile=${xml-stem}.pdf"/>
+			<arg value="-c"/>
+			<arg value=".setpdfwrite"/>
+			<arg value="-f"/>
 			<arg value="${xml-stem}.ps"/>
-			<arg value="${xml-stem}.pdf"/>
 		</exec>
 		<available property="ps-pdf-available" file="${build}/${xml-stem}.pdf"/>
 		<fail message="${build}/${xml-stem}.pdf not created from ps"
@@ -179,51 +194,110 @@
 	<!--transformation to html-->
 	<target name="to-html"
 		depends="init-xsl,check-html.xsl,check-src-xml">
-		<exec executable="${xsltproc}" dir="${build}">
-			<arg value="--xinclude"/>
-			<arg value="--nonet"/>
+		<java classname="${xsltclass}"
+			fork="true" dir="${build}"
+			maxmemory="${xsltmem}"
+			classpathref="xsltclasspath">
+			<sysproperty key="${docbuild}" value="${docbuildimpl}"/>
+			<sysproperty key="${saxparse}" value="${saxparseimpl}"/>
+			<sysproperty key="${parseconfig}" value="${xercesconfig}"/>
+			<arg value="-r"/>
+			<arg value="${resolverclass}"/>
+			<arg value="-x"/>
+			<arg value="${readerclass}"/>
+			<arg value="-y"/>
+			<arg value="${readerclass}"/>
 			<arg value="-o"/>
 			<arg value="${xml-stem}.html"/>
-			<arg value="${html.xsl}"/>
 			<arg value="${xml}"/>
-		</exec>	
+			<arg value="${html.xsl}"/>
+			<arg value="target.database.document=file:///${buildwithforwardslashes}/olinkdb.xml"/>
+			<arg value="target.filename=file:///${buildwithforwardslashes}/target.db"/>
+		</java>
 	</target>
 	<!--transformation to chunked html-->
 	<target name="to-html_chunk"
 		depends="init-xsl,check-html_chunk.xsl,check-src-xml">
-		<exec executable="${xsltproc}" dir="${build}">
-			<arg value="--xinclude"/>
-			<arg value="--nonet"/>
-			<arg value="${html_chunk.xsl}"/>
+		<java classname="${xsltclass}"
+			fork="true" dir="${build}"
+			maxmemory="${xsltmem}"
+			classpathref="xsltclasspath">
+			<sysproperty key="${docbuild}" value="${docbuildimpl}"/>
+			<sysproperty key="${saxparse}" value="${saxparseimpl}"/>
+			<sysproperty key="${parseconfig}" value="${xercesconfig}"/>
+			<arg value="-r"/>
+			<arg value="${resolverclass}"/>
+			<arg value="-x"/>
+			<arg value="${readerclass}"/>
+			<arg value="-y"/>
+			<arg value="${readerclass}"/>
 			<arg value="${xml}"/>
-		</exec>	
+			<arg value="${html_chunk.xsl}"/>
+			<arg value="target.database.document=file:///${buildwithforwardslashes}/olinkdb.xml"/>
+			<arg value="target.filename=file:///${buildwithforwardslashes}/target.db"/>
+		</java>
 	</target>
 	<!--transformation to xhtml-->
 	<target name="to-xhtml"
 		depends="init-xsl,check-xhtml.xsl,check-src-xml">
-		<exec executable="${xsltproc}" dir="${build}">
-			<arg value="--xinclude"/>
-			<arg value="--nonet"/>
+		<java classname="${xsltclass}"
+			fork="true" dir="${build}"
+			maxmemory="${xsltmem}"
+			classpathref="xsltclasspath">
+			<sysproperty key="${docbuild}" value="${docbuildimpl}"/>
+			<sysproperty key="${saxparse}" value="${saxparseimpl}"/>
+			<sysproperty key="${parseconfig}" value="${xercesconfig}"/>
+			<arg value="-r"/>
+			<arg value="${resolverclass}"/>
+			<arg value="-x"/>
+			<arg value="${readerclass}"/>
+			<arg value="-y"/>
+			<arg value="${readerclass}"/>
 			<arg value="-o"/>
 			<arg value="${xml-stem}.xhtml"/>
-			<arg value="${xhtml.xsl}"/>
 			<arg value="${xml}"/>
-		</exec>	
+			<arg value="${xhtml.xsl}"/>
+			<arg value="target.database.document=file:///${buildwithforwardslashes}/olinkdb.xml"/>
+			<arg value="target.filename=file:///${buildwithforwardslashes}/target.db"/>
+		</java>
 	</target>
 	<!--transformation to chunked xhtml-->
 	<target name="to-xhtml_chunk"
 		depends="init-xsl,check-xhtml_chunk.xsl,check-src-xml">
-		<exec executable="${xsltproc}" dir="${build}">
-			<arg value="--xinclude"/>
-			<arg value="--nonet"/>
-			<arg value="${xhtml_chunk.xsl}"/>
+		<java classname="${xsltclass}"
+			fork="true" dir="${build}"
+			maxmemory="${xsltmem}"
+			classpathref="xsltclasspath">
+			<sysproperty key="${docbuild}" value="${docbuildimpl}"/>
+			<sysproperty key="${saxparse}" value="${saxparseimpl}"/>
+			<sysproperty key="${parseconfig}" value="${xercesconfig}"/>
+			<arg value="-r"/>
+			<arg value="${resolverclass}"/>
+			<arg value="-x"/>
+			<arg value="${readerclass}"/>
+			<arg value="-y"/>
+			<arg value="${readerclass}"/>
 			<arg value="${xml}"/>
-		</exec>	
+			<arg value="${xhtml_chunk.xsl}"/>
+			<arg value="target.database.document=file:///${buildwithforwardslashes}/olinkdb.xml"/>
+			<arg value="target.filename=file:///${buildwithforwardslashes}/target.db"/>
+		</java>
 	</target>
 	<!--move to dist-->
 	<!--target name="move-build-to-dist" depends="to-pdf,to-html,to-xhtml,to-html_chunk,to-xhtml_chunk"-->
-	<target name="move-build-to-dist" depends="to-html">
-			<move todir="${dist}">
+	<target name="move-build-to-dist" depends="to-pdf,to-html,to-xhtml,to-html_chunk,to-xhtml_chunk">
+		<property name="MakePathsRelative.m"
+			location="${mmade_xml_parent_dir}/XML/Ant/MakePathsRelative.m"/>
+		<path id="makepathsrelativefiles">
+			<fileset dir="${build}">
+				<include name="**/*.html"/>
+				<include name="**/*.xhtml"/>			
+			</fileset>
+		</path>
+		<mathematica exe="${math}">
+			<![CDATA[Get@AntProperty["MakePathsRelative.m"]]]>
+		</mathematica>
+		<move todir="${dist}">
 			<fileset dir="${build}"/>
 		</move>
 	</target>
