@@ -326,7 +326,7 @@
 		<path id="makepathsrelativefiles">
 			<fileset dir="${build}">
 				<include name="**/*.html"/>
-				<include name="**/*.xhtml"/>			
+				<include name="**/*.xhtml"/>
 			</fileset>
 		</path>
 		<mathematica exe="${math}">
