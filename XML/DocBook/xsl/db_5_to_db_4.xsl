@@ -5,9 +5,9 @@
 	xmlns:db="http://docbook.org/ns/docbook"
 	exclude-result-prefixes="db ng exsl"
 	version='1.0'>
-	<!--this file is used with permission of Bob Stayton-->
-	<!--I, Chris Chiasson, modified the line below to use the official docbook-xsl url-->
-	<xsl:import href="http://docbook.sourceforge.net/release/xsl/current/fo/profile-docbook.xsl"/>
+	<!--This file is used with the permission of its author, Bob Stayton.-->
+	<!--I, Chris Chiasson, modified the line below to use the official docbook-xsl url.-->
+	<xsl:import href="http://docbook.sourceforge.net/release/xsl/current/fo/docbook.xsl"/>
 	<xsl:template match="/">
 		<xsl:if test="function-available('exsl:node-set')
 			and (*/self::ng:* or */self::db:*)">
