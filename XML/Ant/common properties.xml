@@ -27,9 +27,12 @@
 	<property name="xsl" location="${mmade_xml_parent_dir}/XML/DocBook/xsl"/>
 	<!--xsl transformation files (may have any path)-->
 	<property name="html.xsl" location="${xsl}/html.xsl"/>
+	<property name="html-profile.xsl" location="${xsl}/html-profile.xsl"/>
 	<property name="html_chunk.xsl" location="${xsl}/html_chunk.xsl"/>
 	<property name="fo.xsl" location="${xsl}/fo.xsl"/>
+	<property name="fo-profile.xsl" location="${xsl}/fo-profile.xsl"/>
 	<property name="xhtml.xsl" location="${xsl}/xhtml.xsl"/>
+	<property name="xhtml-profile.xsl" location="${xsl}/xhtml-profile.xsl"/>
 	<property name="xhtml_chunk.xsl" location="${xsl}/xhtml_chunk.xsl"/>
 	<property name="db_5_to_db_4.xsl" location="${xsl}/db_5_to_db_4.xsl"/>
 	<!--css directory (contents are copied to dist)
