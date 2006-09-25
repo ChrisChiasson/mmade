@@ -20,6 +20,20 @@ Update[Print];
 (*check that the m files exist and then execute them
 in a notebook or non-notebook environment (user chooses)*)
 
+$MMADEBuildDirectory=AntProperty["build"];
+
+If[FileType[$MMADEBuildDirectory]===Directory,
+	Null,
+	AntFail[
+		StringJoin["The MMADE build directory, ",
+			build,
+			", has FileType ",
+			ToString@$MMADEBuildDirectory
+			"."
+			]
+		]
+	]
+
 Module[{failedmFiles,
 	mFiles=Ant["Project"]@getReference["mfiles"]@list[],
 	stringTrueQ=StringMatchQ[ToString@#,"True",IgnoreCase->True]&},
