@@ -64,7 +64,7 @@
 		<!--fix EOL markers and convert tabs-->
 		<fixcrlf srcdir="${build}" eol="lf" tab="remove" tablength="4"
 			includes="**/*.m"/>
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
@@ -113,7 +113,7 @@
 	<!--transformation to formatting objects-->
 	<target name="to-fo"
 		depends="init-xsl,check-fo.xsl,check-src-xml">
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
@@ -121,7 +121,7 @@
 			<arg value="${fo-profile.xsl}"/>
 			<arg value="${xml-stem}.db4"/>
 		</exec>
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
@@ -198,7 +198,7 @@
 	<!--transformation to html-->
 	<target name="to-html"
 		depends="init-xsl,check-html.xsl,check-src-xml">
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
@@ -206,7 +206,7 @@
 			<arg value="${html-profile.xsl}"/>
 			<arg value="${xml-stem}.db4"/>
 		</exec>
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
@@ -218,7 +218,7 @@
 	<!--transformation to chunked html-->
 	<target name="to-html_chunk"
 		depends="init-xsl,check-html_chunk.xsl,check-src-xml,to-html">
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="${html_chunk.xsl}"/>
@@ -228,7 +228,7 @@
 	<!--transformation to xhtml-->
 	<target name="to-xhtml"
 		depends="init-xsl,check-xhtml.xsl,check-src-xml">
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
@@ -236,7 +236,7 @@
 			<arg value="${xhtml-profile.xsl}"/>
 			<arg value="${xml-stem}.db4"/>
 		</exec>
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
@@ -248,7 +248,7 @@
 	<!--transformation to chunked xhtml-->
 	<target name="to-xhtml_chunk"
 		depends="init-xsl,check-xhtml_chunk.xsl,check-src-xml,to-xhtml">
-		<exec executable="xsltproc" dir="${build}">
+		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="${xhtml_chunk.xsl}"/>
