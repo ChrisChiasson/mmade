@@ -5,3 +5,8 @@
 	<xsl:import href="http://docbook.sourceforge.net/release/xsl/current/profiling/profile.xsl"/>
 	<xsl:import href="ml_common-profile.xsl"/>
 </xsl:stylesheet>
+<!--
+	MMADE, a Mathematica DocBook Exporter
+	The license and Copyright information for MMADE is included in rights.txt
+	in the XML directory.
+-->

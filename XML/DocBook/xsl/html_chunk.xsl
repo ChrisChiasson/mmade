@@ -11,3 +11,8 @@
 <xsl:param name="chunker.output.doctype-system">http://www.w3.org/TR/html4/loose.dtd</xsl:param>
 <xsl:param name="chunker.output.encoding">ISO-8859-1</xsl:param>
 </xsl:stylesheet>
+<!--
+	MMADE, a Mathematica DocBook Exporter
+	The license and Copyright information for MMADE is included in rights.txt
+	in the XML directory.
+-->

@@ -16,3 +16,8 @@
 		<xsl:attribute name="font-size">8pt</xsl:attribute>
 	</xsl:attribute-set>
 </xsl:stylesheet>
+<!--
+	MMADE, a Mathematica DocBook Exporter
+	The license and Copyright information for MMADE is included in rights.txt
+	in the XML directory.
+-->

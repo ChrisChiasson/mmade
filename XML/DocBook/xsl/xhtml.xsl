@@ -9,3 +9,8 @@
 <xsl:import href="ml_single_common.xsl"/>
 <xsl:import href="xhtml_common.xsl"/>
 </xsl:stylesheet>
+<!--
+	MMADE, a Mathematica DocBook Exporter
+	The license and Copyright information for MMADE is included in rights.txt
+	in the XML directory.
+-->
