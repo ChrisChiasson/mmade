@@ -21,3 +21,8 @@ replacePath[string_String]:=
 
 importReplaceExport[filename_String]:=
 	Export[filename,replacePath[Import[filename,"Text"]],"Text"];
+(*
+MMADE, a Mathematica DocBook Exporter
+The license and Copyright information for MMADE is included in rights.txt
+in the XML directory.
+*)

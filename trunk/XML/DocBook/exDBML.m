@@ -1,3 +1,4 @@
+(*this is the old version of MMADE, it's unsupported*)
 (*******************************************************************
 This file was generated automatically by the Mathematica front end.
 It contains Initialization cells from a Notebook file, which
@@ -247,3 +248,8 @@ content[name_String,xpr_,pspec:{__Integer},
 End[];
 
 EndPackage[];
+(*
+MMADE, a Mathematica DocBook Exporter
+The license and Copyright information for MMADE is included in rights.txt
+in the XML directory.
+*)

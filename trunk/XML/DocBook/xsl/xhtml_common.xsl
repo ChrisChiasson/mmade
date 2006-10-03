@@ -20,7 +20,12 @@
             doctype-public="''"
             doctype-system="''"/>
 
-	<!--this is the xhtml imagedata template - it is patched to handle svg and mathml-->
+	<!--this is the xhtml imagedata template from the DocBook project
+		it is patched to handle SVG and MathML markup children of imagedata
+		from DocBook 5
+		except for the modifications, this template did not originate from the
+		MMADE project or its authors
+		-->
 	<xsl:template match="imagedata">
 		<xsl:choose>
 			<xsl:when xmlns:svg="http://www.w3.org/2000/svg" test="svg:*">
@@ -91,3 +96,8 @@
 	</xsl:template>
 
 </xsl:stylesheet>
+<!--
+	MMADE, a Mathematica DocBook Exporter
+	The license and Copyright information for MMADE is included in rights.txt
+	in the XML directory.
+-->
