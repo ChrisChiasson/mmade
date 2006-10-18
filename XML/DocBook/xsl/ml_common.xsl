@@ -20,7 +20,49 @@ sect4     nop
 sect5     nop
 section   nop
 set       toc,title
+<!--this template is originally from the DocBook project; it has been
+	modified for caption handling-->
 </xsl:param>
+	<xsl:template match="caption/para">
+		<xsl:choose>
+			<xsl:when test="count(preceding-sibling::*)=0">
+				<xsl:call-template name="captionparagraph">
+					<xsl:with-param name="class">
+						<xsl:if test="@role and $para.propagates.style != 0">
+							<xsl:value-of select="@role"/>
+						</xsl:if>
+					</xsl:with-param>
+					<xsl:with-param name="content">
+						<xsl:if test="position() = 1 and parent::listitem">
+							<xsl:call-template name="anchor">
+								<xsl:with-param name="node" select="parent::listitem"/>
+							</xsl:call-template>
+						</xsl:if>
+						<xsl:call-template name="anchor"/>
+						<xsl:apply-templates/>
+					</xsl:with-param>
+				</xsl:call-template>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:call-template name="$paragraph">
+					<xsl:with-param name="class">
+						<xsl:if test="@role and $para.propagates.style != 0">
+							<xsl:value-of select="@role"/>
+						</xsl:if>
+					</xsl:with-param>
+					<xsl:with-param name="content">
+						<xsl:if test="position() = 1 and parent::listitem">
+							<xsl:call-template name="anchor">
+								<xsl:with-param name="node" select="parent::listitem"/>
+							</xsl:call-template>
+						</xsl:if>
+						<xsl:call-template name="anchor"/>
+						<xsl:apply-templates/>
+					</xsl:with-param>
+				</xsl:call-template>
+			</xsl:otherwise>
+		</xsl:choose>
+	</xsl:template>
 </xsl:stylesheet>
 <!--
 	MMADE, a Mathematica DocBook Exporter
