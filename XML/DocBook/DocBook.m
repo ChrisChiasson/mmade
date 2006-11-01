@@ -138,7 +138,15 @@ nonRowSuperscriptOrSubscriptBoxesPatternObject=DeleteCases[
 	superScriptAndSubscriptPatternObject
 	];
 
-stripableBoxesPatternObject=Alternatives[TagBox];
+stripableBoxesPatternObject=Alternatives[InterpretationBox,TagBox];
+
+unwantedBeneathScriptBoxes=
+	DeleteCases[
+		nonRowBoxesPatternObject,
+		stripableBoxesPatternObject
+		];
+
+rowBoxOrStringPatternObject=(_RowBox|_String)..;
 
 stringFormattablePseudoPatternObject=_?stringFormattableQ;
 
@@ -330,22 +338,33 @@ Update[CopyFile];
 
 (*expression to string conversion*)
 
-docBookSuperscript[expr__String]:=RowBox[{{expr}[[1]],
-	Sequence@@Function[XMLElement["superscript",{},{#}]]/@Rest@{expr}}];
+removeRowBoxes[expr_]:=Module[{args},expr/.RowBox[{args__}]:>Sequence[args]];
+
+defineBadArgs@removeRowBoxes;
+
+docBookSuperscript[expr:rowBoxOrStringPatternObject]:=
+	RowBox[{
+		{expr}[[1]],
+		Function[
+			XMLElement["superscript",{},{StringJoin[##]}]]@@
+				Rest@
+					removeRowBoxes@
+						{expr}
+		}];
 
 defineBadArgs@docBookSuperscript;
 
-docBookSubscript[expr__String]:=RowBox[{{expr}[[1]],
-	Sequence@@Function[XMLElement["subscript",{},{#}]]/@Rest@{expr}}];
+docBookSubscript[expr:rowBoxOrStringPatternObject]:=
+	RowBox[{
+		{expr}[[1]],
+		Function[
+			XMLElement["subscript",{},{StringJoin[##]}]]@@
+				Rest@
+					removeRowBoxes@
+						{expr}
+		}];
 
 defineBadArgs@docBookSubscript;
-
-Options@toString=Options@ToString;
-SetOptions[toString,FormatType->InputForm];
-
-toString[string__String,
-	opts:optionsOrNullPseudoPatternObject]:=
-	StringJoin[string];
 
 stringFormattableQ[expr_]:=Module[
 	{subXpr,sewingTag},
@@ -357,13 +376,20 @@ stringFormattableQ[expr_]:=Module[
 				]],
 		Sequence@@Flatten@Reap[
 			ToBoxes[expr]/.(superScriptAndSubscriptPatternObject)[subxpr__]:>
-				Sow[FreeQ[{subxpr},nonRowBoxesPatternObject],sewingTag],
+				Sow[FreeQ[{subxpr},unwantedBeneathScriptBoxes],sewingTag],
 			sewingTag
 			][[2]]
 		]
 	];
 
 defineBadArgs@stringFormattableQ;
+
+Options@toString=Options@ToString;
+SetOptions[toString,FormatType->InputForm];
+
+toString[string__String,
+	opts:optionsOrNullPseudoPatternObject]:=
+	StringJoin[string];
 
 toString[expr:stringFormattablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
@@ -384,11 +410,44 @@ toString[expr_,opts:optionsOrNullPseudoPatternObject]:=
 
 defineBadArgs@toString;
 
+(*the Through statement below fixes problems with expressions like
+ExportString[XMLElement["mo",{},{"\[VerticalSeparator]"}],"XML"]
+generating unprintable entities like "&#10072;".
+This seems as if it would be useless, but when \[LeftVerticalBar] is replaced
+by | (not \[VerticalSeparator]) and then converted into XML, something goes
+haywire -- this "fixes" it.
+*)
+
+Through[
+	{Unprotect,
+		Update,
+		(#=Evaluate[#]/."&#10072;"->"&#124;")&,
+		Protect,
+		Update}[
+			Unevaluated[
+			System`Convert`MLStringDataDump`$PrivateCharacterToUnicodeEntities
+				]
+			]
+	];
+
 (*the BoxesToMathML call on the greek character is needed to define
+System`Convert`MathMLDump`BoxesToSMML,
 System`Convert`XMLDump`generateNumericEntityFromCharacterCode and
 System`ConvertersDump`fullPathNameExport*)
 
 BoxesToMathML["\[Beta]"];
+
+(*this Block changes two of the definitions that use ms to mtext so that strings
+appear as unquoted strings -- this isn't needed for the DocBookTable command
+-- it's needed for exporting symbols that have definitions like
+Format[symb]="#";*)
+
+Block[{BTSMMLDV=DownValues[System`Convert`MathMLDump`BoxesToSMML]},
+	Extract[BTSMMLDV,#[[{1}]]]&/@
+		Position[BTSMMLDV,"ms"]
+			/."ms"->"mtext"
+				/.RuleDelayed->SetDelayed
+	]
 
 (*escapeStringXML converts non ASCII character codes to SGML numeric
 entities, AFAIK*)
@@ -719,7 +778,7 @@ Options@XMLDocument={Declarations->{"Version"->"1.0","Encoding"->"UTF-8"},
 	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
 	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\:00D7",
-	"\[Equal]"->"="}};
+	"\[Equal]"->"=","\[LeftBracketingBar]"|"\[RightBracketingBar]"->"|"}};
 
 XMLDocument[file_String,
 	xmlChain:xmlOrExportXmlChainPseudoPatternObject,
