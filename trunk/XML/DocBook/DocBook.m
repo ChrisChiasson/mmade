@@ -437,18 +437,6 @@ System`ConvertersDump`fullPathNameExport*)
 
 BoxesToMathML["\[Beta]"];
 
-(*this Block changes two of the definitions that use ms to mtext so that strings
-appear as unquoted strings -- this isn't needed for the DocBookTable command
--- it's needed for exporting symbols that have definitions like
-Format[symb]="#";*)
-
-Block[{BTSMMLDV=DownValues[System`Convert`MathMLDump`BoxesToSMML]},
-	Extract[BTSMMLDV,#[[{1}]]]&/@
-		Position[BTSMMLDV,"ms"]
-			/."ms"->"mtext"
-				/.RuleDelayed->SetDelayed
-	]
-
 (*escapeStringXML converts non ASCII character codes to SGML numeric
 entities, AFAIK*)
 
