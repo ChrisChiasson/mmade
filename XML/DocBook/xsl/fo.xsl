@@ -14,12 +14,52 @@
 	<xsl:attribute-set name="monospace.verbatim.properties">
 		<xsl:attribute name="font-size">8pt</xsl:attribute>
 	</xsl:attribute-set>
+	<!--this template is originally from the DocBook project; it has been
+		modified for caption handling-->
 	<xsl:template match="caption/para">
 		<xsl:choose>
 			<xsl:when test="count(preceding-sibling::*)=0">
 				<fo:block xsl:use-attribute-sets="normal.para.spacing">
 					<xsl:call-template name="anchor"/>
 					<fo:inline font-weight="bold">Caption: </fo:inline>
+					<xsl:apply-templates/>
+				</fo:block>
+			</xsl:when>
+			<xsl:otherwise>
+				<fo:block xsl:use-attribute-sets="normal.para.spacing">
+					<xsl:call-template name="anchor"/>
+					<xsl:apply-templates/>
+				</fo:block>
+			</xsl:otherwise>
+		</xsl:choose>
+	</xsl:template>
+	<!--this template is originally from the DocBook project; it has been
+		modified for question handling-->
+	<xsl:template match="question/para">
+		<xsl:choose>
+			<xsl:when test="count(preceding-sibling::*)=0">
+				<fo:block xsl:use-attribute-sets="normal.para.spacing">
+					<xsl:call-template name="anchor"/>
+					<fo:inline font-weight="bold">Q: </fo:inline>
+					<xsl:apply-templates/>
+				</fo:block>
+			</xsl:when>
+			<xsl:otherwise>
+				<fo:block xsl:use-attribute-sets="normal.para.spacing">
+					<xsl:call-template name="anchor"/>
+					<xsl:apply-templates/>
+				</fo:block>
+			</xsl:otherwise>
+		</xsl:choose>
+	</xsl:template>
+	<!--this template is originally from the DocBook project; it has been
+		modified for answer handling-->
+	<xsl:template match="answer/para">
+		<xsl:choose>
+			<xsl:when test="count(preceding-sibling::*)=0">
+				<fo:block xsl:use-attribute-sets="normal.para.spacing">
+					<xsl:call-template name="anchor"/>
+					<fo:inline font-weight="bold">A: </fo:inline>
 					<xsl:apply-templates/>
 				</fo:block>
 			</xsl:when>
