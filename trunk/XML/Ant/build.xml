@@ -63,7 +63,7 @@
 	<target name="init-xsl" depends="init,exec-math">
 		<!--fix EOL markers and convert tabs-->
 		<fixcrlf srcdir="${build}" eol="lf" tab="remove" tablength="4"
-			includes="**/*.m"/>
+			fixlast="false" includes="**/*.m"/>
 		<exec executable="${xsltproc}" dir="${build}">
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
