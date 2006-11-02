@@ -347,9 +347,7 @@ docBookSuperscript[expr:rowBoxOrStringPatternObject]:=
 		{expr}[[1]],
 		Function[
 			XMLElement["superscript",{},{StringJoin[##]}]]@@
-				Rest@
-					removeRowBoxes@
-						{expr}
+				removeRowBoxes@Rest@{expr}
 		}];
 
 defineBadArgs@docBookSuperscript;
@@ -359,9 +357,7 @@ docBookSubscript[expr:rowBoxOrStringPatternObject]:=
 		{expr}[[1]],
 		Function[
 			XMLElement["subscript",{},{StringJoin[##]}]]@@
-				Rest@
-					removeRowBoxes@
-						{expr}
+				removeRowBoxes@Rest@{expr}
 		}];
 
 defineBadArgs@docBookSubscript;
