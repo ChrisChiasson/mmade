@@ -338,7 +338,7 @@ Update[CopyFile];
 
 (*expression to string conversion*)
 
-removeRowBoxes[expr_]:=Module[{args},expr/.RowBox[{args__}]:>Sequence[args]];
+removeRowBoxes[expr_]:=Module[{args},expr//.RowBox[{args__}]:>Sequence[args]];
 
 defineBadArgs@removeRowBoxes;
 
