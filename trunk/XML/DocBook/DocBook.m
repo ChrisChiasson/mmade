@@ -466,8 +466,11 @@ defineBadArgs@toString;
 ExportString[XMLElement["mo",{},{"\[VerticalSeparator]"}],"XML"]
 generating unprintable entities like "&#10072;".
 This seems as if it would be useless, but when \[LeftVerticalBar] is replaced
-by | (not \[VerticalSeparator]) and then converted into XML, something goes
-haywire -- this "fixes" it.
+by | (not \[VerticalSeparator]) and then converted into XML, something sometimes
+goes haywire -- this "fixes" it.
+I have no idea Mathematica *sometimes* converts | into \[VerticalSeparator] (and
+then into &#10072;). It just does. See the definition of ptol in the
+EngineeringOptimization project for an example.
 *)
 
 Through[
