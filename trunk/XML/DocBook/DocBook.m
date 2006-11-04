@@ -49,6 +49,9 @@ DocBookInlineMediaObject::usage="";
 
 DocBookTable::usage="DocBookTable[\"id\",\"title\",\"description\",table,opts]";
 
+DocBookString::usage="DocBookString[str1,str2,...] displays as str1<>str2.\
+it is useful for avoiding quotation marks around exported strings.";
+
 DownValueArguments::usage="";
 
 ExportDelayed::usage="";
@@ -119,7 +122,11 @@ XMLChain::usage="";
 XMLDocument::badprep="A bad path of `1` was given as the PrependDirectory \
 option to XMLDocument. The prepend will be skipped."
 
-XMLDocument::usage="";
+XMLDocument::usage="XMLDocument[\"file\",xmlchain,opts] produces a list of \
+ExportDelayed objects with an \"XML\" export that has appropriate \
+serialization options and character replacements for DocBook. xmlchain is a \
+list of ExportDelayed objects of the kind produced by XMLChain, \
+DocBookEquation, DocBookTable, etc.";
 
 Begin["`Private`"];
 
@@ -130,6 +137,15 @@ superScriptAndSubscriptPatternObject=SuperscriptBox|SubscriptBox;
 
 boxesPatternObject=Alternatives@@
 	ToExpression/@Cases[Names["System`*"],x_/;StringMatchQ[x,___~~"Box"]];
+
+notBoxExpressionPatternObject=
+	Except[
+		Union@
+			Flatten[
+				BlankSequence/@boxesPatternObject|
+					boxesPatternObject|_String|List|__List
+				]
+		];
 
 nonRowBoxesPatternObject=Module[{x},DeleteCases[boxesPatternObject,RowBox]];
 
@@ -336,6 +352,8 @@ Protect[CopyFile];
 
 Update[CopyFile];
 
+MakeBoxes[DocBookString[strs__String],_]:=StringJoin[strs];
+
 (*expression to string conversion*)
 
 removeRowBoxes[expr_]:=Module[{args},expr//.RowBox[{args__}]:>Sequence[args]];
@@ -380,21 +398,59 @@ stringFormattableQ[expr_]:=Module[
 
 defineBadArgs@stringFormattableQ;
 
+formatNumber[str_String/;AtomQ[Unevaluated[str]]&&SyntaxQ[str]]:=
+	Module[{xprHeld=ToExpression[str,InputForm,HoldComplete]},
+		ToString@ReleaseHold@xprHeld/;MatchQ[xprHeld,HoldComplete[_Real]]
+		];
+
+formatNumber[str_String]=str;
+
+defineBadArgs@formatNumber;
+
+formatString[str_String/;AtomQ[Unevaluated[str]]&&
+	(!ShowStringCharacters/.FullOptions[$FrontEnd])]:=
+	StringReplace[str,{"\\\""->"\"","\""->""}];
+
+formatString[str_String]=str;
+
+defineBadArgs@formatString;
+
+removeUnwantedBoxes[boxes_]:=
+	Module[{unwantedBoxExpr,symb},
+		boxes//.
+			unwantedBoxExpr:nonRowSuperscriptOrSubscriptBoxesPatternObject[__]:>
+				unwantedBoxExpr[[1]]
+		];
+
+defineBadArgs@removeUnwantedBoxes;
+
+unStringableBoxesQ[boxes_/;FreeQ[boxes,notBoxExpressionPatternObject]]:=False;
+
+(*this should always give False, if it doesn't the toString routine is
+broken*)
+
+unStringableBoxesQ[boxes_]:=True;
+
+defineBadArgs@unStringableBoxesQ;
+
 Options@toString=Options@ToString;
+
 SetOptions[toString,FormatType->InputForm];
 
-toString[string__String,
+toString::"usb"="Can't convert `1` into a string.";
+
+toString[strings__String,
 	opts:optionsOrNullPseudoPatternObject]:=
-	StringJoin[string];
+	StringJoin[strings];
 
 toString[expr:stringFormattablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
-	Module[
-		{boxExpr,unwantedBoxExpr},
+	Module[{boxExpr},
 		boxExpr=ToBoxes[expr,
-			FormatType/.{opts}/.Options@toString/.InputForm->StandardForm]//.
-			unwantedBoxExpr:nonRowSuperscriptOrSubscriptBoxesPatternObject[__]:>
-			unwantedBoxExpr[[1]];
+			FormatType/.{opts}/.Options@toString/.InputForm->StandardForm];
+		boxExpr=removeUnwantedBoxes[boxExpr]/.str_String:>
+			formatString@formatNumber@str;
+		If[unStringableBoxesQ[boxExpr],Message[toString::"usb",expr];Abort[]];
 		Block[
 			{SuperscriptBox=docBookSuperscript,SubscriptBox=docBookSubscript},
 			Sequence@@Flatten[{boxExpr/.RowBox->List}]
@@ -762,7 +818,8 @@ Options@XMLDocument={Declarations->{"Version"->"1.0","Encoding"->"UTF-8"},
 	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
 	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\:00D7",
-	"\[Equal]"->"=","\[LeftBracketingBar]"|"\[RightBracketingBar]"->"|"}};
+	"\[Equal]"->"=","\[LeftBracketingBar]"|"\[RightBracketingBar]"->"|",
+	"\[Rule]"->"\:2192","\[InvisibleSpace]"->"\:200B"}};
 
 XMLDocument[file_String,
 	xmlChain:xmlOrExportXmlChainPseudoPatternObject,
@@ -1275,21 +1332,14 @@ docBookTableGeneral[id_String,
 					rowElement@@@
 						MapIndexed[
 							entryElement[
-								Which[
-									MatchQ[#,nothing],
-									"",
-									MatchQ[#,_String],
+								ToXML@DocBookInlineEquation[
+									id<>StringJoin@@
+										Function["_"<>ToString[#]]/@#2,
 									#,
-									True,
-									ToXML@DocBookInlineEquation[
-										id<>StringJoin@@
-											Function["_"<>ToString[#]]/@#2,
-										#,
-										Sequence@@
-											(DocBookInlineEquationOptions
-												/.{options}
-												)
-										]
+									Sequence@@
+										(DocBookInlineEquationOptions
+											/.{options}
+											)
 									],
 								options
 								]&,
@@ -1307,7 +1357,8 @@ defineBadArgs@docBookTableGeneral;
 
 Options@DocBookTable=Options@docBookTableGeneral
 
-DocBookTable[id_String,title_String,description_String,
+DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
+	description_String,
 	tablexpr:tablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@DocBookTable]},
