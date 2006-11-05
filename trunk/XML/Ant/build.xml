@@ -57,7 +57,6 @@
 		<mathematica exe="${math}">
 			<![CDATA[Get@AntProperty["mFiles.m"]]]>
 		</mathematica>
-		<!--antcall target="stop-xvnc"/-->
 	</target>
 	<!--xsl initialization-->
 	<target name="init-xsl" depends="init,exec-math">
@@ -263,7 +262,9 @@
 		</move>
 	</target>
 	<!--all-->
-	<target name="all" depends="move-build-to-dist"/>
+	<target name="all" depends="move-build-to-dist">
+		<antcall target="stop-xvnc"/>
+	</target>
 	<!--cleaning-->
 	<target name="clean">
 		<delete dir="${build}" includeemptydirs="true"/>
