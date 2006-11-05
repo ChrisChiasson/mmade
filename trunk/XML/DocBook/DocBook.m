@@ -445,7 +445,7 @@ toString[strings__String,
 
 toString[expr:stringFormattablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
-	Module[{boxExpr},
+	Module[{boxExpr,str},
 		boxExpr=ToBoxes[expr,
 			FormatType/.{opts}/.Options@toString/.InputForm->StandardForm];
 		boxExpr=removeUnwantedBoxes[boxExpr]/.str_String:>
@@ -462,29 +462,6 @@ toString[expr_,opts:optionsOrNullPseudoPatternObject]:=
 
 defineBadArgs@toString;
 
-(*the Through statement below fixes problems with expressions like
-ExportString[XMLElement["mo",{},{"\[VerticalSeparator]"}],"XML"]
-generating unprintable entities like "&#10072;".
-This seems as if it would be useless, but when \[LeftVerticalBar] is replaced
-by | (not \[VerticalSeparator]) and then converted into XML, something sometimes
-goes haywire -- this "fixes" it.
-I have no idea Mathematica *sometimes* converts | into \[VerticalSeparator] (and
-then into &#10072;). It just does. See the definition of ptol in the
-EngineeringOptimization project for an example.
-*)
-
-Through[
-	{Unprotect,
-		Update,
-		(#=Evaluate[#]/."&#10072;"->"&#124;")&,
-		Protect,
-		Update}[
-			Unevaluated[
-			System`Convert`MLStringDataDump`$PrivateCharacterToUnicodeEntities
-				]
-			]
-	];
-
 (*the BoxesToMathML call on the greek character is needed to define
 System`Convert`MathMLDump`BoxesToSMML,
 System`Convert`XMLDump`generateNumericEntityFromCharacterCode and
@@ -492,8 +469,23 @@ System`ConvertersDump`fullPathNameExport*)
 
 BoxesToMathML["\[Beta]"];
 
-(*escapeStringXML converts non ASCII character codes to SGML numeric
-entities, AFAIK*)
+Block[{BSMMLDV=DownValues[System`Convert`MathMLDump`BoxesToSMML]},
+	BSMMLDV=Insert[BSMMLDV,
+			HoldPattern[
+				System`Convert`MathMLDump`BoxesToSMML[
+					str_String/;AtomQ[Unevaluated[str]]&&SyntaxQ[str]]
+					]:>
+				Module[{xprHeld=ToExpression[str,InputForm,HoldComplete]},
+					XMLElement["mn",{},{ToString@ReleaseHold@xprHeld}]/;
+						MatchQ[xprHeld,HoldComplete[_Real]]
+					],
+			First[Position[BSMMLDV,x_/;!FreeQ[x,DigitQ],{1}]]
+			];
+	DownValues[System`Convert`MathMLDump`BoxesToSMML]=BSMMLDV;
+	];
+
+(*escapeStringXML should convert non ASCII character codes to SGML numeric
+entities*)
 
 escapeStringXML[strxpr_String]:=Apply[StringJoin,If[Or[33<=#<=127,#==10],
 	FromCharacterCode[#],
@@ -673,7 +665,7 @@ Mathematica from generating namespace prefixed MathML*)
 
 rawXML[mathMl_String,opts:optionsOrNullPseudoPatternObject]:=Sequence@@
 	ImportString["<llamabait>"<>mathMl<>"</llamabait>",xmlFileType,
-		FilterOptions[ExportString,opts]][[2,3]];
+		FilterOptions[ImportString,opts]][[2,3]];
 
 expressionToSymbolicMathML[expr_,opts:optionsOrNullPseudoPatternObject]:=rawXML@
 	StringReplace[ExpressionToMathML[expr,opts],StringExpression[Whitespace,
@@ -821,8 +813,9 @@ Options@XMLDocument={Declarations->{"Version"->"1.0","Encoding"->"UTF-8"},
 	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
 	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\:00D7",
-	"\[Equal]"->"=","\[LeftBracketingBar]"|"\[RightBracketingBar]"->"|",
-	"\[Rule]"->"\:2192","\[InvisibleSpace]"->"\:200B"}};
+	"\[Equal]"->"=","\[Rule]"->"\:2192","\[InvisibleSpace]"->"\:200B",
+	"\[LeftBracketingBar]"|"\[RightBracketingBar]"|"\[VerticalSeparator]"->"|"}
+	};
 
 XMLDocument[file_String,
 	xmlChain:xmlOrExportXmlChainPseudoPatternObject,
