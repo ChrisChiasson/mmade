@@ -28,7 +28,7 @@
 	<!--Mathematica location-->
 	<property name="math_top_dir"
 		location="/usr/local/Wolfram/Mathematica/5.2"/>
-	<property name="math" location="${math_top_dir}\MathKernel"/>
+	<property name="math" location="${math_top_dir}/Executables/MathKernel"/>
 	<!--XVNC/tightvnc-->
 	<property name="usexvnc" value="true"/>
 	<property name="vncserver" location="/usr/bin/vncserver"/>
