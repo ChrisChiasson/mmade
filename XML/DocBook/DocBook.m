@@ -133,6 +133,8 @@ Begin["`Private`"];
 $ContextPath=Fold[Insert[##,2]&,$ContextPath,Reverse@{"XML`MathML`","XML`"}];
 
 (*patterns*)
+containsMsPatternObject=_?(!FreeQ[#,"ms"]&);
+
 superScriptAndSubscriptPatternObject=SuperscriptBox|SubscriptBox;
 
 boxesPatternObject=Alternatives@@
@@ -257,8 +259,10 @@ docBookNameSpaceAttributeRule=xmlnsNameSpaceAttribute->docBookNameSpace;
 
 symbolicMLConversionOptions=ConversionOptions->{"ElementFormatting"->None};
 
-mathMLConversionOptions=Sequence["Formats"->{"PresentationMathML",
-	"ContentMathML"},"NamespacePrefixes"->{mathMlNameSpace->"mml"}];
+(*Mathematica is incapable of generating fully correct ContentMathML*)
+
+mathMLConversionOptions=Sequence["Formats"->{"PresentationMathML"},
+	"NamespacePrefixes"->{mathMlNameSpace->"mml"}];
 
 ruleHeadPatternObject=Rule|RuleDelayed;
 
@@ -381,15 +385,16 @@ docBookSubscript[expr:rowBoxOrStringPatternObject]:=
 defineBadArgs@docBookSubscript;
 
 stringFormattableQ[expr_]:=Module[
-	{subXpr,sewingTag},
+	{subXpr,sewingTag,exprBoxes=ToBoxes[NumberForm[expr]]},
 	And[
-		FreeQ[ToBoxes[expr],
+		FreeQ[exprBoxes,
 			DeleteCases[
 				nonRowSuperscriptOrSubscriptBoxesPatternObject,
 				stripableBoxesPatternObject
-				]],
+				]
+			],
 		Sequence@@Flatten@Reap[
-			ToBoxes[expr]/.(superScriptAndSubscriptPatternObject)[subxpr__]:>
+			exprBoxes/.(superScriptAndSubscriptPatternObject)[subxpr__]:>
 				Sow[FreeQ[{subxpr},unwantedBeneathScriptBoxes],sewingTag],
 			sewingTag
 			][[2]]
@@ -397,15 +402,6 @@ stringFormattableQ[expr_]:=Module[
 	];
 
 defineBadArgs@stringFormattableQ;
-
-formatNumber[str_String/;AtomQ[Unevaluated[str]]&&SyntaxQ[str]]:=
-	Module[{xprHeld=ToExpression[str,InputForm,HoldComplete]},
-		ToString@ReleaseHold@xprHeld/;MatchQ[xprHeld,HoldComplete[_Real]]
-		];
-
-formatNumber[str_String]=str;
-
-defineBadArgs@formatNumber;
 
 formatString[str_String/;AtomQ[Unevaluated[str]]&&
 	(!ShowStringCharacters/.FullOptions[$FrontEnd])]:=
@@ -446,17 +442,16 @@ toString[strings__String,
 toString[expr:stringFormattablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{boxExpr,str},
-		boxExpr=ToBoxes[expr,
+		boxExpr=ToBoxes[NumberForm[expr],
 			FormatType/.{opts}/.Options@toString/.InputForm->StandardForm];
-		boxExpr=removeUnwantedBoxes[boxExpr]/.str_String:>
-			formatString@formatNumber@str;
+		boxExpr=removeUnwantedBoxes[boxExpr]/.str_String:>formatString@str;
 		If[unStringableBoxesQ[boxExpr],Message[toString::"usb",expr];Abort[]];
 		Block[
 			{SuperscriptBox=docBookSuperscript,SubscriptBox=docBookSubscript},
 			Sequence@@Flatten[{boxExpr/.RowBox->List}]
 			]
 		];
-	
+
 toString[expr_,opts:optionsOrNullPseudoPatternObject]:=
 	ToString[expr,opts,Sequence@@Options@toString];
 
@@ -468,21 +463,6 @@ System`Convert`XMLDump`generateNumericEntityFromCharacterCode and
 System`ConvertersDump`fullPathNameExport*)
 
 BoxesToMathML["\[Beta]"];
-
-Block[{BSMMLDV=DownValues[System`Convert`MathMLDump`BoxesToSMML]},
-	BSMMLDV=Insert[BSMMLDV,
-			HoldPattern[
-				System`Convert`MathMLDump`BoxesToSMML[
-					str_String/;AtomQ[Unevaluated[str]]&&SyntaxQ[str]]
-					]:>
-				Module[{xprHeld=ToExpression[str,InputForm,HoldComplete]},
-					XMLElement["mn",{},{ToString@ReleaseHold@xprHeld}]/;
-						MatchQ[xprHeld,HoldComplete[_Real]]
-					],
-			First[Position[BSMMLDV,x_/;!FreeQ[x,DigitQ],{1}]]
-			];
-	DownValues[System`Convert`MathMLDump`BoxesToSMML]=BSMMLDV;
-	];
 
 (*escapeStringXML should convert non ASCII character codes to SGML numeric
 entities*)
@@ -660,6 +640,46 @@ defineBadArgs@titleElements;
 
 (*imageobject*)
 
+reformatMs[
+	XMLElement[msHead:containsMsPatternObject,{attributes___},{str_String}]/;
+		AtomQ[Unevaluated[str]]&&SyntaxQ[str]]:=
+	Module[{xprHeld=ToExpression[str,InputForm,HoldComplete],num},
+		(num=ReleaseHold[xprHeld];
+			If[Negative[num],
+				Identity[Sequence][
+					XMLElement[msHead/."ms"->"mo",{},{"-"}],
+					XMLElement[msHead/."ms"->"mn",
+						{attributes},
+						{StringDrop[str,1]}
+						]
+					],
+				XMLElement[msHead/."ms"->"mn",{attributes},{str}]
+				]
+			)/;MatchQ[xprHeld,HoldComplete[_Real|_Integer]]
+		];
+
+reformatMs[
+	XMLElement[msHead:containsMsPatternObject,{attributes___},{str_String}]/;
+		AtomQ[Unevaluated[str]]&&(!ShowStringCharacters/.FullOptions[$FrontEnd])
+	]:=
+	Module[{midStr},
+		If[StringMatchQ[str,StringExpression["\\\"",midStr__,"\\\""]],
+			XMLElement[msHead/."ms"->"ms",
+				{attributes},
+				{StringTake[str,{3,-3}]}
+				],
+			XMLElement[msHead/."ms"->"mtext",{attributes},{str}]
+			]
+		];
+
+reformatMs[XMLElement[msHead:containsMsPatternObject,{attributes___},{}]/;
+		(!ShowStringCharacters/.FullOptions[$FrontEnd])]:=
+		XMLElement[msHead/."ms"->"mtext",{attributes},{}];
+
+reformatMs[elem:XMLElement[containsMsPatternObject,__]]:=elem;
+
+defineBadArgs@reformatMs;
+
 (*the rawXML + expressionToSymbolicMathML trick overcomes a bug preventing
 Mathematica from generating namespace prefixed MathML*)
 
@@ -667,10 +687,23 @@ rawXML[mathMl_String,opts:optionsOrNullPseudoPatternObject]:=Sequence@@
 	ImportString["<llamabait>"<>mathMl<>"</llamabait>",xmlFileType,
 		FilterOptions[ImportString,opts]][[2,3]];
 
-expressionToSymbolicMathML[expr_,opts:optionsOrNullPseudoPatternObject]:=rawXML@
-	StringReplace[ExpressionToMathML[expr,opts],StringExpression[Whitespace,
-		"xmlns=",quoteCharStringPatternObject,mathMlNameSpace,
-		quoteCharStringPatternObject]->"",1];
+defineBadArgs@rawXML;
+
+expressionToSymbolicMathML[expr_,opts:optionsOrNullPseudoPatternObject]:=
+	Module[{ms},rawXML@
+		StringReplace[
+			ExpressionToMathML[
+				NumberForm[expr],
+				opts
+				],
+			StringExpression[
+				Whitespace,
+				"xmlns=",
+				quoteCharStringPatternObject,
+				mathMlNameSpace,
+				quoteCharStringPatternObject]->"",
+			1]/.ms:XMLElement[containsMsPatternObject,___]:>reformatMs[ms]
+		];
 
 defineBadArgs@expressionToSymbolicMathML;
 
