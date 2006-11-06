@@ -29,7 +29,10 @@
 	<property name="math_top_dir"
 		location="/usr/local/Wolfram/Mathematica/5.2"/>
 	<property name="math" location="${math_top_dir}/Executables/MathKernel"/>
+	<property name="usefrontend" value="true"/>
 	<!--XVNC/tightvnc-->
+	<!--remember, in order for ant to not use xvnc, the usexnc paramter must be
+		commented out instead of set to false-->
 	<property name="usexvnc" value="true"/>
 	<property name="vncserver" location="/usr/bin/vncserver"/>
 	<property name="xvncgeometry" value="1024x768"/>
