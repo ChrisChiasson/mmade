@@ -29,6 +29,7 @@
 	<property name="math_top_dir"
 		location="C:\Program Files\Wolfram Research\Mathematica\5.2\"/>
 	<property name="math" location="${math_top_dir}\MathKernel.exe"/>
+	<property name="usefrontend" value="true"/>
 </project>
 <!--
 	MMADE, a Mathematica DocBook Exporter
