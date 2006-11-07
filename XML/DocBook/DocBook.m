@@ -1,3 +1,5 @@
+(* ::Package:: *)
+
 BeginPackage["XML`DocBook`",{"Utilities`FilterOptions`"}];
 
 $ExportWidth::usage="$ExportWidth specifies the width at which to line \
@@ -17,9 +19,12 @@ AllowMathPhrase::usage="This is an option with a boolean value (True|False) \
 that controls wether the particular export will use <mathphrase> to represent \
 the subclass of expressions that can be represented by pure DocBook markup.";
 
-Caption::usage="";
+Caption::usage="This is an option for the DocBook* table, figure, and equation \
+functions that accepts a string, XMLElement or XMLChain as a caption.";
 
-CharacterReplacements::usage="";
+CharacterReplacements::usage="This option for the XMLDocument accepts as its \
+right hand side a list of rules to be used in a StringReplace on all strings in
+the xmlchain argument.";
 
 DataAttributes::usage="These attributes are applied to the element inside the \
 <*object> element. This is usually an <imagedata> or <phrase> element.";
@@ -36,25 +41,33 @@ element that has multiple mediaobject or mathphrase children."
 DocBookFigure::usage="DocBookFigure[\"id\",\"title\",\"alt text\",graphics,\
 opts]";
 
-DocBookInformalFigure::usage="";
+DocBookInformalFigure::usage="DocBookInformalFigure[\"id\",\"alt text\",\
+graphics,opts]";
 
-DocBookInformalEquation::usage="DocBookInformalEquation[\"id\",expr,opts]";;
+DocBookInformalEquation::usage="DocBookInformalEquation[\"id\",expr,opts]";
 
-DocBookInformalTable::usage="DocBookInformalTable[\"id\",\"description\",table,\
-opts]";
+DocBookInformalTable::usage="DocBookInformalTable[\"id\",\"description\",\
+table,opts]";
 
 DocBookInlineEquation::usage="DocBookInlineEquation[\"id\",expr,opts]";
 
-DocBookInlineMediaObject::usage="";
+DocBookInlineMediaObject::usage="DocBookInlineMediaObject[\"id\",\
+\"description\",graphics,opts]";
 
 DocBookTable::usage="DocBookTable[\"id\",\"title\",\"description\",table,opts]";
 
-DocBookString::usage="DocBookString[str1,str2,...] displays as str1<>str2.\
+DocBookString::usage="DocBookString[str1,str2,...] displays as str1<>str2. \
 it is useful for avoiding quotation marks around exported strings.";
 
-DownValueArguments::usage="";
+DownValueParts::usage="DownValueParts is an option for PickBadArguments that \
+gives the appropriate Part argument to select the proper DownValue of the \
+function call to be debugged.";
 
-ExportDelayed::usage="";
+ExportDelayed::usage="This is an intert version of Export. When one is ready \
+to actually perform the Export, Replace ExportDelayed with Export. These \
+ExportDelayed objects are handled differently by this package depending \
+on whether they are \"XML\" or non-XML types. The type is given in the third \
+argument. See ToXML and XMLChain.";
 
 ExportDryRun::chtype=StringReplace[Export::chtype,"Export"->"ExportDryRun"];
 
@@ -78,7 +91,8 @@ FromRelativePath::usage="FromRelativePath[\"relativeFileName\"] returns the "<>
 General::badargs="Bad arguments were supplied to `1`. The call was as follows: \
 `2`";
 
-InlineMediaObject::usage="";
+InlineMediaObjectElement::usage"InlineMediaObjectElement is the type of \
+element used to contain inlineequation media.";
 
 InputFileBaseName::usage="InputFileBaseName[] gives the base file name of "<>
 	"$Input. This is useful for copying the source file to an export "<>
@@ -91,33 +105,48 @@ InputFileName::usage="InputFileName[] will search $Path in an attempt to "<>
 	"find the presently executing $Input file. This does not work fo "<>
 	"interactive notebooks.";
 
-MediaObject::usage="";
+MediaObjectElement::usage="MediaObjectElement is the type of element used \
+to contain equation and informalequation media.";
 
 ObjectAttributes::usage="These attributes are applied to the <*object> element \
 inside the <mediaobject> element.";
 
-ObjectContainer::usage="";
+ObjectContainer::usage="ObjectContainer is an option for the DocBook*Equation \
+functions that allows one to specify the type of media object container for \
+the generated equations (inline or regular block level.";
 
 Overwrite::usage="Overwrite is an option for CopyFile that allows it to "<>
 	"safely overwrite the destination file";
 
-PickBadArguments::usage="";
+PickBadArguments::usage="PickBadArguments[heldFunctionCall,opts] \
+heldFunctionCall must have Head Hold that contains an expression which does \
+not match any DownValues for the Symbol immediately within Hold.";
 
 PrependDirectory::usage="PrependDirectory is an option for XMLDocument that \
 allows prepension of a directory name to each id in an XML chain. This option \
 provides an easy method to set the output directory of the files in the chain. \
 Set the option to the path string that you would like to append to the ids."; 
 
-SetIdAttribute::usage="";
+SetIdAttribute::usage="An boolean option for the DocBook* functions that \
+states whether or not to set the xml:id attribute on the generated element.";
 
-TitleAbbrev::usage="";
+TitleAbbrev::usage="An options for the DocBook* functions that accepts a \
+right hand value like the title argument. It is usually shorter than the \
+title.";
 
 ToBoxesFunction::usage="This pure function is applied to the expression to be \
 exported to obtain its box form.";
 
-ToXML::usage="";
+ToXML::usage="This function sequences the XML out of an XMLChain and Sows \
+all the rest of the ExportDelayed types. See ExportDelayed and XMLChain.";
 
-XMLChain::usage="";
+XMLChain::usage="An XMLChain is a function that will Sow the XML in its \
+argument just before Reaping the XML and non-XML tags (that are handled \
+by this package). An XMLChain is also the name given to a list of \
+ExportDelayed functions, because that is what this function generates. \
+Similarly, there are other functions that generate these ExportDelayed \
+lists, and they are called XMLChain generating functions. See \
+ExportDelayed and ToXML.";
 
 XMLDocument::badprep="A bad path of `1` was given as the PrependDirectory \
 option to XMLDocument. The prepend will be skipped."
@@ -845,8 +874,8 @@ Options@XMLDocument={Declarations->{"Version"->"1.0","Encoding"->"UTF-8"},
 	PrependDirectory->False,symbolicMLConversionOptions,CharacterReplacements->{
 	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
-	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\:00D7",
-	"\[Equal]"->"=","\[Rule]"->"\:2192","\[InvisibleSpace]"->"\:200B",
+	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\[Times]",
+	"\[Equal]"->"=","\[Rule]"->"\[RightArrow]","\[InvisibleSpace]"->"\:200b",
 	"\[LeftBracketingBar]"|"\[RightBracketingBar]"|"\[VerticalSeparator]"->"|"}
 	};
 
