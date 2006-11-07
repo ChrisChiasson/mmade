@@ -36,7 +36,7 @@ DocBookEquation::usage="DocBookEquation[\"id\",\"title\",expr,opts]";
 
 DocBookEquationSequence::usage="DocBookEquationSequence[expr1,expr2...] may be \
 fed into DocBookEquation as the expression argument to create an equation \
-element that has multiple mediaobject or mathphrase children."
+element that has multiple mediaobject or mathphrase children.";
 
 DocBookFigure::usage="DocBookFigure[\"id\",\"title\",\"alt text\",graphics,\
 opts]";
@@ -80,7 +80,7 @@ that gives a nested list of option lists for the functions that are called \
 in the process of making an equation or figure element.";
 
 ExportType::usage="This is the type of output that will be generated for the \
-expression being exported. It must be one of the types handled by Export."
+expression being exported. It must be one of the types handled by Export.";
 
 FileBaseName::usage="FileBaseName[\"fileName\"] returns the name of the file "<>
 	"after the last path separator.";
@@ -149,7 +149,7 @@ lists, and they are called XMLChain generating functions. See \
 ExportDelayed and ToXML.";
 
 XMLDocument::badprep="A bad path of `1` was given as the PrependDirectory \
-option to XMLDocument. The prepend will be skipped."
+option to XMLDocument. The prepend will be skipped.";
 
 XMLDocument::usage="XMLDocument[\"file\",xmlchain,opts] produces a list of \
 ExportDelayed objects with an \"XML\" export that has appropriate \
@@ -231,7 +231,7 @@ sequenceNullXmlPseudoPatternObject=xmlPseudoPatternObject...;
 
 multipleNullXmlPseudoPatternObject={sequenceNullXmlPseudoPatternObject};
 
-optionPseudoPatternObject=((Rule|RuleDelayed)[_,_])?OptionQ
+optionPseudoPatternObject=((Rule|RuleDelayed)[_,_])?OptionQ;
 
 optionsOrNullPseudoPatternObject=optionPseudoPatternObject...;
 
@@ -268,7 +268,7 @@ graphicsOrMultipleGraphicsPatternObject=graphicsPatternObject|
 
 xmlNameSpace="http://www.w3.org/XML/1998/namespace";
 
-mathMlNameSpace="http://www.w3.org/1998/Math/MathML"
+mathMlNameSpace="http://www.w3.org/1998/Math/MathML";
 
 quoteCharStringPatternObject="\""|"'";
 
@@ -333,7 +333,7 @@ defineDebugArgs[symbol_Symbol]:=Module[{args,debugString,debugSymbol,result,
 
 (*PickBadArguments*)
 
-Options@PickBadArguments={DownValueParts->Sequence[1,1],PadExpression->0}
+Options@PickBadArguments={DownValueParts->Sequence[1,1],PadExpression->0};
 
 PickBadArguments[heldFunctionCall_Hold,opts___?OptionQ]:=
 	Module[
@@ -1000,7 +1000,7 @@ $epsPdfExpressionExportOptions={
 	ExportType->"EPS",
 	(*ImageResolution:>$PrintResolution,*)
 	ObjectAttributes->{"role"->"fo"}
-	}
+	};
 
 $docBookEquationGeneralAdditionalExportOptions=
 	{Sequence@@$boxExportOptions,
@@ -1413,7 +1413,7 @@ docBookTableGeneral[id_String,
 
 defineBadArgs@docBookTableGeneral;
 
-Options@DocBookTable=Options@docBookTableGeneral
+Options@DocBookTable=Options@docBookTableGeneral;
 
 DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	description_String,
@@ -1426,7 +1426,7 @@ DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 
 defineBadArgs@DocBookTable;
 
-Options@DocBookInformalTable=Options@docBookTableGeneral
+Options@DocBookInformalTable=Options@docBookTableGeneral;
 
 DocBookInformalTable[id_String,description_String,
 	tablexpr:tablePseudoPatternObject,
