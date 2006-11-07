@@ -433,7 +433,7 @@ stringFormattableQ[expr_]:=Module[
 defineBadArgs@stringFormattableQ;
 
 formatString[str_String/;AtomQ[Unevaluated[str]]&&
-	(!ShowStringCharacters/.FullOptions[$FrontEnd])]:=
+	(!ShowStringCharacters/.AbsoluteOptions[$FrontEnd,ShowStringCharacters])]:=
 	StringReplace[str,{"\\\""->"\"","\""->""}];
 
 formatString[str_String]=str;
@@ -689,7 +689,8 @@ reformatMs[
 
 reformatMs[
 	XMLElement[msHead:containsMsPatternObject,{attributes___},{str_String}]/;
-		AtomQ[Unevaluated[str]]&&(!ShowStringCharacters/.FullOptions[$FrontEnd])
+		AtomQ[Unevaluated[str]]&&(!ShowStringCharacters/.
+			AbsoluteOptions[$FrontEnd,ShowStringCharacters])
 	]:=
 	Module[{midStr},
 		If[StringMatchQ[str,StringExpression["\\\"",midStr__,"\\\""]],
@@ -702,7 +703,8 @@ reformatMs[
 		];
 
 reformatMs[XMLElement[msHead:containsMsPatternObject,{attributes___},{}]/;
-		(!ShowStringCharacters/.FullOptions[$FrontEnd])]:=
+		(!ShowStringCharacters/.
+			AbsoluteOptions[$FrontEnd,ShowStringCharacters])]:=
 		XMLElement[msHead/."ms"->"mtext",{attributes},{}];
 
 reformatMs[elem:XMLElement[containsMsPatternObject,__]]:=elem;
