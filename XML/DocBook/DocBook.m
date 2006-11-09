@@ -451,8 +451,9 @@ defineBadArgs@removeUnwantedBoxes;
 
 unStringableBoxesQ[boxes_/;FreeQ[boxes,notBoxExpressionPatternObject]]:=False;
 
-(*this should always give False, if it doesn't the toString routine is
-broken*)
+(*This should always give False. If it doesn't, either the toString routine is
+broken, or a MakeBoxes definition that created something that isn't
+a box or a string*)
 
 unStringableBoxesQ[boxes_]:=True;
 
