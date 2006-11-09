@@ -570,6 +570,15 @@ noAttributeXmlElement[element_String,content:sequenceXmlPseudoPatternObject,
 
 defineBadArgs@noAttributeXmlElement;
 
+processDescriptionPart[descriptionPart_String,
+	opts:optionsOrNullPseudoPatternObject]:=
+	noAttributeXmlElement["phrase",descriptionPart,opts];
+
+processDescriptionPart[descriptionPart:xmlElementPseudoPatternObject,opts:
+	optionsOrNullPseudoPatternObject]:=descriptionPart;
+
+defineBadArgs@processDescriptionPart;
+
 textObjectElement[attributes:multipleNullXmlAttributePatternObject,
 	xml:multipleXmlOrNothingPseudoPatternObject]:=
 	XMLElement["textobject",attributes,xml];
@@ -617,6 +626,8 @@ processCaptionPart[captionPart_String,opts:optionsOrNullPseudoPatternObject]:=
 
 processCaptionPart[captionPart:xmlElementPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=captionPart;
+
+defineBadArgs@processCaptionPart;
 
 captionElement[caption:exportXmlChainPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=captionElement[ToXML[caption,opts]];
@@ -1233,13 +1244,13 @@ exportGraphicsObjectList[
 
 docBookFigureGeneralKernel[
 	id_String,
-	description_String,
+	description:xmlPseudoPatternObject,
 	graphics:graphicsOrMultipleGraphicsPatternObject,
 	options:optionsOrNullPseudoPatternObject
 	]:=
 	(ObjectContainer/.{options})[
 		Sequence@@exportGraphicsObjectList[id,graphics,Exports/.{options}],
-		textObjectElement@phraseElement@description
+		textObjectElement@processDescriptionPart@description
 		];
 
 docBookFigureGeneral[
@@ -1247,7 +1258,7 @@ docBookFigureGeneral[
 	figureTag:figureElementNameStringsPatternObject,
 	hasTitle:booleanPatternObject,
 	title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
-	description_String,
+	description:xmlPseudoPatternObject,
 	graphics:graphicsOrMultipleGraphicsPatternObject,
 	caption:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject
@@ -1292,7 +1303,8 @@ defineBadArgs@docBookFigureGeneral;
 Options@DocBookFigure=Options@docBookFigureGeneral;
 
 DocBookFigure[id_String,title:xmlOrExportXmlChainPseudoPatternObject,
-	description_String,graphics:graphicsOrMultipleGraphicsPatternObject,
+	description:xmlPseudoPatternObject,
+	graphics:graphicsOrMultipleGraphicsPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@
 		DocBookFigure]},docBookFigureGeneral[id,"figure",True,title,description,
@@ -1302,7 +1314,7 @@ defineBadArgs@DocBookFigure;
 
 Options@DocBookInformalFigure=Options@docBookFigureGeneral;
 
-DocBookInformalFigure[id_String,description_String,graphics:
+DocBookInformalFigure[id_String,description:xmlPseudoPatternObject,graphics:
 	graphicsOrMultipleGraphicsPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=Module[{options=Sequence[opts,Sequence@@
 		Options@DocBookInformalFigure]},docBookFigureGeneral[id,
@@ -1316,15 +1328,43 @@ Options@DocBookInlineMediaObject=DeleteCases[Options@docBookFigureGeneral,
 
 (*option maintencance needed*)
 
-DocBookInlineMediaObject[id_String,description_String,graphics:
-	graphicsOrMultipleGraphicsPatternObject,opts:
-	optionsOrNullPseudoPatternObject]:=Flatten@Reap[Sow[ExportDelayed[id,
-	XMLElement["inlinemediaobject",{Apply[Sequence,Attributes/.{opts}/.Options@
-		DocBookInlineMediaObject],xmlIdAttributeRule[id,opts]},{Sequence@@
-		Function[imageObjectElement[id,graphics,##,opts]]@@@ReplaceAll[Exports/.
-			{opts},Options@DocBookInlineMediaObject],textObjectElement@
-			phraseElement@description}],xmlFileType,FilterOptions[Export,opts]],
-		xmlSewingTag],allSewingTags][[2]];
+DocBookInlineMediaObject[
+	id_String,
+	description:xmlPseudoPatternObject,
+	graphics:graphicsOrMultipleGraphicsPatternObject,
+	opts:optionsOrNullPseudoPatternObject]:=
+	Flatten@
+		Reap[
+			Sow[ExportDelayed[
+				id,
+				XMLElement[
+					"inlinemediaobject",
+					{
+						Apply[
+							Sequence,
+							Attributes/.{opts}/.Options@DocBookInlineMediaObject
+							],
+						xmlIdAttributeRule[id,opts]
+						},
+					{
+						Sequence@@
+							Function[
+								imageObjectElement[id,graphics,##,opts]
+								]@@@
+									ReplaceAll[
+										Exports/.{opts},
+										Options@DocBookInlineMediaObject
+										],
+						textObjectElement@processDescriptionPart@description
+						}
+					],
+				xmlFileType,
+				FilterOptions[Export,opts]
+				],
+			xmlSewingTag
+			],
+		allSewingTags
+		][[2]];
 
 defineBadArgs@DocBookInlineMediaObject;
 
@@ -1373,7 +1413,7 @@ docBookTableGeneral[id_String,
 	tableTag:tableElementNameStringsPatternObject,
 	hasTitle:booleanPatternObject,
 	title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
-	description_String,
+	description:xmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
 	caption:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
@@ -1384,6 +1424,7 @@ docBookTableGeneral[id_String,
 				xmlIdAttributeRule[id,options]
 				},
 			{titleElements[hasTitle,title,TitleAbbrev/.{options}],
+				textObjectElement@processDescriptionPart@description,
 				Apply[
 					tGroupElement[
 						{"cols"->ToString@Dimensions[tablexpr][[2]]},
@@ -1418,7 +1459,7 @@ defineBadArgs@docBookTableGeneral;
 Options@DocBookTable=Options@docBookTableGeneral;
 
 DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
-	description_String,
+	description:xmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@DocBookTable]},
@@ -1430,7 +1471,7 @@ defineBadArgs@DocBookTable;
 
 Options@DocBookInformalTable=Options@docBookTableGeneral;
 
-DocBookInformalTable[id_String,description_String,
+DocBookInformalTable[id_String,description:xmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@DocBookTable]},
