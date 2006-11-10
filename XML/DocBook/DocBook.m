@@ -884,7 +884,11 @@ defineBadArgs@xmlDeclaration;
 
 (*XMLDocument*)
 
-Options@XMLDocument={Declarations->{"Version"->"1.0","Encoding"->"UTF-8"},
+Options@XMLDocument=
+	{Declarations->
+		{"Version"->"1.0",
+			"Encoding"->"ISO-8859-1"(*"UTF-8"*)
+			},
 	PrependDirectory->False,symbolicMLConversionOptions,CharacterReplacements->{
 	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
