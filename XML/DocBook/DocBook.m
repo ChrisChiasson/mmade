@@ -288,10 +288,13 @@ docBookNameSpaceAttributeRule=xmlnsNameSpaceAttribute->docBookNameSpace;
 
 symbolicMLConversionOptions=ConversionOptions->{"ElementFormatting"->None};
 
+(*i think:*)
 (*Mathematica is incapable of generating fully correct ContentMathML*)
+(*it also messes up the export of NumberForm[xpr] in annotations*)
 
 mathMLConversionOptions=Sequence["Formats"->{"PresentationMathML"},
-	"NamespacePrefixes"->{mathMlNameSpace->"mml"}];
+	"NamespacePrefixes"->{mathMlNameSpace->"mml"},
+	"IncludeMarkupAnnotations"->False];
 
 ruleHeadPatternObject=Rule|RuleDelayed;
 
@@ -683,24 +686,6 @@ defineBadArgs@titleElements;
 
 reformatMs[
 	XMLElement[msHead:containsMsPatternObject,{attributes___},{str_String}]/;
-		AtomQ[Unevaluated[str]]&&SyntaxQ[str]]:=
-	Module[{xprHeld=ToExpression[str,InputForm,HoldComplete],num},
-		(num=ReleaseHold[xprHeld];
-			If[Negative[num],
-				Identity[Sequence][
-					XMLElement[msHead/."ms"->"mo",{},{"-"}],
-					XMLElement[msHead/."ms"->"mn",
-						{attributes},
-						{StringDrop[str,1]}
-						]
-					],
-				XMLElement[msHead/."ms"->"mn",{attributes},{str}]
-				]
-			)/;MatchQ[xprHeld,HoldComplete[_Real|_Integer]]
-		];
-
-reformatMs[
-	XMLElement[msHead:containsMsPatternObject,{attributes___},{str_String}]/;
 		AtomQ[Unevaluated[str]]&&(!ShowStringCharacters/.
 			AbsoluteOptions[$FrontEnd,ShowStringCharacters])
 	]:=
@@ -723,6 +708,54 @@ reformatMs[elem:XMLElement[containsMsPatternObject,__]]:=elem;
 
 defineBadArgs@reformatMs;
 
+formatNumberFormMathMLNumber[
+	str_String/;AtomQ[Unevaluated[str]]&&SyntaxQ[str]
+	]:=
+	Module[
+		{number},
+		ToBoxes@number/;
+			validateGiveNumber[ToExpression[str,InputForm,HoldComplete],number]
+		];
+
+formatNumberFormMathMLNumber[str_String]:=str;
+
+defineBadArgs@formatNumberFormMathMLNumber;
+
+validateGiveNumber[HoldComplete[str_String],number_Symbol]/;
+	AtomQ[Unevaluated[str]]&&SyntaxQ[str]:=
+	validateGiveNumberKernel[ToExpression[str,InputForm,HoldComplete],number];
+
+validateGiveNumber[_,number_Symbol]=False;
+
+defineBadArgs@validateGiveNumber;
+
+validateGiveNumberKernel[HoldComplete[numberVal:_Real|_Integer],number_Symbol]:=
+	(number=numberVal;True);
+
+validateGiveNumberKernel[_,number_Symbol]=False;
+
+defineBadArgs@validateGiveNumberKernel;
+
+formatNumberFormMathMLInterpretationBox[boxes_,number_?NumberQ,otherArgs___]:=
+	Module[{str},boxes/.str_String:>formatNumberFormMathMLNumber[str]];
+
+defineBadArgs@formatNumberFormMathMLInterpretationBox;
+
+formatNumberFormMathMLBoxes[boxes_]:=
+	Module[{intBoxes,number,otherArgs,result},
+		boxes/.InterpretationBox[intBoxes_,number_?NumberQ,otherArgs___]:>
+			Block[
+				{InterpretationBox},
+				formatNumberFormMathMLInterpretationBox[
+					intBoxes,
+					number,
+					otherArgs
+					]/;True
+				]
+		];
+
+defineBadArgs@formatNumberFormMathMLBoxes;
+
 (*the rawXML + expressionToSymbolicMathML trick overcomes a bug preventing
 Mathematica from generating namespace prefixed MathML*)
 
@@ -735,8 +768,8 @@ defineBadArgs@rawXML;
 expressionToSymbolicMathML[expr_,opts:optionsOrNullPseudoPatternObject]:=
 	Module[{ms},rawXML@
 		StringReplace[
-			ExpressionToMathML[
-				NumberForm[expr],
+			BoxesToMathML[
+				formatNumberFormMathMLBoxes[ToBoxes[NumberForm[expr]]],
 				opts
 				],
 			StringExpression[
@@ -767,7 +800,7 @@ imageObjectElement[id_String,expr_,"MathML",idExtension_String,
 	opts:optionsOrNullPseudoPatternObject]:=XMLElement["imageobject",{Sequence@@
 		imageObjectAttributes(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
 		{imageDataElement@expressionToSymbolicMathML[expr,FilterOptions[
-			ExpressionToMathML,Sequence@@(ConversionOptions/.{opts}),opts]]}];
+			BoxesToMathML,Sequence@@(ConversionOptions/.{opts}),opts]]}];
 
 fileExtension[filetype_String]:=ToLowerCase@StringReplace[filetype,
 	{"EPSTIFF"->"eps"},
@@ -887,9 +920,11 @@ defineBadArgs@xmlDeclaration;
 Options@XMLDocument=
 	{Declarations->
 		{"Version"->"1.0",
-			"Encoding"->"ISO-8859-1"(*"UTF-8"*)
+			"Encoding"->"US-ASCII"(*"UTF-8"*)
 			},
-	PrependDirectory->False,symbolicMLConversionOptions,CharacterReplacements->{
+	PrependDirectory->False,
+	symbolicMLConversionOptions,
+	CharacterReplacements->{
 	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
 	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\[Times]",
