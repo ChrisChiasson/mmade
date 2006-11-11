@@ -193,7 +193,7 @@ nonRowSuperscriptOrSubscriptBoxesPatternObject=DeleteCases[
 
 stripableBoxesPatternObject=Alternatives[InterpretationBox,TagBox];
 
-nonRowSupSubOrStripableBoxes:=
+nonRowSupSubOrStripableBoxes=
 	DeleteCases[
 		nonRowSuperscriptOrSubscriptBoxesPatternObject,
 		stripableBoxesPatternObject
@@ -490,12 +490,15 @@ toStringKernel[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 			]
 		];
 
-toString[expr_,boxes_,opts:optionsOrNullPseudoPatternObject/;
-	stringFormattableQ[boxes]]:=
+toString[expr_,boxes_/;stringFormattableQ[boxes],
+	opts:optionsOrNullPseudoPatternObject]:=
 	toStringKernel[expr,boxes,opts];
 
 toString[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
-	ToString[expr,FilterOptions[ToString,TextOptions/.{opts},opts]];
+	ToString[
+		expr,
+		Sequence@@Rule@@@{FilterOptions[ToString,TextOptions/.{opts},opts]}
+		];
 
 defineBadArgs@toString;
 
@@ -809,6 +812,34 @@ than once, even with SetIdAttribute->False - if this functionality is needed,
 then a way to propagate DocBook* command options for SetIdAttribute to
 imageObjectElement must be created*)
 
+imageObjectElement[id_String,expr_,boxes_,"Text",idExtension_String,
+	imageObjectAttributes:multipleNullXmlAttributePatternObject,
+	imageDataAttributes:multipleNullXmlAttributePatternObject,
+	opts:optionsOrNullPseudoPatternObject]:=
+	textObjectElement[
+		{Sequence@@imageObjectAttributes
+			(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
+		{phraseElement[
+			imageDataAttributes,
+			{inlineEquationElement[
+				{},
+				{mathPhraseElement[
+					toString[
+						expr,
+						boxes,
+						Sequence@@
+							Replace[
+								{opts},
+								ruleHeadPatternObject[FormatType,_]->
+									FormatType->InputForm,
+								{3}
+								]
+						]
+					]}
+				]}
+			]}
+		];
+
 imageObjectElement[id_String,expr_,boxes_,"MathML",idExtension_String,
 	imageObjectAttributes:multipleNullXmlAttributePatternObject,_List,
 	opts:optionsOrNullPseudoPatternObject]:=XMLElement["imageobject",{Sequence@@
@@ -1037,6 +1068,8 @@ $ToBoxesFunction[expr_,
 			]
 		];
 
+defineBadArgs@$ToBoxesFunction;
+
 $boxExportOptions=
 	{ToBoxesFunction->$ToBoxesFunction,
 		TextOptions->Options@$ToBoxesFunction};
@@ -1046,7 +1079,8 @@ $mathMlXhtmlExpressionExportOptions={
 	ConversionOptions->{mathMLConversionOptions},
 	DataAttributes->{},
 	ExportType->"MathML",
-	ObjectAttributes->{"role"->"xhtml"}
+	ObjectAttributes->{"role"->"xhtml"},
+	Sequence@@$boxExportOptions
 	};
 
 $pngHtmlExpressionExportOptions={
@@ -1062,6 +1096,14 @@ $epsPdfExpressionExportOptions={
 	ExportType->"EPS",
 	(*ImageResolution:>$PrintResolution,*)
 	ObjectAttributes->{"role"->"fo"}
+	};
+
+$textAllAlternateExpressionExportOptions={
+	AllowMathPhrase->True,
+	DataAttributes->{},
+	ExportType->"Text",
+	ObjectAttributes->{},
+	Sequence@@$boxExportOptions
 	};
 
 $docBookEquationGeneralAdditionalExportOptions=
@@ -1091,7 +1133,8 @@ Options@docBookEquationGeneral={
 					$docBookEquationGeneralAdditionalExportOptions,
 					AllowMathPhrase->False
 					]
-				]
+				],
+			$textAllAlternateExpressionExportOptions
 			},
 	ObjectContainer->MediaObjectElement,
 	SetIdAttribute->True,
@@ -1138,11 +1181,8 @@ exportObjectList[id_String,expr_,exports:exportsPatternObject]:=
 
 docBookEquationGeneralKernel[id_String,expr_,
 	options:optionsOrNullPseudoPatternObject]:=
-	Module[{exprString=toString[expr]},
-		(ObjectContainer/.{options})[
-			Sequence@@exportObjectList[id,expr,Exports/.{options}],
-			textObjectElement@phraseElement@exprString
-			]
+	(ObjectContainer/.{options})[
+		Sequence@@exportObjectList[id,expr,Exports/.{options}]
 		];
 
 docBookEquationGeneral[id_String,
@@ -1214,27 +1254,10 @@ SetOptions[DocBookInlineEquation,
 				Append,
 				$epsPdfExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
-				]
-			}
-(*		{$mathMlXhtmlExpressionExportOptions,
-			Fold[
-				Append,
-				$pngHtmlExpressionExportOptions,
-				Append[
-					$docBookInlineEquationAdditionalExportOptions,
-					AllowMathPhrase->True
-					]
 				],
-			Fold[
-				Append,
-				$epsPdfExpressionExportOptions,
-				Append[
-					$docBookInlineEquationAdditionalExportOptions,
-					AllowMathPhrase->False
-					]
-				]
+			$textAllAlternateExpressionExportOptions	
 			}
-*)	];
+	];
 
 DocBookInlineEquation[id_String,expr_,opts:optionsOrNullPseudoPatternObject]:=
 	docBookEquationGeneral[id,"inlineequation",False,None,expr,None,Sequence[
