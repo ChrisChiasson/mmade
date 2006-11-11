@@ -191,7 +191,7 @@ nonRowSuperscriptOrSubscriptBoxesPatternObject=DeleteCases[
 	superScriptAndSubscriptPatternObject
 	];
 
-stripableBoxesPatternObject=Alternatives[InterpretationBox,TagBox];
+stripableBoxesPatternObject=Alternatives[InterpretationBox,TagBox,StyleBox];
 
 nonRowSupSubOrStripableBoxes=
 	DeleteCases[
