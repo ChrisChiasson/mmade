@@ -103,16 +103,6 @@
 		</xsl:choose>
 	</xsl:template>
 
-<!--apparently, there is no way to turn off the DTD,
-	and the XHTML+MathML+SVG DTD doesn't actually match
-	the stylesheet's output -->
-	
-<xsl:output method="xml"
-            encoding="UTF-8"
-            indent="no"
-            doctype-public="''"
-            doctype-system="''"/>
-
 	<!--this is the xhtml imagedata template from the DocBook project
 		it is patched to handle SVG and MathML markup children of imagedata
 		from DocBook 5
