@@ -130,12 +130,18 @@ Set the option to the path string that you would like to append to the ids.";
 SetIdAttribute::usage="An boolean option for the DocBook* functions that \
 states whether or not to set the xml:id attribute on the generated element.";
 
+TextOptions::usage="A sub option of the Exports option. It affects downstream"<>
+	"ToBoxes and StyleBox calls. Well, some of them. It typically contains"<>
+	"the sub options TextStyle and FormatType.";
+
 TitleAbbrev::usage="An options for the DocBook* functions that accepts a \
 right hand value like the title argument. It is usually shorter than the \
 title.";
 
 ToBoxesFunction::usage="This pure function is applied to the expression to be \
-exported to obtain its box form.";
+exported to obtain its box form. Within the package, the right hand side of \
+rule becomes the head of a function that accepts the expression to be exported \
+and the Sequenced right hand side of TextOptions.";
 
 ToXML::usage="This function sequences the XML out of an XMLChain and Sows \
 all the rest of the ExportDelayed types. See ExportDelayed and XMLChain.";
@@ -185,7 +191,19 @@ nonRowSuperscriptOrSubscriptBoxesPatternObject=DeleteCases[
 	superScriptAndSubscriptPatternObject
 	];
 
-stripableBoxesPatternObject=Alternatives[InterpretationBox,TagBox];
+stripableBoxesPatternObject=
+	Alternatives[
+		InterpretationBox,
+		TagBox,
+		StyleBox,
+		FormBox
+		];
+
+nonRowSupSubOrStripableBoxes=
+	DeleteCases[
+		nonRowSuperscriptOrSubscriptBoxesPatternObject,
+		stripableBoxesPatternObject
+		];
 
 unwantedBeneathScriptBoxes=
 	DeleteCases[
@@ -194,8 +212,6 @@ unwantedBeneathScriptBoxes=
 		];
 
 rowBoxOrStringPatternObject=(_RowBox|_String)..;
-
-stringFormattablePseudoPatternObject=_?stringFormattableQ;
 
 allSewingTags=xmlSewingTag|otherSewingTag;
 
@@ -416,23 +432,18 @@ docBookSubscript[expr:rowBoxOrStringPatternObject]:=
 
 defineBadArgs@docBookSubscript;
 
-stringFormattableQ[expr_]:=Module[
-	{subXpr,sewingTag,exprBoxes=ToBoxes[NumberForm[expr]]},
-	And[
-		FreeQ[exprBoxes,
-			DeleteCases[
-				nonRowSuperscriptOrSubscriptBoxesPatternObject,
-				stripableBoxesPatternObject
-				]
-			],
-		Sequence@@Flatten@Reap[
-			exprBoxes/.(superScriptAndSubscriptPatternObject)[subxpr__]:>
-				Sow[FreeQ[{subxpr},unwantedBeneathScriptBoxes],sewingTag],
-			sewingTag
-			][[2]]
-		]
-	];
-
+stringFormattableQ[boxes_]:=
+	Module[{subXpr,sewingTag},
+		And[
+			FreeQ[boxes,nonRowSupSubOrStripableBoxes],
+			Sequence@@Flatten@Reap[
+				boxes/.(superScriptAndSubscriptPatternObject)[subxpr__]:>
+					Sow[FreeQ[{subxpr},unwantedBeneathScriptBoxes],sewingTag],
+				sewingTag
+				][[2]]
+			]
+		];
+	
 defineBadArgs@stringFormattableQ;
 
 formatString[str_String/;AtomQ[Unevaluated[str]]&&
@@ -454,39 +465,46 @@ defineBadArgs@removeUnwantedBoxes;
 
 unStringableBoxesQ[boxes_/;FreeQ[boxes,notBoxExpressionPatternObject]]:=False;
 
-(*This should always give False. If it doesn't, either the toString routine is
-broken, or a MakeBoxes definition that created something that isn't
+(*This should always give False. If it doesn't, either the toString routine
+is broken, or a MakeBoxes definition that created something that isn't
 a box or a string*)
 
 unStringableBoxesQ[boxes_]:=True;
 
 defineBadArgs@unStringableBoxesQ;
 
-Options@toString=Options@ToString;
+toBoxes[expr_,opts___?OptionQ]:=
+	(ToBoxesFunction/.{opts})[
+		expr,
+		Sequence@@Rule@@@(TextOptions/.{opts})
+		];
 
-SetOptions[toString,FormatType->InputForm];
+defineBadArgs@toBoxes;
 
 toString::"usb"="Can't convert `1` into a string.";
 
-toString[strings__String,
-	opts:optionsOrNullPseudoPatternObject]:=
-	StringJoin[strings];
-
-toString[expr:stringFormattablePseudoPatternObject,
-	opts:optionsOrNullPseudoPatternObject]:=
-	Module[{boxExpr,str},
-		boxExpr=ToBoxes[NumberForm[expr],
-			FormatType/.{opts}/.Options@toString/.InputForm->StandardForm];
-		boxExpr=removeUnwantedBoxes[boxExpr]/.str_String:>formatString@str;
-		If[unStringableBoxesQ[boxExpr],Message[toString::"usb",expr];Abort[]];
+toStringKernel[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
+	Module[{strippedBoxes},
+		strippedBoxes=removeUnwantedBoxes[boxes]/.
+			str_String:>formatString@str;
+		If[unStringableBoxesQ[strippedBoxes],
+			Message[toString::"usb",expr];Abort[]
+			];
 		Block[
 			{SuperscriptBox=docBookSuperscript,SubscriptBox=docBookSubscript},
-			Sequence@@Flatten[{boxExpr/.RowBox->List}]
+			Sequence@@Flatten[{strippedBoxes/.RowBox->List}]
 			]
 		];
 
-toString[expr_,opts:optionsOrNullPseudoPatternObject]:=
-	ToString[expr,opts,Sequence@@Options@toString];
+toString[expr_,boxes_/;stringFormattableQ[boxes],
+	opts:optionsOrNullPseudoPatternObject]:=
+	toStringKernel[expr,boxes,opts];
+
+toString[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
+	ToString[
+		expr,
+		Sequence@@Rule@@@{FilterOptions[ToString,TextOptions/.{opts},opts]}
+		];
 
 defineBadArgs@toString;
 
@@ -699,6 +717,9 @@ reformatMs[
 			]
 		];
 
+(*do not remove the condition from this function evaluation it is part of a 
+two by two decision matrix - you will need to look at all four conditions
+to be sure you can remove it*)
 reformatMs[XMLElement[msHead:containsMsPatternObject,{attributes___},{}]/;
 		(!ShowStringCharacters/.
 			AbsoluteOptions[$FrontEnd,ShowStringCharacters])]:=
@@ -713,6 +734,7 @@ formatNumberFormMathMLNumber[
 	]:=
 	Module[
 		{number},
+		(*this should be a regular ToBoxes call, not toBoxes*)
 		ToBoxes@number/;
 			validateGiveNumber[ToExpression[str,InputForm,HoldComplete],number]
 		];
@@ -765,12 +787,16 @@ rawXML[mathMl_String,opts:optionsOrNullPseudoPatternObject]:=Sequence@@
 
 defineBadArgs@rawXML;
 
-expressionToSymbolicMathML[expr_,opts:optionsOrNullPseudoPatternObject]:=
+expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 	Module[{ms},rawXML@
 		StringReplace[
 			BoxesToMathML[
-				formatNumberFormMathMLBoxes[ToBoxes[NumberForm[expr]]],
-				opts
+				formatNumberFormMathMLBoxes[boxes],
+				FilterOptions[
+					BoxesToMathML,
+					Sequence@@(ConversionOptions/.{opts}),
+					opts
+					]
 				],
 			StringExpression[
 				Whitespace,
@@ -795,16 +821,43 @@ than once, even with SetIdAttribute->False - if this functionality is needed,
 then a way to propagate DocBook* command options for SetIdAttribute to
 imageObjectElement must be created*)
 
-imageObjectElement[id_String,expr_,"MathML",idExtension_String,
+imageObjectElement[id_String,expr_,boxes_,"Text",idExtension_String,
+	imageObjectAttributes:multipleNullXmlAttributePatternObject,
+	imageDataAttributes:multipleNullXmlAttributePatternObject,
+	opts:optionsOrNullPseudoPatternObject]:=
+	textObjectElement[
+		{Sequence@@imageObjectAttributes
+			(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
+		{phraseElement[
+			imageDataAttributes,
+			{inlineEquationElement[
+				{},
+				{mathPhraseElement[
+					toString[
+						expr,
+						boxes,
+						Sequence@@
+							Replace[
+								{opts},
+								ruleHeadPatternObject[FormatType,_]->
+									FormatType->InputForm,
+								{3}
+								]
+						]
+					]}
+				]}
+			]}
+		];
+
+imageObjectElement[id_String,expr_,boxes_,"MathML",idExtension_String,
 	imageObjectAttributes:multipleNullXmlAttributePatternObject,_List,
 	opts:optionsOrNullPseudoPatternObject]:=XMLElement["imageobject",{Sequence@@
 		imageObjectAttributes(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
-		{imageDataElement@expressionToSymbolicMathML[expr,FilterOptions[
-			BoxesToMathML,Sequence@@(ConversionOptions/.{opts}),opts]]}];
+		{imageDataElement@expressionToSymbolicMathML[expr,boxes,opts]}];
 
 fileExtension[filetype_String]:=ToLowerCase@StringReplace[filetype,
 	{"EPSTIFF"->"eps"},
-	IgnoreCase->True]
+	IgnoreCase->True];
 
 defineBadArgs@fileExtension;
 
@@ -833,36 +886,52 @@ imageObjectElement[
 imageObjectElement[
 	id_String,
 	expr_,
+	boxes_,
 	filetype_String,
 	idExtension_String,
 	imageObjectAttributes:multipleNullXmlAttributePatternObject,
 	imageDataAttributes:multipleNullXmlAttributePatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
-	Module[{fileName=StringJoin[id,idExtension,".",fileExtension@filetype]},
+	Module[
+		{verticalAdjustment,
+			notebook,
+			fileName=StringJoin[id,idExtension,".",fileExtension@filetype]
+			},
+		notebook=
+			Notebook[
+				{Cell[
+					BoxData[boxes],
+					Sequence@@Rule@@@(CellOptions/.{opts})	
+					]},
+				Sequence@@Rule@@@(NotebookOptions/.{opts})
+				];
+		(*verticalAdjustment=-FrontEndExecute[
+			System`GetBoundingBoxSizePacket[notebook]
+			][[1,3]];*)
 		Sow[
 			ExportDelayed[
 				fileName,
-				Notebook[
-					{Cell[
-						BoxData[
-							(ToBoxesFunction/.{opts})[
-								expr,
-								Sequence@@Rule@@@(NonAltTextOptions/.{opts})
-								]
-							],
-						Sequence@@Rule@@@(CellOptions/.{opts})	
-						]},
-					Sequence@@Rule@@@(NotebookOptions/.{opts})
-					],
+				notebook,
 				filetype,
 				FilterOptions[Export,opts]
 				],
 			otherSewingTag
 			];
-		XMLElement["imageobject",{Sequence@@
-			imageObjectAttributes(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
-			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
-				fileRefAttribute[fileName]},{}]}]];
+		XMLElement["imageobject",
+			{Sequence@@imageObjectAttributes
+				(*,xmlIdAttributeRule[id<>idExtension,opts]*)
+				},
+			{XMLElement["imagedata",
+				{Sequence@@imageDataAttributes,
+					fileRefAttribute[fileName]
+					},
+				{(*XMLObject["ProcessingInstruction"][
+					"dbfo",
+					"alignment-adjust=\""<>ToString[verticalAdjustment]<>"\""
+					]*)}
+				]}
+			]
+		];
 
 defineBadArgs@imageObjectElement;
 
@@ -1021,23 +1090,26 @@ $ToBoxesFunction[expr_,
 			styleForm=StyleForm
 			},
 		ToBoxes[
-			styleForm[expr,
+			styleForm[NumberForm@expr,
 				Sequence@@(TextStyle/.{options})
 				],
 			FormatType/.{options}
 			]
 		];
 
+defineBadArgs@$ToBoxesFunction;
+
 $boxExportOptions=
 	{ToBoxesFunction->$ToBoxesFunction,
-		NonAltTextOptions->Options@$ToBoxesFunction};
+		TextOptions->Options@$ToBoxesFunction};
 
 $mathMlXhtmlExpressionExportOptions={
 	AllowMathPhrase->False,
 	ConversionOptions->{mathMLConversionOptions},
 	DataAttributes->{},
 	ExportType->"MathML",
-	ObjectAttributes->{"role"->"xhtml"}
+	ObjectAttributes->{"role"->"xhtml"},
+	Sequence@@$boxExportOptions
 	};
 
 $pngHtmlExpressionExportOptions={
@@ -1053,6 +1125,14 @@ $epsPdfExpressionExportOptions={
 	ExportType->"EPS",
 	(*ImageResolution:>$PrintResolution,*)
 	ObjectAttributes->{"role"->"fo"}
+	};
+
+$textAllAlternateExpressionExportOptions={
+	AllowMathPhrase->True,
+	DataAttributes->{},
+	ExportType->"Text",
+	ObjectAttributes->{},
+	Sequence@@$boxExportOptions
 	};
 
 $docBookEquationGeneralAdditionalExportOptions=
@@ -1082,7 +1162,8 @@ Options@docBookEquationGeneral={
 					$docBookEquationGeneralAdditionalExportOptions,
 					AllowMathPhrase->False
 					]
-				]
+				],
+			$textAllAlternateExpressionExportOptions
 			},
 	ObjectContainer->MediaObjectElement,
 	SetIdAttribute->True,
@@ -1095,51 +1176,42 @@ docBookEquationGeneralKernel[id_String,expressions_DocBookEquationSequence,
 		docBookEquationGeneralKernel[id<>"_"<>ToString[#2[[1]]],#,options]&,
 			expressions];
 
-(*exports is a list of option lists, therefore, # in the Function represents a
-replacement list*)
+exportObjectListKernel[id_String,expr_,boxes_,
+	opts:optionsOrNullPseudoPatternObject]/;
+		(AllowMathPhrase/.{opts})===True&&stringFormattableQ[boxes]:=
+	textObjectElement[
+		ObjectAttributes/.{opts},
+		{phraseElement[
+			DataAttributes/.{opts},
+			{inlineEquationElement[
+				{},
+				{mathPhraseElement[toStringKernel[expr,boxes,opts]]}
+				]}
+			]}
+		];
 
-exportObjectList[id_String,expr_,
-	exports:exportsPatternObject]:=
-	Function[
-		If[
-			And[
-				MatchQ[expr,
-					stringFormattablePseudoPatternObject
-					],
-				(AllowMathPhrase/.#)===True
-				],
-			textObjectElement[
-				ObjectAttributes/.#,
-				{phraseElement[
-					DataAttributes/.#,
-					{inlineEquationElement[
-						{},
-						{mathPhraseElement[
-							toString[
-								expr,
-								Sequence@@(NonAltTextOptions/.#)
-								]
-							]}
-						]}
-					]}
-				],
-			imageObjectElement[id,
-				expr,
-				ExportType/.#,
-				"role"/.(ObjectAttributes/.#),
-				ObjectAttributes/.#,
-				DataAttributes/.#,
-				Sequence@@#
-				]
-			]]/@exports;
+exportObjectListKernel[id_String,expr_,boxes_,
+	opts:optionsOrNullPseudoPatternObject]:=
+	imageObjectElement[id,
+		expr,
+		boxes,
+		ExportType/.{opts},
+		"role"/.(ObjectAttributes/.{opts}),
+		ObjectAttributes/.{opts},
+		DataAttributes/.{opts},
+		opts
+		];
+
+defineBadArgs@exportObjectListKernel;
+
+exportObjectList[id_String,expr_,exports:exportsPatternObject]:=
+	exportObjectListKernel[id,expr,toBoxes[expr,Sequence@@#],Sequence@@#]&/@
+		exports;
 
 docBookEquationGeneralKernel[id_String,expr_,
 	options:optionsOrNullPseudoPatternObject]:=
-	Module[{exprString=toString[expr]},
-		(ObjectContainer/.{options})[
-			Sequence@@exportObjectList[id,expr,Exports/.{options}],
-			textObjectElement@phraseElement@exprString
-			]
+	(ObjectContainer/.{options})[
+		Sequence@@exportObjectList[id,expr,Exports/.{options}]
 		];
 
 docBookEquationGeneral[id_String,
@@ -1211,27 +1283,10 @@ SetOptions[DocBookInlineEquation,
 				Append,
 				$epsPdfExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
-				]
-			}
-(*		{$mathMlXhtmlExpressionExportOptions,
-			Fold[
-				Append,
-				$pngHtmlExpressionExportOptions,
-				Append[
-					$docBookInlineEquationAdditionalExportOptions,
-					AllowMathPhrase->True
-					]
 				],
-			Fold[
-				Append,
-				$epsPdfExpressionExportOptions,
-				Append[
-					$docBookInlineEquationAdditionalExportOptions,
-					AllowMathPhrase->False
-					]
-				]
+			$textAllAlternateExpressionExportOptions	
 			}
-*)	];
+	];
 
 DocBookInlineEquation[id_String,expr_,opts:optionsOrNullPseudoPatternObject]:=
 	docBookEquationGeneral[id,"inlineequation",False,None,expr,None,Sequence[

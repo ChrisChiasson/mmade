@@ -4,6 +4,7 @@
 	<xsl:import
 		href="http://docbook.sourceforge.net/release/xsl/current/fo/docbook.xsl"/>
 	<xsl:import href="common.xsl"/>
+	<xsl:import href="fo-process-image.xsl"/>
 	<!--xsl:param name="ulink.show">0</xsl:param-->
 	<!--xsl:param name="alignment">left</xsl:param-->
 	<!--xsl:param name="fop1.extensions">1</xsl:param-->

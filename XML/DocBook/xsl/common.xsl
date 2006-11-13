@@ -1,5 +1,7 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+	<!--handle mathml-->
+	<xsl:import href="mathml.xsl"/>
 	<!--numbering or lettering of chapters (1 is that default)-->
 	<xsl:param name="chapter.autolabel">1</xsl:param>
 	<!--restart chapter numbering at each part? (0 is the default)-->
