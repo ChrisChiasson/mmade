@@ -5,7 +5,7 @@
 	version="1.0">
 	<xsl:template match="mml:*">
 		<xsl:element name="{local-name(.)}" namespace="{namespace-uri(.)}">
-			<xsl:for-each select="@*[namespace-uri()=namespace-uri(parent::self)]">
+			<xsl:for-each select="@*[namespace-uri()='' or namespace-uri()=namespace-uri(parent::*)]">
 				<xsl:copy/>
 			</xsl:for-each>
 			<xsl:apply-templates/>
