@@ -717,6 +717,9 @@ reformatMs[
 			]
 		];
 
+(*do not remove the condition from this function evaluation it is part of a 
+two by two decision matrix - you will need to look at all four conditions
+to be sure you can remove it*)
 reformatMs[XMLElement[msHead:containsMsPatternObject,{attributes___},{}]/;
 		(!ShowStringCharacters/.
 			AbsoluteOptions[$FrontEnd,ShowStringCharacters])]:=
@@ -889,26 +892,46 @@ imageObjectElement[
 	imageObjectAttributes:multipleNullXmlAttributePatternObject,
 	imageDataAttributes:multipleNullXmlAttributePatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
-	Module[{fileName=StringJoin[id,idExtension,".",fileExtension@filetype]},
+	Module[
+		{verticalAdjustment,
+			notebook,
+			fileName=StringJoin[id,idExtension,".",fileExtension@filetype]
+			},
+		notebook=
+			Notebook[
+				{Cell[
+					BoxData[boxes],
+					Sequence@@Rule@@@(CellOptions/.{opts})	
+					]},
+				Sequence@@Rule@@@(NotebookOptions/.{opts})
+				];
+		(*verticalAdjustment=-FrontEndExecute[
+			System`GetBoundingBoxSizePacket[notebook]
+			][[1,3]];*)
 		Sow[
 			ExportDelayed[
 				fileName,
-				Notebook[
-					{Cell[
-						BoxData[boxes],
-						Sequence@@Rule@@@(CellOptions/.{opts})	
-						]},
-					Sequence@@Rule@@@(NotebookOptions/.{opts})
-					],
+				notebook,
 				filetype,
 				FilterOptions[Export,opts]
 				],
 			otherSewingTag
 			];
-		XMLElement["imageobject",{Sequence@@
-			imageObjectAttributes(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
-			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
-				fileRefAttribute[fileName]},{}]}]];
+		XMLElement["imageobject",
+			{Sequence@@imageObjectAttributes
+				(*,xmlIdAttributeRule[id<>idExtension,opts]*)
+				},
+			{XMLElement["imagedata",
+				{Sequence@@imageDataAttributes,
+					fileRefAttribute[fileName]
+					},
+				{(*XMLObject["ProcessingInstruction"][
+					"dbfo",
+					"alignment-adjust=\""<>ToString[verticalAdjustment]<>"\""
+					]*)}
+				]}
+			]
+		];
 
 defineBadArgs@imageObjectElement;
 
