@@ -53,7 +53,8 @@ Module[{failedmFiles,
 			]
 		];
 	If[stringTrueQ@AntProperty["usefrontend"],
-		Developer`UseFrontEnd[Get[#]]&/@mFiles,
+		Developer`SetSystemOptions[LegacyFrontEnd->False];
+			Developer`UseFrontEnd[Get[#]]&/@mFiles,
 		Get/@mFiles
 		]
 	]
