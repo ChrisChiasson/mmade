@@ -169,6 +169,7 @@ $ContextPath=Fold[Insert[##,2]&,$ContextPath,Reverse@{"XML`MathML`","XML`"}];
 
 (*patterns*)
 containsMsPatternObject=_?(!FreeQ[#,"ms"]&);
+containsMtextPatternObject=_?(!FreeQ[#,"mtext"]&);
 
 superScriptAndSubscriptPatternObject=SuperscriptBox|SubscriptBox;
 
@@ -446,11 +447,13 @@ stringFormattableQ[boxes_]:=
 	
 defineBadArgs@stringFormattableQ;
 
+constantStringReplacements=Sequence["\\n"->"\n"];
+
 formatString[str_String/;AtomQ[Unevaluated[str]]&&
 	(!ShowStringCharacters/.AbsoluteOptions[$FrontEnd,ShowStringCharacters])]:=
-	StringReplace[str,{"\\\""->"\"","\""->""}];
+	StringReplace[str,{constantStringReplacements,"\\\""->"\"","\""->""}];
 
-formatString[str_String]=str;
+formatString[str_String]:=StringReplace[str,{constantStringReplacements}];
 
 defineBadArgs@formatString;
 
@@ -702,18 +705,55 @@ defineBadArgs@titleElements;
 
 (*imageobject*)
 
+$mspaceWidth="0.5em";
+
+reformatMtext[
+	XMLElement[
+		mtextHead:containsMtextPatternObject,{attributes___},{str_String}
+		]
+	]/;AtomQ[Unevaluated[str]]&&StringLength[str]>=1&&
+		StringMatchQ[StringTake[str,-1],Whitespace]:=
+	Sequence[
+		reformatMtext[XMLElement[mtextHead,{attributes},{StringDrop[str,-1]}]],
+		XMLElement[
+			mtextHead/."mtext"->"mspace",
+			{"width"->$mspaceWidth,attributes},
+			{}
+			]
+		];
+
+reformatMtext[
+	XMLElement[
+		mtextHead:containsMtextPatternObject,{attributes___},{str_String}
+		]
+	]/;AtomQ[Unevaluated[str]]&&StringLength[str]>=1&&
+		StringMatchQ[StringTake[str,1],Whitespace]:=
+	Sequence[
+		XMLElement[
+			mtextHead/."mtext"->"mspace",
+			{"width"->$mspaceWidth,attributes},
+			{}
+			],
+		reformatMtext[XMLElement[mtextHead,{attributes},{StringDrop[str,1]}]]
+		];
+
+reformatMtext[element:XMLElement[containsMtextPatternObject,{___},{___String}]]=
+	element;
+
+defineBadArgs@reformatMtext;
+
 reformatMs[
 	XMLElement[msHead:containsMsPatternObject,{attributes___},{str_String}]/;
 		AtomQ[Unevaluated[str]]&&(!ShowStringCharacters/.
 			AbsoluteOptions[$FrontEnd,ShowStringCharacters])
 	]:=
-	Module[{midStr},
+	Module[{midStr,strMod=StringReplace[str,{constantStringReplacements}]},
 		If[StringMatchQ[str,StringExpression["\\\"",midStr__,"\\\""]],
 			XMLElement[msHead/."ms"->"ms",
 				{attributes},
-				{StringTake[str,{3,-3}]}
+				{StringTake[strMod,{3,-3}]}
 				],
-			XMLElement[msHead/."ms"->"mtext",{attributes},{str}]
+			XMLElement[msHead/."ms"->"mtext",{attributes},{strMod}]
 			]
 		];
 
@@ -781,17 +821,23 @@ defineBadArgs@formatNumberFormMathMLBoxes;
 (*the rawXML + expressionToSymbolicMathML trick overcomes a bug preventing
 Mathematica from generating namespace prefixed MathML*)
 
-rawXML[mathMl_String,opts:optionsOrNullPseudoPatternObject]:=Sequence@@
-	ImportString["<llamabait>"<>mathMl<>"</llamabait>",xmlFileType,
-		FilterOptions[ImportString,opts]][[2,3]];
+rawXML[mathMl_String,opts:optionsOrNullPseudoPatternObject]:=
+	Sequence@@
+		ImportString[
+			"<llamabait>"<>mathMl<>"</llamabait>",
+			xmlFileType,
+			ConversionOptions->{"NormalizeWhitespace"->False},
+			FilterOptions[ImportString,opts]
+			][[2,3]];
 
 defineBadArgs@rawXML;
 
 expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
-	Module[{ms},rawXML@
+	Module[{melement},rawXML@
 		StringReplace[
 			BoxesToMathML[
 				formatNumberFormMathMLBoxes[boxes],
+				"ElementFormatting"->None,
 				FilterOptions[
 					BoxesToMathML,
 					Sequence@@(ConversionOptions/.{opts}),
@@ -804,7 +850,10 @@ expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 				quoteCharStringPatternObject,
 				mathMlNameSpace,
 				quoteCharStringPatternObject]->"",
-			1]/.ms:XMLElement[containsMsPatternObject,___]:>reformatMs[ms]
+			1]/.melement:XMLElement[containsMsPatternObject,___]:>
+					reformatMs[melement]/.
+						melement:XMLElement[containsMtextPatternObject,___]:>
+							reformatMtext[melement]
 		];
 
 defineBadArgs@expressionToSymbolicMathML;
@@ -997,7 +1046,8 @@ Options@XMLDocument=
 	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
 	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\[Times]",
-	"\[Equal]"->"=","\[Rule]"->"\[RightArrow]","\[InvisibleSpace]"->"\:200b",
+	"\[Equal]"->"=","\[Rule]"->"\[RightArrow]",
+	"\[InvisibleSpace]"->"\:200b",
 	"\[LeftBracketingBar]"|"\[RightBracketingBar]"|"\[VerticalSeparator]"->"|"}
 	};
 
