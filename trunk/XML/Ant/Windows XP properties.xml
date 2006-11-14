@@ -30,6 +30,8 @@
 		location="C:\Program Files\Wolfram Research\Mathematica\5.2\"/>
 	<property name="math" location="${math_top_dir}\MathKernel.exe"/>
 	<property name="usefrontend" value="true"/>
+	<!--sound--><!--comment out if unwanted-->
+	<property name="usesound" value="true"/>
 </project>
 <!--
 	MMADE, a Mathematica DocBook Exporter

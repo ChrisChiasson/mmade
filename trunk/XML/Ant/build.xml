@@ -16,6 +16,8 @@
 		file="${mmade_xml_parent_dir}/XML/Ant/${os.name} properties.xml"/>
 	<import
 		file="${mmade_xml_parent_dir}/XML/Ant/common properties.xml"/>
+	<import
+		file="${mmade_xml_parent_dir}/XML/Ant/sounds.xml"/>	
 	<!--configure xml parsing-->
 	<pathconvert dirsep="/" property="buildwithforwardslashes">
 		<path location="${build}"/>
