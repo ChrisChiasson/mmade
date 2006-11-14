@@ -37,8 +37,6 @@
 	<property name="vncserver" location="/usr/bin/vncserver"/>
 	<property name="xvncgeometry" value="1024x768"/>
 	<property name="xvncdepth" value="24"/>
-	<!--sound-->
-	<!--property name="usesound" value="true"/-->
 </project>
 <!--
 	MMADE, a Mathematica DocBook Exporter
