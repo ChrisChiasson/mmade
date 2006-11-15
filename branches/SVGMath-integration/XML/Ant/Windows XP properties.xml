@@ -33,7 +33,7 @@
 	<!--python location-->
 	<property name="python" location="C:\Python25\python.exe"/>
 	<!--SVGMath-->
-	<property name="foMathMLIntermediate" value="true"/>
+	<!--property name="foMathMLIntermediate" value="true"/-->
 	<property name="svgmathpath" location="C:\Program Files\SVGMath\SVGMath-0.3.1"/>
 	<property name="svgmathconfig" location="${svgmathpath}\svgmath.xml"/>
 	<property name="math2svg.py" location="${svgmathpath}\math2svg.py"/>
