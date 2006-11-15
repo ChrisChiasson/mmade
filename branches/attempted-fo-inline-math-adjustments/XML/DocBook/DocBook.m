@@ -932,6 +932,11 @@ imageObjectElement[
 			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
 				fileRefAttribute[fileName]},{}]}]];
 
+(*Obviously, no unit conversion is going on here. It's just a small function
+to convert the numbers to strings and add cm to them so that they can be
+exported to xml*)
+toCm[imageDimension_?NumberQ]:=ToString[imageDimension]<>"cm";
+
 imageObjectElement[
 	id_String,
 	expr_,
@@ -942,9 +947,10 @@ imageObjectElement[
 	imageDataAttributes:multipleNullXmlAttributePatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[
-		{verticalAdjustment,
+		{contentHeight,contentWidth,baseToTop,baseToBottom,
 			notebook,
-			fileName=StringJoin[id,idExtension,".",fileExtension@filetype]
+			fileName=StringJoin[id,idExtension,".",fileExtension@filetype],
+			exportDimensions=If[(ExportDimensions/.{opts})===True,True,False]
 			},
 		notebook=
 			Notebook[
@@ -954,9 +960,15 @@ imageObjectElement[
 					]},
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
-		(*verticalAdjustment=-FrontEndExecute[
-			System`GetBoundingBoxSizePacket[notebook]
-			][[1,3]];*)
+		(*centimeters are the units after these conversions*)
+		If[exportDimensions,
+			{{contentWidth,baseToTop,baseToBottom}}=
+				FrontEndExecute[
+					System`GetBoundingBoxSizePacket[notebook]
+					]*2.54/72/Magnification^2/.
+						AbsoluteOptions[$FrontEnd,Magnification];
+			contentHeight=baseToTop+baseToBottom
+			];
 		Sow[
 			ExportDelayed[
 				fileName,
@@ -972,12 +984,22 @@ imageObjectElement[
 				},
 			{XMLElement["imagedata",
 				{Sequence@@imageDataAttributes,
-					fileRefAttribute[fileName]
+					fileRefAttribute[fileName],
+					If[exportDimensions,
+						Identity[Sequence][
+							"contentwidth"->toCm@contentWidth,
+							"contentdepth"->toCm@contentHeight
+							],
+						Identity[Sequence][]
+						]
 					},
-				{(*XMLObject["ProcessingInstruction"][
-					"dbfo",
-					"alignment-adjust=\""<>ToString[verticalAdjustment]<>"\""
-					]*)}
+				{If[exportDimensions,
+					XMLObject["ProcessingInstruction"][
+						"db"<>(idExtension/."xhtml"->"html"),
+						"alignment-adjust=\""<>toCm[-baseToBottom]<>"\""
+						],
+					Identity[Sequence][]
+					]}
 				]}
 			]
 		];
@@ -1332,7 +1354,9 @@ SetOptions[DocBookInlineEquation,
 			Fold[
 				Append,
 				$epsPdfExpressionExportOptions,
-				$docBookInlineEquationAdditionalExportOptions
+				Flatten@{AllowMathPhrase->False,ExportDimensions->True,
+					$docBookInlineEquationAdditionalExportOptions
+					}
 				],
 			$textAllAlternateExpressionExportOptions	
 			}
@@ -1549,7 +1573,11 @@ Options@docBookTableGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
 	docBookEquationVersionAttributeRule},
 	TitleAbbrev->Automatic,
-	DocBookInlineEquationOptions->{Attributes->{},SetIdAttribute->False}
+	DocBookInlineEquationOptions->Options@DocBookInlineEquation/.
+		{(Attributes->_)->(Attributes->{}),
+			(SetIdAttribute->_)->(SetIdAttribute->False),
+			(ExportDimensions->_)->(ExportDimensions->False)
+			}
 	};
 
 (*change the table code so that strings don't pass through inlineequation*)
