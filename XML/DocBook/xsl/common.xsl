@@ -46,6 +46,26 @@
 			</l:context>    
 		</l:l10n>
 	</l:i18n>
+	<!--perhaps there should be some changes to the match=table mode
+		title.markup template, but it is probably better to override
+		the match=caption mode=title.markup for now in the customization
+		layer-->
+	<!--because cals tables can now have captions, this template
+		needs to be altered as follows... if this is patched in the
+		distribution, they will probably just change the match statement-->
+	<xsl:template match="caption" mode="title.markup">
+		<xsl:param name="allow-anchors" select="0"/>
+		<xsl:if test="count(preceding-sibling::tgroup|mediaobject)=0">
+			<xsl:choose>
+				<xsl:when test="$allow-anchors != 0">
+					<xsl:apply-templates/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:apply-templates mode="no.anchor.mode"/>
+				</xsl:otherwise>
+			</xsl:choose>			
+		</xsl:if>
+	</xsl:template>	
 </xsl:stylesheet>
 <!--
 	MMADE, a Mathematica DocBook Exporter
