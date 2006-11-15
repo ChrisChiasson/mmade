@@ -1185,6 +1185,15 @@ $epsPdfExpressionExportOptions={
 	ObjectAttributes->{"role"->"fo"}
 	};
 
+$mathMlPdfExpressionExportOptions={
+	AllowMathPhrase->False,
+	ConversionOptions->{mathMLConversionOptions},
+	DataAttributes->{},
+	ExportType->"MathML",
+	ObjectAttributes->{"role"->"fo"},
+	Sequence@@$boxExportOptions
+	};
+
 $textAllAlternateExpressionExportOptions={
 	AllowMathPhrase->True,
 	DataAttributes->{},
@@ -1337,11 +1346,12 @@ SetOptions[DocBookInlineEquation,
 				$pngHtmlExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
 				],
-			Fold[
+			$mathMlPdfExpressionExportOptions
+			(*Fold[
 				Append,
 				$epsPdfExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
-				],
+				]*),
 			$textAllAlternateExpressionExportOptions	
 			}
 	];
