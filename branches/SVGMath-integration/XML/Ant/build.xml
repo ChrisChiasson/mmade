@@ -126,10 +126,36 @@
 			<arg value="--xinclude"/>
 			<arg value="--nonet"/>
 			<arg value="-o"/>
-			<arg value="${xml-stem}.fo"/>
+			<arg value="${xml-stem}.fo-intermediate"/>
 			<arg value="${fo.xsl}"/>
 			<arg value="${xml-stem}.fo-profile"/>
 		</exec>
+	</target>
+	<!--handling of MathML in fo-->
+	<target name="SVGMath-if-foMathMLIntermediate" if="foMathMLIntermediate"
+		depends="to-fo">
+		<exec executable="${python}" dir="${build}">
+			<arg value="${math2svg.py}"/>
+			<arg value="-c"/>
+			<arg value="${svgmathconfig}"/>
+			<arg value="-o"/>
+			<arg value="${xml-stem}.fo-intermediate2"/>
+			<arg value="${xml-stem}.fo-intermediate"/>
+		</exec>
+		<exec executable="${xsltproc}" dir="${build}">
+			<arg value="--xinclude"/>
+			<arg value="--nonet"/>
+			<arg value="-o"/>
+			<arg value="${xml-stem}.fo"/>
+			<arg value="${adjustbase.xsl}"/>
+			<arg value="${xml-stem}.fo-intermediate2"/>
+		</exec>		
+	</target>
+	<!--if unrequested, don't handle MathML in fo-->
+	<target name="skip-SVGMath-unless-foMathMLIntermediate"
+		unless="foMathMLIntermediate" depends="to-fo">
+		<copy file="${build}/${xml-stem}.fo-intermediate"
+			tofile="${build}/${xml-stem}.fo"/>
 	</target>
 	<!--xep initialization-->
 	<target name="init-xep" depends="init-xsl">
@@ -151,7 +177,7 @@
 	<!--transformation to post script if specified by ps-intermediate-->
 	<target name="to-ps-if-ps-intermediate"
 		if="ps-intermediate"
-		depends="to-fo,init-xep">
+		depends="SVGMath-if-foMathMLIntermediate,skip-SVGMath-unless-foMathMLIntermediate,init-xep">
 		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.ps"
 			format="PostScript">
 			<sysproperty key="com.renderx.xep.CONFIG" value="${xep.xml}"/>
@@ -184,7 +210,7 @@
 	<!--transformation to pdf if post script isn't desired-->
 	<target name="to-pdf-unless-ps-intermediate"
 			unless="ps-intermediate"
-			depends="to-fo,init-xep">
+			depends="SVGMath-if-foMathMLIntermediate,skip-SVGMath-unless-foMathMLIntermediate,init-xep">
 		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.pdf"
 			format="PDF">
 			<sysproperty key="com.renderx.xep.CONFIG" value="${xep.xml}"/>
