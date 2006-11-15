@@ -22,6 +22,10 @@ the subclass of expressions that can be represented by pure DocBook markup.";
 Caption::usage="This is an option for the DocBook* table, figure, and equation \
 functions that accepts a string, XMLElement or XMLChain as a caption.";
 
+CellOptions::usage="CellOptions is a list of options provided to the \
+Cell expression that will be exported by one of the DocBook*Equation \
+commands.";
+
 CharacterReplacements::usage="This option for the XMLDocument accepts as its \
 right hand side a list of rules to be used in a StringReplace on all strings in
 the xmlchain argument.";
@@ -107,6 +111,10 @@ InputFileName::usage="InputFileName[] will search $Path in an attempt to "<>
 
 MediaObjectElement::usage="MediaObjectElement is the type of element used \
 to contain equation and informalequation media.";
+
+NotebookOptions::usage="NotebookOptions is a list of options provided to the \
+Notebook expression that will be exported by one of the DocBook*Equation \
+commands.";
 
 ObjectAttributes::usage="These attributes are applied to the <*object> element \
 inside the <mediaobject> element.";
