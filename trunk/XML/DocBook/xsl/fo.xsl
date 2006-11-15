@@ -15,6 +15,13 @@
 	<xsl:attribute-set name="monospace.verbatim.properties">
 		<xsl:attribute name="font-size">8pt</xsl:attribute>
 	</xsl:attribute-set>
+	<!--keep variable names from being segmented-->
+	<!--This template is used with the permission of its author, Bob Stayton.-->	
+	<!--xsl:template match="varname">
+		<fo:inline keep-together.within-line="always">
+			<xsl:apply-imports/>
+		</fo:inline>
+	</xsl:template-->	
 	<!--this template is originally from the DocBook project; it has been
 		modified for caption handling-->
 	<xsl:template match="caption/para">
