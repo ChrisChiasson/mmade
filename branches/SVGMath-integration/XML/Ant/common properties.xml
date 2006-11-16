@@ -41,10 +41,15 @@
 	<!--xslt styler class possible values (not used yet)-->
 	<!--com.icl.saxon.StyleSheet saxon 6-->
 	<!--net.sf.saxon.Transform saxon 8-->
+	<!--SVGMath-->
+	<property name="foMathMLIntermediate" value="true"/>
+	<property name="svgmathconfig" location="${svgmathpath}\svgmath.xml"/>
+	<property name="math2svg.py" location="${svgmathpath}\math2svg.py"/>
+	<property name="adjustbase.xsl" location="${svgmathpath}\fo\adjustbase.xsl"/>	
 	<!--formatting objects processor-->
 	<property name="fo-processor" value="xep"/>
 	<!--fo transform target-->
-	<property name="ps-intermediate" value="true"/>
+	<!--property name="ps-intermediate" value="true"/-->
 	<!--RenderX's XEP configuration-->
 	<!--XEP config file-->
 	<property name="xep.xml" value="${XEP-path}/xep.xml"/>
