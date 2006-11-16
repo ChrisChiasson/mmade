@@ -1698,9 +1698,32 @@ Message[Export::format,_]=Sequence[];
 
 Export[pdfFile_String,xpr_,"PDF",opts___?OptionQ]/;
 	StringQ@Ghostscript`Executable&&FileType@Ghostscript`Executable===File:=
-	Module[{args,epsFile,stem},
+	Module[{args,commentEndPos,epsFile,epsList,stem,llx,lly,urx,ury},
 		epsFile=StringReplace[pdfFile,stem__~~".pdf"\[Rule]stem~~".eps"];
 		Export[epsFile,xpr,"EPS",opts];
+		epsList=ImportString[ExportString[xpr,"EPS",opts],"Lines"];
+		commentEndPos=First@First@Position[epsList,"%%EndComments"];
+		{llx,lly,urx,ury}=Flatten@
+			StringCases[
+				Take[epsList,{1,commentEndPos}],
+				StringExpression[
+					"%%HiResBoundingBox: ",
+					llx__," ",lly__," ",
+					urx__," ",ury__]->
+						{llx,lly,urx,ury}
+					];
+		epsList=
+			Fold[Insert[#1,#2,commentEndPos+1]&,
+				epsList,
+				{StringJoin[llx," neg ",lly," neg translate"],
+					StringJoin[
+						"<</PageSize [",
+						urx," ",llx," sub ",
+						ury," ",lly," sub]>>setpagedevice"
+						]
+					}
+				];
+		Export[epsFile,epsList,"Lines"];
 		If[0===
 			Run["\""<>Ghostscript`Executable<>"\"",
 				"-dCompatibilityLevel=1.4","-q","-dSAFER","-dNOPAUSE","-dBATCH",
