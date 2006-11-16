@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="common_properties">
+	<!--file format info:
+		http://ant.apache.org/manual/CoreTasks/xmlproperty.html
+		-->
+	<!--documentation directory (most stuff is in a
+		subdirectory of this unless you say otherwise)
+		if you follow the default layout for this directory,
+		you don't have to change src-->
+	<property name="documentation" location="DocBook/Documentation"/>
+	<!--xml source directory-->
+	<property name="src" location="${documentation}/src"/>
+	<!--The (master) xml file to be turned into documentation
+		must be directly beneath src.
+		Use the value attribute not the location attribute.-->
+	<property name="xml" value="MMADE.xml"/>
+	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
+	<property name="xml-intermediate" value="${xml}.intermediate"/>
+	<!--build directory-->
+	<property name="build" location="build"/>
+	<!--output distribution directory-->
+	<property name="dist" location="${documentation}/English"/>
+	<!--configure xsl-->
+	<!--xsl directory (defaults to the files that come with MMADE)
+		however, these files in turn depend on your xml catalog
+		MMADE checks that this directory exists-->
+	<property name="xsl" location="${mmade_xml_parent_dir}/XML/DocBook/xsl"/>
+	<!--xsl transformation files (may have any path)-->
+	<property name="html.xsl" location="${xsl}/html.xsl"/>
+	<property name="html-profile.xsl" location="${xsl}/html-profile.xsl"/>
+	<property name="html_chunk.xsl" location="${xsl}/html_chunk.xsl"/>
+	<property name="fo.xsl" location="${xsl}/fo.xsl"/>
+	<property name="fo-profile.xsl" location="${xsl}/fo-profile.xsl"/>
+	<property name="xhtml.xsl" location="${xsl}/xhtml.xsl"/>
+	<property name="xhtml-profile.xsl" location="${xsl}/xhtml-profile.xsl"/>
+	<property name="xhtml_chunk.xsl" location="${xsl}/xhtml_chunk.xsl"/>
+	<property name="db_5_to_db_4.xsl" location="${xsl}/db_5_to_db_4.xsl"/>
+	<!--css directory (contents are copied to dist)
+		(defaults to the files that come with MMADE)-->
+	<property name="css" location="${mmade_xml_parent_dir}/XML/DocBook/css"/>
+	<!--xslt styler class possible values (not used yet)-->
+	<!--com.icl.saxon.StyleSheet saxon 6-->
+	<!--net.sf.saxon.Transform saxon 8-->
+	<!--SVGMath-->
+	<property name="foMathMLIntermediate" value="true"/>
+	<property name="svgmathconfig" location="${svgmathpath}\svgmath.xml"/>
+	<property name="math2svg.py" location="${svgmathpath}\math2svg.py"/>
+	<property name="adjustbase.xsl" location="${svgmathpath}\fo\adjustbase.xsl"/>	
+	<!--formatting objects processor-->
+	<property name="fo-processor" value="xep"/>
+	<!--fo transform target-->
+	<!--property name="ps-intermediate" value="true"/-->
+	<!--RenderX's XEP configuration-->
+	<!--XEP config file-->
+	<property name="xep.xml" value="${XEP-path}/xep.xml"/>
+	<!--configure Mathematica-->
+	<!--mpath is prepended to $Path in Mathematica
+		so that you can load your package
+		you can override it with <reference> in
+		<ant>-->
+	<path id="mpath" location="${basedir}"/>
+	<!--mfiles is a pathlike ant variable that should contain
+		files you want to Get in Mathematica (to generate your
+		documentation)
+		if you build your documentation by executing Get on a
+		context, then make mfiles include the init.m for that
+		context or, alternatively, the .m file that corresponds
+		to that context-->
+	<path id="mfiles"
+		location="${mmade_xml_parent_dir}/XML/DocBook/Documentation/Build/Build.m"/>
+	<path id="jlink"
+		location="${math_top_dir}/AddOns/JLink/JLink.jar"/>
+	<property name="docbuild" value="javax.xml.parsers.DocumentBuilderFactory"/>
+	<property name="docbuildimpl" value="org.apache.xerces.jaxp.DocumentBuilderFactoryImpl"/>
+	<property name="saxparse" value="javax.xml.parsers.SAXParserFactory"/>
+	<property name="saxparseimpl" value="org.apache.xerces.jaxp.SAXParserFactoryImpl"/>
+	<property name="parseconfig" value="org.apache.xerces.xni.parser.XMLParserConfiguration"/>
+	<property name="xercesconfig" value="org.apache.xerces.parsers.XIncludeParserConfiguration"/>
+	<property name="xsltclass" value="com.icl.saxon.StyleSheet"/>
+	<property name="resolverclass" value="org.apache.xml.resolver.tools.CatalogResolver"/>
+	<property name="readerclass" value="org.apache.xml.resolver.tools.ResolvingXMLReader"/>
+	<property name="xsltmem" value="128m"/>
+</project>
+<!--
+	MMADE, a Mathematica DocBook Exporter
+	The license and Copyright information for MMADE is included in rights.txt
+	in the XML directory.
+-->
