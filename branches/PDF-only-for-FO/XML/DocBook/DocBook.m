@@ -1696,34 +1696,64 @@ System`ConvertersDump`exportFormatQ["PDF"]=False;
 
 Message[Export::format,_]=Sequence[];
 
-Export[pdfFile_String,xpr_,"PDF",opts___?OptionQ]/;
-	StringQ@Ghostscript`Executable&&FileType@Ghostscript`Executable===File:=
-	Module[{args,commentEndPos,epsFile,epsList,stem,llx,lly,urx,ury},
-		epsFile=StringReplace[pdfFile,stem__~~".pdf"\[Rule]stem~~".eps"];
-		Export[epsFile,xpr,"EPS",opts];
-		epsList=ImportString[ExportString[xpr,"EPS",opts],"Lines"];
-		commentEndPos=First@First@Position[epsList,"%%EndComments"];
-		{llx,lly,urx,ury}=Flatten@
-			StringCases[
-				Take[epsList,{1,commentEndPos}],
-				StringExpression[
-					"%%HiResBoundingBox: ",
-					llx__," ",lly__," ",
-					urx__," ",ury__]->
-						{llx,lly,urx,ury}
-					];
+(*{llx,lly,urx,ury}=*)
+(*ReleaseHold[Hold[opts]/.(rulepatternobject"IncludeSpecialFonts"->_)->("IncludeSpecialFonts"->False)]*)
+(*returns adjustments and comment end position*)
+epsSystem[expr_,opts___?OptionQ]:=
+	Module[{commentEndPos,epsList,llx,lly,urx,ury},
 		epsList=
-			Fold[Insert[#1,#2,commentEndPos+1]&,
-				epsList,
-				{StringJoin[llx," neg ",lly," neg translate"],
-					StringJoin[
-						"<</PageSize [",
-						urx," ",llx," sub ",
-						ury," ",lly," sub]>>setpagedevice"
-						]
-					}
-				];
-		Export[epsFile,epsList,"Lines"];
+			ImportString[
+				ExportString[
+					expr,
+					"EPS",
+					opts
+					],
+				"Lines"];
+		commentEndPos=First@First@Position[epsList,"%%EndComments"];
+		{Flatten@{
+				StringCases[
+					Take[epsList,{1,commentEndPos}],
+					StringExpression[
+						"%%HiResBoundingBox: ",
+						llx__," ",lly__," ",
+						urx__," ",ury__]->
+							{llx,lly,urx,ury}
+						],
+				commentEndPos
+				},
+			epsList
+			}
+		];
+
+defineBadArgs@epsSystem;
+
+epsList[expr_,opts___?OptionQ]:=
+	Module[{epsList,commentEndPos,llx,lly,urx,ury},
+		{{llx,lly,urx,ury,commentEndPos},epsList}=epsSystem[expr,opts];
+		Fold[Insert[#1,#2,commentEndPos+1]&,
+			epsList,
+			{StringJoin[llx," neg ",lly," neg translate"],
+				StringJoin[
+					"<</PageSize [",
+					urx," ",llx," sub ",
+					ury," ",lly," sub]>>setpagedevice"
+					]
+				}
+			]
+		];
+
+defineBadArgs@epsList;
+
+epsAdjustments[expr_,opts___?OptionQ]:=
+	ToExpression/@Drop[First@epsSystem[expr,opts],-1];
+
+defineBadArgs@epsAdjustments;
+
+Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
+	StringQ@Ghostscript`Executable&&FileType@Ghostscript`Executable===File:=
+	Module[{args,epsFile,stem},
+		epsFile=StringReplace[pdfFile,stem__~~".pdf"\[Rule]stem~~".eps"];
+		Export[epsFile,epsList[expr,opts],"Lines"];
 		If[0===
 			Run["\""<>Ghostscript`Executable<>"\"",
 				"-dCompatibilityLevel=1.4","-q","-dSAFER","-dNOPAUSE","-dBATCH",
