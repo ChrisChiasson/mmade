@@ -222,6 +222,8 @@ unwantedBeneathScriptBoxes=
 
 rowBoxOrStringPatternObject=(_RowBox|_String)..;
 
+ruleOrRuleDelayedPatternObject=Rule|RuleDelayed;
+
 allSewingTags=xmlSewingTag|otherSewingTag;
 
 xmlFileType="XML";
@@ -940,6 +942,57 @@ imageObjectElement[
 			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
 				fileRefAttribute[fileName]},{}]}]];
 
+(*returns adjustments and comment end position*)
+epsSystem[expr_,opts___?OptionQ]:=
+	Module[{commentEndPos,epsList,llx,lly,urx,ury},
+		epsList=
+			ImportString[
+				ExportString[
+					expr,
+					"EPS",
+					FilterOptions[ExportString,opts]
+					],
+				"Lines"];
+		commentEndPos=First@First@Position[epsList,"%%EndComments"];
+		{Flatten@{
+				StringCases[
+					Take[epsList,{1,commentEndPos}],
+					StringExpression[
+						"%%HiResBoundingBox: ",
+						llx__," ",lly__," ",
+						urx__," ",ury__]->
+							{llx,lly,urx,ury}
+						],
+				commentEndPos
+				},
+			epsList
+			}
+		];
+
+defineBadArgs@epsSystem;
+
+epsList[expr_,opts___?OptionQ]:=
+	Module[{epsList,commentEndPos,llx,lly,urx,ury},
+		{{llx,lly,urx,ury,commentEndPos},epsList}=epsSystem[expr,opts];
+		Fold[Insert[#1,#2,commentEndPos+1]&,
+			epsList,
+			{StringJoin[llx," neg ",lly," neg translate"],
+				StringJoin[
+					"<</PageSize [",
+					urx," ",llx," sub ",
+					ury," ",lly," sub]>>setpagedevice"
+					]
+				}
+			]
+		];
+
+defineBadArgs@epsList;
+
+epsBounds[expr_,opts___?OptionQ]:=
+	ToExpression/@Drop[First@epsSystem[expr,opts],-1];
+
+defineBadArgs@epsBounds;
+
 imageObjectElement[
 	id_String,
 	expr_,
@@ -950,9 +1003,10 @@ imageObjectElement[
 	imageDataAttributes:multipleNullXmlAttributePatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[
-		{verticalAdjustment,
-			notebook,
-			fileName=StringJoin[id,idExtension,".",fileExtension@filetype]
+		{contentHeight,contentWidth,baseToTop,baseToBottom,
+			notebook,llx,lly,urx,ury,
+			fileName=StringJoin[id,idExtension,".",fileExtension@filetype],
+			exportDimensions=If[(ExportDimensions/.{opts})===True,True,True]
 			},
 		notebook=
 			Notebook[
@@ -962,9 +1016,26 @@ imageObjectElement[
 					]},
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
-		(*verticalAdjustment=-FrontEndExecute[
-			System`GetBoundingBoxSizePacket[notebook]
-			][[1,3]];*)
+		(*points are the units after these conversions*)
+		If[exportDimensions,
+			{{contentWidth,baseToTop,baseToBottom}}=
+				FrontEndExecute[
+					System`GetBoundingBoxSizePacket[notebook]
+					];
+			contentHeight=baseToTop+baseToBottom;
+			{llx,lly,urx,ury}=
+				epsBounds[
+					notebook,
+					ReleaseHold[Hold[opts]/.
+						ruleOrRuleDelayedPatternObject[
+							"IncludeSpecialFonts",_]->
+								"IncludeSpecialFonts"->False
+						]
+					];
+			{baseToTop,baseToBottom,contentHeight}=
+				{baseToTop,baseToBottom,contentHeight}*(ury-lly)/contentHeight;
+			contentWidth=(urx-llx);
+			];
 		Sow[
 			ExportDelayed[
 				fileName,
@@ -980,12 +1051,22 @@ imageObjectElement[
 				},
 			{XMLElement["imagedata",
 				{Sequence@@imageDataAttributes,
-					fileRefAttribute[fileName]
+					fileRefAttribute[fileName],
+					If[exportDimensions,
+						Identity[Sequence][
+							"contentwidth"->ToString@contentWidth<>"pt",
+							"contentdepth"->ToString@contentHeight<>"pt"
+							],
+						Identity[Sequence][]
+						]
 					},
-				{(*XMLObject["ProcessingInstruction"][
-					"dbfo",
-					"alignment-adjust=\""<>ToString[verticalAdjustment]<>"\""
-					]*)}
+				{If[exportDimensions,
+					XMLObject["ProcessingInstruction"][
+						"db"<>(idExtension/."xhtml"->"html"),
+						"alignment-adjust=\""<>ToString[-baseToBottom]<>"pt\""
+						],
+					Identity[Sequence][]
+					]}
 				]}
 			]
 		];
@@ -1346,12 +1427,12 @@ SetOptions[DocBookInlineEquation,
 				$pngHtmlExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
 				],
-			$mathMlPdfExpressionExportOptions
-			(*Fold[
+			(*$mathMlPdfExpressionExportOptions*)
+			Fold[
 				Append,
 				$epsPdfExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
-				]*),
+				],
 			$textAllAlternateExpressionExportOptions	
 			}
 	];
@@ -1695,59 +1776,6 @@ Update/@{System`ConvertersDump`exportFormatQ,Message,Export};
 System`ConvertersDump`exportFormatQ["PDF"]=False;
 
 Message[Export::format,_]=Sequence[];
-
-(*{llx,lly,urx,ury}=*)
-(*ReleaseHold[Hold[opts]/.(rulepatternobject"IncludeSpecialFonts"->_)->("IncludeSpecialFonts"->False)]*)
-(*returns adjustments and comment end position*)
-epsSystem[expr_,opts___?OptionQ]:=
-	Module[{commentEndPos,epsList,llx,lly,urx,ury},
-		epsList=
-			ImportString[
-				ExportString[
-					expr,
-					"EPS",
-					opts
-					],
-				"Lines"];
-		commentEndPos=First@First@Position[epsList,"%%EndComments"];
-		{Flatten@{
-				StringCases[
-					Take[epsList,{1,commentEndPos}],
-					StringExpression[
-						"%%HiResBoundingBox: ",
-						llx__," ",lly__," ",
-						urx__," ",ury__]->
-							{llx,lly,urx,ury}
-						],
-				commentEndPos
-				},
-			epsList
-			}
-		];
-
-defineBadArgs@epsSystem;
-
-epsList[expr_,opts___?OptionQ]:=
-	Module[{epsList,commentEndPos,llx,lly,urx,ury},
-		{{llx,lly,urx,ury,commentEndPos},epsList}=epsSystem[expr,opts];
-		Fold[Insert[#1,#2,commentEndPos+1]&,
-			epsList,
-			{StringJoin[llx," neg ",lly," neg translate"],
-				StringJoin[
-					"<</PageSize [",
-					urx," ",llx," sub ",
-					ury," ",lly," sub]>>setpagedevice"
-					]
-				}
-			]
-		];
-
-defineBadArgs@epsList;
-
-epsAdjustments[expr_,opts___?OptionQ]:=
-	ToExpression/@Drop[First@epsSystem[expr,opts],-1];
-
-defineBadArgs@epsAdjustments;
 
 Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
 	StringQ@Ghostscript`Executable&&FileType@Ghostscript`Executable===File:=
