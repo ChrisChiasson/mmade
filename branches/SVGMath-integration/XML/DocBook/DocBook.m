@@ -1346,12 +1346,12 @@ SetOptions[DocBookInlineEquation,
 				$pngHtmlExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
 				],
-			(*$mathMlPdfExpressionExportOptions*)
-			Fold[
+			$mathMlPdfExpressionExportOptions
+			(*Fold[
 				Append,
 				$epsPdfExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
-				],
+				]*),
 			$textAllAlternateExpressionExportOptions	
 			}
 	];
