@@ -15,6 +15,25 @@
 	<xsl:attribute-set name="monospace.verbatim.properties">
 		<xsl:attribute name="font-size">8pt</xsl:attribute>
 	</xsl:attribute-set>
+	<!--this is the xhtml imagedata template from the DocBook project
+		it is patched to handle SVG and MathML markup children of imagedata
+		from DocBook 5
+		except for the modifications, this template did not originate from the
+		MMADE project or its authors
+	-->
+	<xsl:template match="imagedata">
+		<xsl:choose>
+			<xsl:when xmlns:svg="http://www.w3.org/2000/svg" test="svg:*">
+				<xsl:apply-templates/>
+			</xsl:when>
+			<xsl:when xmlns:mml="http://www.w3.org/1998/Math/MathML" test="mml:*">
+				<xsl:apply-templates/>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:apply-imports/>
+			</xsl:otherwise>
+		</xsl:choose>
+	</xsl:template>
 	<!--this template is originally from the DocBook project; it has been
 		modified for caption handling-->
 	<xsl:template match="caption/para">
