@@ -24,10 +24,14 @@
 	<xsl:template match="imagedata">
 		<xsl:choose>
 			<xsl:when xmlns:svg="http://www.w3.org/2000/svg" test="svg:*">
-				<xsl:apply-templates/>
+				<fo:instream-foreign-object>
+					<xsl:apply-templates/>
+				</fo:instream-foreign-object>
 			</xsl:when>
 			<xsl:when xmlns:mml="http://www.w3.org/1998/Math/MathML" test="mml:*">
-				<xsl:apply-templates/>
+				<fo:instream-foreign-object>
+					<xsl:apply-templates/>
+				</fo:instream-foreign-object>
 			</xsl:when>
 			<xsl:otherwise>
 				<xsl:apply-imports/>
