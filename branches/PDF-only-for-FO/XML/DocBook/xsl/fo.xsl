@@ -15,6 +15,10 @@
 	<xsl:attribute-set name="monospace.verbatim.properties">
 		<xsl:attribute name="font-size">8pt</xsl:attribute>
 	</xsl:attribute-set>
+	<xsl:attribute-set name="root.properties">
+		<xsl:attribute
+			name="line-height-shift-adjustment">consider-shifts</xsl:attribute>
+	</xsl:attribute-set>
 	<!--this is the xhtml imagedata template from the DocBook project
 		it is patched to handle SVG and MathML markup children of imagedata
 		from DocBook 5
