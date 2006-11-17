@@ -1431,7 +1431,8 @@ SetOptions[DocBookInlineEquation,
 			Fold[
 				Append,
 				$epsPdfExpressionExportOptions,
-				$docBookInlineEquationAdditionalExportOptions
+				Flatten@{AllowMathPhrase->False,
+					$docBookInlineEquationAdditionalExportOptions}
 				],
 			$textAllAlternateExpressionExportOptions	
 			}
