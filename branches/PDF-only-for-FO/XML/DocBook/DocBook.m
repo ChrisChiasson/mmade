@@ -1938,10 +1938,25 @@ decimalUnicodeCharacterNumber[charNum_?NumberQ,name_String]:=
 
 defineDebugArgs@decimalUnicodeCharacterNumber;
 
+hexUnicodeCharacterNumberString[charNum_?NumberQ,name_String]:=StringJoin@
+	Prepend[
+		StringSplit[
+			Cases[
+				ToBoxes[
+					BaseForm[decimalUnicodeCharacterNumber[charNum,name],16]
+					],
+				SubscriptBox[__],
+				{0,Infinity}
+				][[1,1]],
+			"\""
+			],
+		"0x"
+		];
+
 toUnicode[attributes_?OptionQ/;!FreeQ[attributes,"code"]]:=
 	Flatten@{
-		"code"->ToString@
-			decimalUnicodeCharacterNumber[
+		"code"->
+			hexUnicodeCharacterNumberString[
 				ToExpression[StringReplace["code"/.attributes,"0x"->"16^^"]],
 				name
 				],
