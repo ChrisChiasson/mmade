@@ -1872,7 +1872,11 @@ If[ttxRun=!=0,
 unicodeXMLFontFiles=FileNames["*.ttx",unicodeFontsDir];
 
 toUnicode[XMLObject["Document"][pre_,body_,post_]]:=
-	XMLObject["Document"][pre,toUnicode[body],post];
+	XMLObject["Document"][
+		pre/.("Encoding"->_)->("Encoding"->"US-ASCII"),
+		toUnicode[body],
+		post
+		];
 
 toUnicode[XMLElement["ttFont",attributes_,body_]]:=
 	Block[{names},
@@ -1905,6 +1909,8 @@ setFontNames[XMLElement["namerecord",attributes_?OptionQ/;
 toUnicode[XMLElement["cmap",attributes_,body_]]:=
 	XMLElement["cmap",attributes,toUnicode/@body];
 
+Needs["Statistics`DescriptiveStatistics`"];
+
 toUnicode[
 	XMLElement[
 		cmapFormat_/;StringMatchQ[cmapFormat,"cmap_format_"~~__],
@@ -1912,27 +1918,33 @@ toUnicode[
 			And["platformID","platEncID"],body_
 			]
 		]:=
-	Block[
-		{name=Flatten[names["platformID","platEncID"]/.attributes][[2]]},
+	Block[{name=Flatten[names["platformID","platEncID"]/.attributes][[2]]},
 		XMLElement[cmapFormat,attributes,toUnicode/@body]
 		];
 
 toUnicode[XMLElement["map",attributes_,body_]]:=
 	XMLElement["map",toUnicode[attributes],body];
 
+weirdFontName=FromCharacterCode[{19809,29800,13133,28526,28416}];
+
 decimalUnicodeCharacterNumber[charNum_?NumberQ,name_String]:=
-	Module[{candidateUnicode,char},
-		char=FromCharacterCode[charNum,name];
-		candidateUnicode=
-			StringReplace[
-				System`Convert`XMLDump`determineEntityExportFunction[
-					{char},
-					"US-ASCII"
-					][char],
-				{"&#"->"",";"->""}
+	Module[{asciiChar,candidateUnicode,char,entity,modName},
+		modName=
+			StringReplace[name,
+				{"Mono"|"-Bold"->"",weirdFontName->"Mathematica3"}
 				];
-		If[DigitQ[candidateUnicode]&&FromCharacterCode[charNum,"ASCII"]=!=char,
-			ToExpression@candidateUnicode,charNum
+		char=FromCharacterCode[charNum,modName];
+		entity=System`Convert`XMLDump`determineEntityExportFunction[
+			{char},"US-ASCII"][char];
+		asciiChar=FromCharacterCode[charNum,"ASCII"];
+		If[asciiChar===char||StringLength[entity]<4,
+			charNum,
+			Block[{candidateUnicode=StringTake[entity,{3,-2}]},
+				If[DigitQ[candidateUnicode],
+					ToExpression@candidateUnicode,
+					charNum					
+					]
+				]
 			]
 		];
 
@@ -1941,17 +1953,22 @@ defineDebugArgs@decimalUnicodeCharacterNumber;
 hexUnicodeCharacterNumberString[charNum_?NumberQ,name_String]:=StringJoin@
 	Prepend[
 		StringSplit[
-			Cases[
-				ToBoxes[
-					BaseForm[decimalUnicodeCharacterNumber[charNum,name],16]
-					],
-				SubscriptBox[__],
-				{0,Infinity}
-				][[1,1]],
+			Check[
+				Cases[
+					ToBoxes[
+						BaseForm[decimalUnicodeCharacterNumber[charNum,name],16]
+						],
+					SubscriptBox[__],
+					{0,Infinity}
+					][[1,1]],
+				tempNum={charNum,name};Abort[]
+				],
 			"\""
 			],
 		"0x"
 		];
+
+defineDebugArgs@hexUnicodeCharacterNumberString;
 
 toUnicode[attributes_?OptionQ/;!FreeQ[attributes,"code"]]:=
 	Flatten@{
@@ -1967,11 +1984,24 @@ toUnicode[arg_]=arg;
 
 defineDebugArgs@toUnicode;
 
-fontTree=Import[unicodeXMLFontFiles[[1]],"SymbolicXML",ConversionOptions->{"NormalizeWhitespace"->False,"IncludeEmbeddedObjects"->True,"PreserveCDATASections"->True}];
+fontXMLPortOptions=ConversionOptions->
+	{"NormalizeWhitespace"->False,
+		"IncludeEmbeddedObjects"->True,
+		"PreserveCDATASections"->True
+		};
+
+Export[#,
+	toUnicode@
+		Import[
+			#,
+			"SymbolicXML",
+			fontXMLPortOptions
+			],
+	"XML"
+	]&/@unicodeXMLFontFiles;
 
 ]
 Abort[];
-
 End[];
 EndPackage[];
 (*
