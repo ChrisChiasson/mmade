@@ -1259,7 +1259,7 @@ $pngHtmlExpressionExportOptions={
 	};
 
 $epsPdfExpressionExportOptions={
-	ConversionOptions->{"IncludeSpecialFonts"->True},
+	ConversionOptions->{"IncludeSpecialFonts"->False},
 	DataAttributes->{(*pdfScaleAttribute*)},
 	ExportType->"PDF",
 	(*ImageResolution:>$PrintResolution,*)
@@ -1303,14 +1303,15 @@ Options@docBookEquationGeneral={
 					AllowMathPhrase->True
 					]
 				],
-			Fold[
+			$mathMlPdfExpressionExportOptions
+			(*Fold[
 				Append,
 				$epsPdfExpressionExportOptions,
 				Append[
 					$docBookEquationGeneralAdditionalExportOptions,
 					AllowMathPhrase->False
 					]
-				],
+				]*),
 			$textAllAlternateExpressionExportOptions
 			},
 	ObjectContainer->MediaObjectElement,
@@ -1427,13 +1428,13 @@ SetOptions[DocBookInlineEquation,
 				$pngHtmlExpressionExportOptions,
 				$docBookInlineEquationAdditionalExportOptions
 				],
-			(*$mathMlPdfExpressionExportOptions*)
-			Fold[
+			$mathMlPdfExpressionExportOptions
+			(*Fold[
 				Append,
 				$epsPdfExpressionExportOptions,
 				Flatten@{AllowMathPhrase->False,
 					$docBookInlineEquationAdditionalExportOptions}
-				],
+				]*),
 			$textAllAlternateExpressionExportOptions	
 			}
 	];
@@ -1741,8 +1742,19 @@ ExportDryRun[file_,expr_,type_String,opts:optionsOrNullPseudoPatternObject]:=
 
 defineBadArgs@ExportDryRun;
 
+(*executable stuff*)
+quote="\""<>#<>"\""&;
+
+If[$SystemID==="Windows",
+	run=Run@quote@StringJoin@BoxForm`Intercalate[{##}," "]&,
+	run=Run
+	];
+
 (*ghostscript*)
 
+If[!ValueQ@OverloadExport,OverloadExport=True];
+
+If[OverloadExport,
 Ghostscript`Executable::notfound="The XML`DocBook` package can't find \
 Ghostscript. The package needs Ghostscript to overload the Export function for \
 PDFs. Please set Ghostscript`Executable equal to the path of your copy of \
@@ -1752,7 +1764,8 @@ freely download a copy of Ghostscript from http://www.cs.wisc.edu/~ghost/. If \
 you don't want to see this message every time you load the XML`DocBook` \
 package, put the definition of Ghostscript`Executable in your kernel's init.m \
 file or set the ghostscript property in one of your MMADE Ant configuration \
-files.";
+files. If you do not want XML`DocBook` to overload Export, set XML`DocBook`\
+Private`OverloadExport=False and restart the kernel.";
 
 If[!ValueQ@Ghostscript`Executable,
 	Ghostscript`Executable=AntProperty["ghostscript"]];
@@ -1784,7 +1797,7 @@ Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
 		epsFile=StringReplace[pdfFile,stem__~~".pdf"\[Rule]stem~~".eps"];
 		Export[epsFile,epsList[expr,opts],"Lines"];
 		If[0===
-			Run["\""<>Ghostscript`Executable<>"\"",
+			run[quote@Ghostscript`Executable,
 				"-dCompatibilityLevel=1.4","-q","-dSAFER","-dNOPAUSE","-dBATCH",
 				"-sDEVICE=pdfwrite","-sOutputFile="<>pdfFile,"-c",
 				".setpdfwrite","-f",fullPathNameExport[epsFile,"EPS"]
@@ -1799,6 +1812,150 @@ Export[pdfFile_String,xpr_,"PDF",opts___?OptionQ]:=
 
 Protect[System`ConvertersDump`exportFormatQ,Message,Export];
 Update/@{System`ConvertersDump`exportFormatQ,Message,Export};
+]
+
+If[!ValueQ@FontTools`Executable,
+	FontTools`Executable=
+		Switch[
+			$SystemID,
+			"Windows",
+			"C:\\Program Files\\TTX\\ttx.exe",
+			"Linux",
+			"/usr/bin/ttx"
+			]
+		];
+
+If[!ValueQ@unicodeFontsDir,
+	unicodeFontsDir=ToFileName[{InputDirectoryName[],"Fonts"}]
+	];
+
+If[FileType[unicodeFontsDir]=!=Directory,CreateDirectory[unicodeFontsDir]];
+
+unicodeFontFiles=FileNames["*.ttf",unicodeFontsDir];
+
+If[Length@unicodeFontFiles<20,
+If[FileType[FontTools`Executable]=!=File,
+	Message[FontTools`Executable::notfound];Abort[]
+	];
+
+originalTtfDirectory=
+	StringJoin[
+		BoxForm`Intercalate[
+			{$TopDirectory,"SystemFiles","Fonts","TrueType"},
+			$PathnameSeparator
+			]
+		];
+
+If[FileType[originalTtfDirectory]===None,
+	General::ttfnf="The Mathematica true type fonts were not found.";
+	Message[General::ttfnf];
+	Abort[]
+	];
+
+originalTtfFontFiles=FileNames["*.ttf",originalTtfDirectory];
+
+ttxRun=run@@
+	Flatten[{
+		quote@FontTools`Executable,
+		"-d",
+		quote@StringTake[unicodeFontsDir,{1,-2}],
+		quote/@originalTtfFontFiles
+		}];
+
+If[ttxRun=!=0,
+	General::fcuttf="XML`DocBook` failed to create the Unicode True Type "<>
+		"versions of the Mathematica fonts";
+	Message[General::fcuttf];
+	Abort[]
+	];
+
+unicodeXMLFontFiles=FileNames["*.ttx",unicodeFontsDir];
+
+toUnicode[XMLObject["Document"][pre_,body_,post_]]:=
+	XMLObject["Document"][pre,toUnicode[body],post];
+
+toUnicode[XMLElement["ttFont",attributes_,body_]]:=
+	Block[{names},
+		setFontNames/@body;XMLElement["ttFont",attributes,toUnicode/@body]
+		];
+
+setFontNames[XMLElement["name",attributes_,body_]]:=setFontNames/@body;
+
+setFontNames[XMLElement["namerecord",attributes_?OptionQ/;
+	(!FreeQ[attributes,#]&)/@And["platformID","platEncID"],nameData:{_String}]
+	]:=
+	Module[
+		{name=Hold[names["platformID","platEncID"]]/.attributes,
+		value,
+		normNameData=
+			StringJoin[
+				BoxForm`Intercalate[Flatten[StringSplit/@nameData]," "]
+				]
+			},
+		value=ReleaseHold@name;
+		If[
+			Function[name=name/.Hold->Unevaluated;#][
+				Map[Hold,value,{0}]=!=name
+				],
+			ReleaseHold@Hold[Set][name,{value,normNameData}],
+			ReleaseHold@Hold[Set][name,name=normNameData]
+			]
+		];
+
+toUnicode[XMLElement["cmap",attributes_,body_]]:=
+	XMLElement["cmap",attributes,toUnicode/@body];
+
+toUnicode[
+	XMLElement[
+		cmapFormat_/;StringMatchQ[cmapFormat,"cmap_format_"~~__],
+		attributes_?OptionQ/;(!FreeQ[attributes,#]&)/@
+			And["platformID","platEncID"],body_
+			]
+		]:=
+	Block[
+		{name=Flatten[names["platformID","platEncID"]/.attributes][[2]]},
+		XMLElement[cmapFormat,attributes,toUnicode/@body]
+		];
+
+toUnicode[XMLElement["map",attributes_,body_]]:=
+	XMLElement["map",toUnicode[attributes],body];
+
+decimalUnicodeCharacterNumber[charNum_?NumberQ,name_String]:=
+	Module[{candidateUnicode,char},
+		char=FromCharacterCode[charNum,name];
+		candidateUnicode=
+			StringReplace[
+				System`Convert`XMLDump`determineEntityExportFunction[
+					{char},
+					"US-ASCII"
+					][char],
+				{"&#"->"",";"->""}
+				];
+		If[DigitQ[candidateUnicode]&&FromCharacterCode[charNum,"ASCII"]=!=char,
+			ToExpression@candidateUnicode,charNum
+			]
+		];
+
+defineDebugArgs@decimalUnicodeCharacterNumber;
+
+toUnicode[attributes_?OptionQ/;!FreeQ[attributes,"code"]]:=
+	Flatten@{
+		"code"->ToString@
+			decimalUnicodeCharacterNumber[
+				ToExpression[StringReplace["code"/.attributes,"0x"->"16^^"]],
+				name
+				],
+		DeleteCases[attributes,"code"->_]
+		};
+
+toUnicode[arg_]=arg;
+
+defineDebugArgs@toUnicode;
+
+fontTree=Import[unicodeXMLFontFiles[[1]],"SymbolicXML",ConversionOptions->{"NormalizeWhitespace"->False,"IncludeEmbeddedObjects"->True,"PreserveCDATASections"->True}];
+
+]
+Abort[];
 
 End[];
 EndPackage[];
