@@ -135,6 +135,11 @@ allows prepension of a directory name to each id in an XML chain. This option \
 provides an easy method to set the output directory of the files in the chain. \
 Set the option to the path string that you would like to append to the ids."; 
 
+ReplaceBoundingBox::usage"This is an option for graphic Exports of the DocBook*\
+Equation functions that, under the conditions mentioned in the usage message \
+for WriteDimensions, where GetBoundingBoxSizePacket is used, rewrites the \
+bounding box with the information from GetBoundingBoxSizePacket.";
+
 SetIdAttribute::usage="An boolean option for the DocBook* functions that \
 states whether or not to set the xml:id attribute on the generated element.";
 
@@ -153,6 +158,23 @@ and the Sequenced right hand side of TextOptions.";
 
 ToXML::usage="This function sequences the XML out of an XMLChain and Sows \
 all the rest of the ExportDelayed types. See ExportDelayed and XMLChain.";
+
+UseMinimumHeightDimension::usage="This is an option for graphic Exports of the \
+DocBook*Equation functions that will cause the bounding box rewriting routine \
+to use the minimum height for the exported graphic at the expense of an \
+incorrect baseline shift. It is useful as a sub-option of DocBookTable because \
+DocBookTable uses DocBookInlineEquation for the contents of its cells, which \
+should be as tightly wrapped to the contents as possible (because it currently \
+can't be made very tight at all and this eliminates the most white space)."
+
+WriteDimensions::usage="This is an option for graphic Exports of the DocBook*\
+Equation/Figure functions that (currently) causes the dimensions of the export \
+to be extracted from an EPS (if ReplaceBoundingBox is false or if the export \
+is a type of Graphics) or GetBoundingBoxSizePacket otherwise. Yes, this means \
+that enabling WriteDimensions on a bitmap export type would actually pull its \
+width and height from an EPS. Also, if the function is able to use GetBounding\
+BoxSizePacket, it writes a processing instruction into the XML that can be \
+for baseline adjustment.";
 
 XMLChain::usage="An XMLChain is a function that will Sow the XML in its \
 argument just before Reaping the XML and non-XML tags (that are handled \
@@ -944,7 +966,12 @@ imageObjectElement[
 
 (*returns adjustments and comment end position*)
 epsSystem[expr_,opts___?OptionQ]:=
-	Module[{commentEndPos,epsList,llx,lly,urx,ury},
+	Module[{commentEndPos,headerList,epsList,llx,lly,urx,ury,width,yUp,yDown,
+		height,newLlx,newLly,newUrx,newUry,rht,orgWidth,orgHeight,
+		replaceBoundingBox=If[(ReplaceBoundingBox/.{opts})===True,True,False],
+		useMinimumHeightDimension=
+			If[(UseMinimumHeightDimension/.{opts})===True,True,False]
+		},
 		epsList=
 			ImportString[
 				ExportString[
@@ -954,33 +981,80 @@ epsSystem[expr_,opts___?OptionQ]:=
 					],
 				"Lines"];
 		commentEndPos=First@First@Position[epsList,"%%EndComments"];
-		{Flatten@{
-				StringCases[
-					Take[epsList,{1,commentEndPos}],
+		headerList=Take[epsList,{1,commentEndPos+1}];
+		{llx,lly,urx,ury}=ToExpression/@Flatten@StringCases[
+					headerList,
 					StringExpression[
 						"%%HiResBoundingBox: ",
 						llx__," ",lly__," ",
 						urx__," ",ury__]->
 							{llx,lly,urx,ury}
+						];
+		If[replaceBoundingBox&&!MatchQ[expr,graphicsPatternObject],
+			{{width,yUp,yDown}}=
+				If[MatchQ[expr,_Notebook],		
+					FrontEndExecute[
+						GetBoundingBoxSizePacket[Append[expr,Magnification->1]]
 						],
-				commentEndPos
-				},
-			epsList
-			}
+					FrontEndExecute[GetBoundingBoxSizePacket[expr]]/
+						Magnification^2/.
+							AbsoluteOptions[$FrontEnd,Magnification]
+					];
+			height=yUp+yDown;
+			orgWidth=urx-llx;
+			If[width>orgWidth,width=orgWidth];
+			orgHeight=ury-lly;
+			If[useMinimumHeightDimension&&height>orgHeight,
+				{yUp,yDown,height}={yUp,yDown,height}*orgHeight/height];
+			{newLlx,newUrx,newLly,newUry}=Sequence@@@
+				{Mean[{llx,urx}]+{-1,1}width/2,Mean[{lly,ury}]+{-1,1}height/2};
+			headerList=
+				StringReplace[
+					headerList,
+					{"%%BoundingBox:"~~__->
+						ToString[SequenceForm@@
+							BoxForm`Intercalate[
+								{"%%BoundingBox:",
+									Floor@newLlx,Floor@newLly,
+									Ceiling@newUrx,Ceiling@newUry},
+								" "
+								]
+							],
+						"%%HiResBoundingBox:"~~__->
+							ToString[SequenceForm@@
+								BoxForm`Intercalate[
+									{"%%HiResBoundingBox:",
+										newLlx,newLly,newUrx,newUry},
+									" "
+									]
+								],
+						(ToString@SequenceForm[lly," ",ury]~~" trans"~~rht__):>
+  							ToString@SequenceForm[newLly," ",newUry]~~
+  								" trans"~~rht
+  						}
+  					],
+  			width=urx-llx;
+  			height=ury-lly;
+  			yDown=0;
+			{newLlx,newLly,newUrx,newUry}={llx,lly,urx,ury}
+			];
+		{{newLlx,newLly,newUrx,newUry},
+			{width,height,yDown},
+			commentEndPos,
+			Join[headerList,Take[epsList,{commentEndPos+2,-1}]]}
 		];
 
 defineBadArgs@epsSystem;
 
 epsList[expr_,opts___?OptionQ]:=
-	Module[{epsList,commentEndPos,llx,lly,urx,ury},
-		{{llx,lly,urx,ury,commentEndPos},epsList}=epsSystem[expr,opts];
+	Module[{epsList,commentEndPos,llx,lly,urx,ury,width,height,yDown},
+		{{llx,lly,urx,ury},{width,height,yDown},commentEndPos,epsList}=
+			epsSystem[expr,opts];
 		Fold[Insert[#1,#2,commentEndPos+1]&,
 			epsList,
-			{StringJoin[llx," neg ",lly," neg translate"],
-				StringJoin[
-					"<</PageSize [",
-					urx," ",llx," sub ",
-					ury," ",lly," sub]>>setpagedevice"
+			ToString/@{SequenceForm[llx," neg ",lly," neg translate"],
+				SequenceForm[
+					"<</PageSize [",width," ",height,"]>>setpagedevice"
 					]
 				}
 			]
@@ -989,7 +1063,7 @@ epsList[expr_,opts___?OptionQ]:=
 defineBadArgs@epsList;
 
 epsBounds[expr_,opts___?OptionQ]:=
-	ToExpression/@Drop[First@epsSystem[expr,opts],-1];
+	ToExpression/@epsSystem[expr,opts][[2]];
 
 defineBadArgs@epsBounds;
 
@@ -1003,10 +1077,9 @@ imageObjectElement[
 	imageDataAttributes:multipleNullXmlAttributePatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[
-		{contentHeight,contentWidth,baseToTop,baseToBottom,
-			notebook,llx,lly,urx,ury,
+		{contentHeight,contentWidth,baseToBottom,notebook,
 			fileName=StringJoin[id,idExtension,".",fileExtension@filetype],
-			exportDimensions=If[(ExportDimensions/.{opts})===True,True,True]
+			writeDimensions=If[(WriteDimensions/.{opts})===True,True,False]
 			},
 		notebook=
 			Notebook[
@@ -1017,13 +1090,8 @@ imageObjectElement[
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
 		(*points are the units after these conversions*)
-		If[exportDimensions,
-			{{contentWidth,baseToTop,baseToBottom}}=
-				FrontEndExecute[
-					System`GetBoundingBoxSizePacket[notebook]
-					];
-			contentHeight=baseToTop+baseToBottom;
-			{llx,lly,urx,ury}=
+		If[writeDimensions,
+			{contentWidth,contentHeight,baseToBottom}=
 				epsBounds[
 					notebook,
 					ReleaseHold[Hold[opts]/.
@@ -1031,10 +1099,7 @@ imageObjectElement[
 							"IncludeSpecialFonts",_]->
 								"IncludeSpecialFonts"->False
 						]
-					];
-			{baseToTop,baseToBottom,contentHeight}=
-				{baseToTop,baseToBottom,contentHeight}*(ury-lly)/contentHeight;
-			contentWidth=(urx-llx);
+					]
 			];
 		Sow[
 			ExportDelayed[
@@ -1052,7 +1117,7 @@ imageObjectElement[
 			{XMLElement["imagedata",
 				{Sequence@@imageDataAttributes,
 					fileRefAttribute[fileName],
-					If[exportDimensions,
+					If[writeDimensions,
 						Identity[Sequence][
 							"contentwidth"->ToString@contentWidth<>"pt",
 							"contentdepth"->ToString@contentHeight<>"pt"
@@ -1060,7 +1125,7 @@ imageObjectElement[
 						Identity[Sequence][]
 						]
 					},
-				{If[exportDimensions,
+				{If[writeDimensions,
 					XMLObject["ProcessingInstruction"][
 						"db"<>(idExtension/."xhtml"->"html"),
 						"alignment-adjust=\""<>ToString[-baseToBottom]<>"pt\""
@@ -1211,14 +1276,6 @@ defineBadArgs@XMLDocument;
 
 (*equations*)
 
-$cellExportOptions={
-	Background->None,
-	CellFrameMargins->{{0,0},{0,0}},
-	CellMargins->{{0,0},{0,0}},
-	ShowCellBracket->False
-	};
-
-$notebookExportOptions={WindowWidth->Infinity};
 
 Options@$ToBoxesFunction={FormatType:>$FormatType,TextStyle:>$TextStyle};
 
@@ -1242,6 +1299,15 @@ $boxExportOptions=
 	{ToBoxesFunction->$ToBoxesFunction,
 		TextOptions->Options@$ToBoxesFunction};
 
+$cellExportOptions={
+	Background->None,
+	CellFrameMargins->{{0,0},{0,0}},
+	CellMargins->{{0,0},{0,0}},
+	ShowCellBracket->False
+	};
+
+$notebookExportOptions={WindowWidth->Infinity};
+
 $mathMlXhtmlExpressionExportOptions={
 	AllowMathPhrase->False,
 	ConversionOptions->{mathMLConversionOptions},
@@ -1255,15 +1321,17 @@ $pngHtmlExpressionExportOptions={
 	DataAttributes->{},
 	ExportType->"PNG",
 	ImageResolution:>$ScreenResolution,
-	ObjectAttributes->{"role"->"html"}
+	ObjectAttributes->{"role"->"html"},
+	Sequence@@$boxExportOptions
 	};
 
 $epsPdfExpressionExportOptions={
-	ConversionOptions->{"IncludeSpecialFonts"->False},
+	ConversionOptions->{"IncludeSpecialFonts"->True},
 	DataAttributes->{(*pdfScaleAttribute*)},
 	ExportType->"PDF",
 	(*ImageResolution:>$PrintResolution,*)
-	ObjectAttributes->{"role"->"fo"}
+	ObjectAttributes->{"role"->"fo"},
+	Sequence@@$boxExportOptions
 	};
 
 $mathMlPdfExpressionExportOptions={
@@ -1284,10 +1352,8 @@ $textAllAlternateExpressionExportOptions={
 	};
 
 $docBookEquationGeneralAdditionalExportOptions=
-	{Sequence@@$boxExportOptions,
-		CellOptions->Append[$cellExportOptions,PageWidth:>$ExportWidth],
-		NotebookOptions->$notebookExportOptions
-		};
+	{CellOptions->Append[$cellExportOptions,PageWidth:>$ExportWidth],
+		NotebookOptions->$notebookExportOptions};
 
 Options@docBookEquationGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
@@ -1295,23 +1361,15 @@ Options@docBookEquationGeneral={
 	Caption->None,
 	Exports->
 		{$mathMlXhtmlExpressionExportOptions,
-			Fold[
-				Append,
-				$pngHtmlExpressionExportOptions,
-				Append[
-					$docBookEquationGeneralAdditionalExportOptions,
-					AllowMathPhrase->True
-					]
-				],
-			$mathMlPdfExpressionExportOptions
-			(*Fold[
-				Append,
+			Flatten@{$pngHtmlExpressionExportOptions,
+				$docBookEquationGeneralAdditionalExportOptions,
+				AllowMathPhrase->True
+				},
+			Flatten@{(*$mathMlPdfExpressionExportOptions*)
 				$epsPdfExpressionExportOptions,
-				Append[
-					$docBookEquationGeneralAdditionalExportOptions,
-					AllowMathPhrase->False
-					]
-				]*),
+				$docBookEquationGeneralAdditionalExportOptions,
+				AllowMathPhrase->False
+				},
 			$textAllAlternateExpressionExportOptions
 			},
 	ObjectContainer->MediaObjectElement,
@@ -1407,9 +1465,7 @@ DocBookInformalEquation[id_String,expr_,opts:optionsOrNullPseudoPatternObject]:=
 defineBadArgs@DocBookInformalEquation;
 
 $docBookInlineEquationAdditionalExportOptions=
-	{Sequence@@$boxExportOptions,
-		AllowMathPhrase->True,
-		CellOptions->$cellExportOptions,
+	{CellOptions->$cellExportOptions,
 		NotebookOptions->$notebookExportOptions
 		};
 
@@ -1423,18 +1479,16 @@ SetOptions[DocBookInlineEquation,
 	ObjectContainer->InlineMediaObjectElement,
 	Exports->
 		{$mathMlXhtmlExpressionExportOptions,
-			Fold[
-				Append,
-				$pngHtmlExpressionExportOptions,
+			Flatten@{$pngHtmlExpressionExportOptions,
+				AllowMathPhrase->True,
 				$docBookInlineEquationAdditionalExportOptions
-				],
-			$mathMlPdfExpressionExportOptions
-			(*Fold[
-				Append,
-				$epsPdfExpressionExportOptions,
-				Flatten@{AllowMathPhrase->False,
-					$docBookInlineEquationAdditionalExportOptions}
-				]*),
+				},
+			Flatten@{(*$mathMlPdfExpressionExportOptions*)
+				$epsPdfExpressionExportOptions,AllowMathPhrase->False,
+				ReplaceBoundingBox->True,WriteDimensions->True,
+				UseMinimumHeightDimension->False,
+				$docBookInlineEquationAdditionalExportOptions
+				},
 			$textAllAlternateExpressionExportOptions	
 			}
 	];
@@ -1650,7 +1704,19 @@ Options@docBookTableGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
 	docBookEquationVersionAttributeRule},
 	TitleAbbrev->Automatic,
-	DocBookInlineEquationOptions->{Attributes->{},SetIdAttribute->False}
+	DocBookInlineEquationOptions->
+		{Attributes->{},
+			SetIdAttribute->False,
+			Rule[Exports,
+				Exports/.
+					(Options@
+						DocBookInlineEquation/.
+							ruleOrRuleDelayedPatternObject[
+								UseMinimumHeightDimension,
+								_
+								]->UseMinimumHeightDimension->True)
+				]
+			}
 	};
 
 (*change the table code so that strings don't pass through inlineequation*)
@@ -1742,6 +1808,18 @@ ExportDryRun[file_,expr_,type_String,opts:optionsOrNullPseudoPatternObject]:=
 
 defineBadArgs@ExportDryRun;
 
+(*adding options to export -- this is not the "overload" mention in 
+the PDF export message*)
+
+Unprotect[Export];
+Update/@{Export};
+Options@Export=
+	Flatten@{Options@Export,
+		UseMinimumHeightDimension->False,
+		ReplaceBoundingBox->False}
+Protect[Export];
+Update/@{Export};
+
 (*executable stuff*)
 quote="\""<>#<>"\""&;
 
@@ -1794,7 +1872,7 @@ Message[Export::format,_]=Sequence[];
 Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
 	StringQ@Ghostscript`Executable&&FileType@Ghostscript`Executable===File:=
 	Module[{args,epsFile,stem},
-		epsFile=StringReplace[pdfFile,stem__~~".pdf"\[Rule]stem~~".eps"];
+		epsFile=StringReplace[pdfFile,stem__~~".pdf"->stem~~".eps"];
 		Export[epsFile,epsList[expr,opts],"Lines"];
 		If[0===
 			run[quote@Ghostscript`Executable,
@@ -1825,6 +1903,8 @@ If[!ValueQ@FontTools`Executable,
 			]
 		];
 
+If[!ValueQ@CreateUnicodeFonts,CreateUnicodeFonts=False];
+
 If[!ValueQ@unicodeFontsDir,
 	unicodeFontsDir=ToFileName[{InputDirectoryName[],"Fonts"}]
 	];
@@ -1833,7 +1913,7 @@ If[FileType[unicodeFontsDir]=!=Directory,CreateDirectory[unicodeFontsDir]];
 
 unicodeFontFiles=FileNames["*.ttf",unicodeFontsDir];
 
-If[Length@unicodeFontFiles<20,
+If[CreateUnicodeFonts&&Length@unicodeFontFiles<20,
 If[FileType[FontTools`Executable]=!=File,
 	Message[FontTools`Executable::notfound];Abort[]
 	];
@@ -1863,9 +1943,9 @@ ttxRun=run@@
 		}];
 
 If[ttxRun=!=0,
-	General::fcuttf="XML`DocBook` failed to create the Unicode True Type "<>
-		"versions of the Mathematica fonts";
-	Message[General::fcuttf];
+	General::fcuttx="XML`DocBook` failed to create the Unicode True Type XML "<>
+		"versions of the Mathematica fonts.";
+	Message[General::fcuttx];
 	Abort[]
 	];
 
@@ -2000,8 +2080,21 @@ Export[#,
 	"XML"
 	]&/@unicodeXMLFontFiles;
 
+ttxRun=run@@
+	Flatten[{
+		quote@FontTools`Executable,
+		quote/@unicodeXMLFontFiles
+		}];
+
+If[ttxRun=!=0,
+	General::fcuttf="XML`DocBook` failed to create the Unicode True Type "<>
+		"versions of the Mathematica fonts.";
+	Message[General::fcuttf];
+	Abort[]
+	];
+
 ]
-Abort[];
+
 End[];
 EndPackage[];
 (*
