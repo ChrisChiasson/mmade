@@ -165,7 +165,11 @@ to use the minimum height for the exported graphic at the expense of an \
 incorrect baseline shift. It is useful as a sub-option of DocBookTable because \
 DocBookTable uses DocBookInlineEquation for the contents of its cells, which \
 should be as tightly wrapped to the contents as possible (because it currently \
-can't be made very tight at all and this eliminates the most white space)."
+can't be made very tight at all and this eliminates the most white space). It \
+also causes other \"random\" problems with things dropping out of place.";
+
+UseMinimumWidthDimension::usage="This option is the same as \
+UseMinimumHeightDimension, but is for the width.";
 
 WriteDimensions::usage="This is an option for graphic Exports of the DocBook*\
 Equation/Figure functions that (currently) causes the dimensions of the export \
@@ -969,6 +973,8 @@ epsSystem[expr_,opts___?OptionQ]:=
 	Module[{commentEndPos,headerList,epsList,llx,lly,urx,ury,width,yUp,yDown,
 		height,newLlx,newLly,newUrx,newUry,rht,orgWidth,orgHeight,
 		replaceBoundingBox=If[(ReplaceBoundingBox/.{opts})===True,True,False],
+		useMinimumWidthDimension=
+			If[(UseMinimumWidthDimension/.{opts})===True,True,False],
 		useMinimumHeightDimension=
 			If[(UseMinimumHeightDimension/.{opts})===True,True,False]
 		},
@@ -1002,7 +1008,7 @@ epsSystem[expr_,opts___?OptionQ]:=
 					];
 			height=yUp+yDown;
 			orgWidth=urx-llx;
-			If[width>orgWidth,width=orgWidth];
+			If[useMinimumWidthDimension&&width>orgWidth,width=orgWidth];
 			orgHeight=ury-lly;
 			If[useMinimumHeightDimension&&height>orgHeight,
 				{yUp,yDown,height}={yUp,yDown,height}*orgHeight/height];
@@ -1486,6 +1492,7 @@ SetOptions[DocBookInlineEquation,
 			Flatten@{(*$mathMlPdfExpressionExportOptions*)
 				$epsPdfExpressionExportOptions,AllowMathPhrase->False,
 				ReplaceBoundingBox->True,WriteDimensions->True,
+				UseMinimumWidthDimension->False,
 				UseMinimumHeightDimension->False,
 				$docBookInlineEquationAdditionalExportOptions
 				},
@@ -1712,9 +1719,9 @@ Options@docBookTableGeneral={
 					(Options@
 						DocBookInlineEquation/.
 							ruleOrRuleDelayedPatternObject[
-								UseMinimumHeightDimension,
+(*spacing altered*)	dimOpt:UseMinimumHeightDimension|UseMinimumWidthDimension,
 								_
-								]->UseMinimumHeightDimension->True)
+								]->dimOpt->False(*disabled for now*))
 				]
 			}
 	};
@@ -1815,6 +1822,7 @@ Unprotect[Export];
 Update/@{Export};
 Options@Export=
 	Flatten@{Options@Export,
+		UseMinimumWidthDimension->False,
 		UseMinimumHeightDimension->False,
 		ReplaceBoundingBox->False}
 Protect[Export];
