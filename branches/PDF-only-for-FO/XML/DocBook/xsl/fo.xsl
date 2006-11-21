@@ -10,6 +10,9 @@
 	<!--xsl:param name="fop1.extensions">1</xsl:param-->
 	<!--<xsl:param name="fop.extensions">1</xsl:param>-->
 	<xsl:param name="xep.extensions">1</xsl:param>
+	<!--we need to enable some symbol fonts-->
+	<xsl:param name="symbol.font.family"
+	select="'Symbol,ZapfDingbats,Arial Unicode MS, Lucida Sans Unicode'"/>
 	<!--included Mathematica source is usually 80 characters wide
 	    so having a small font size is probably necessary-->
 	<xsl:attribute-set name="monospace.verbatim.properties">
