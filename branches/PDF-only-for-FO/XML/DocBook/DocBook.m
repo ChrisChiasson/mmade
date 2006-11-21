@@ -1341,7 +1341,6 @@ $epsPdfExpressionExportOptions={
 	};
 
 $mathMlPdfExpressionExportOptions={
-	AllowMathPhrase->False,
 	ConversionOptions->{mathMLConversionOptions},
 	DataAttributes->{},
 	ExportType->"MathML",
@@ -1489,12 +1488,12 @@ SetOptions[DocBookInlineEquation,
 				AllowMathPhrase->True,
 				$docBookInlineEquationAdditionalExportOptions
 				},
-			Flatten@{(*$mathMlPdfExpressionExportOptions*)
-				$epsPdfExpressionExportOptions,AllowMathPhrase->False,
+			Flatten@{$mathMlPdfExpressionExportOptions,AllowMathPhrase->True
+				(*$epsPdfExpressionExportOptions,AllowMathPhrase->False,
 				ReplaceBoundingBox->True,WriteDimensions->True,
 				UseMinimumWidthDimension->False,
 				UseMinimumHeightDimension->False,
-				$docBookInlineEquationAdditionalExportOptions
+				$docBookInlineEquationAdditionalExportOptions*)
 				},
 			$textAllAlternateExpressionExportOptions	
 			}
