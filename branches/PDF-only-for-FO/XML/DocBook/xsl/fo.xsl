@@ -1,6 +1,9 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:fo="http://www.w3.org/1999/XSL/Format" version="1.0">
+	xmlns:fo="http://www.w3.org/1999/XSL/Format"
+	xmlns:mml="http://www.w3.org/1998/Math/MathML"
+	xmlns:mathematica="http://www.wolfram.com/XML/"
+	version="1.0">
 	<xsl:import
 		href="http://docbook.sourceforge.net/release/xsl/current/fo/docbook.xsl"/>
 	<xsl:import href="common.xsl"/>
@@ -22,6 +25,20 @@
 		<xsl:attribute
 			name="line-height-shift-adjustment">consider-shifts</xsl:attribute>
 	</xsl:attribute-set>
+	<!--this stylesheet is different than the "main" mathml.xsl because
+		I am trying to work around a problem where SVGMath seems to ignore
+		the fallback fonts when fontfamily is specified-->
+	<xsl:template match="mml:*">
+		<xsl:element name="{local-name(.)}" namespace="{namespace-uri(.)}">
+			<xsl:for-each select="@*[local-name()!='fontfamily' and (namespace-uri()='' or namespace-uri()=namespace-uri(parent::*))]">
+				<xsl:copy/>
+			</xsl:for-each>
+			<xsl:apply-templates/>
+		</xsl:element>
+	</xsl:template>
+	<xsl:template match="mml:semantics">
+		<xsl:apply-templates select="mml:*[1]"/>
+	</xsl:template>
 	<!--this is the xhtml imagedata template from the DocBook project
 		it is patched to handle SVG and MathML markup children of imagedata
 		from DocBook 5
@@ -45,6 +62,7 @@
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
+	
 	<!--this template is originally from the DocBook project; it has been
 		modified for caption handling-->
 	<xsl:template match="caption/para">
