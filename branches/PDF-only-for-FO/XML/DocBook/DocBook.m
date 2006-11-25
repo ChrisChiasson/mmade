@@ -67,7 +67,7 @@ DownValueParts::usage="DownValueParts is an option for PickBadArguments that \
 gives the appropriate Part argument to select the proper DownValue of the \
 function call to be debugged.";
 
-ExportDelayed::usage="This is an intert version of Export. When one is ready \
+ExportDelayed::usage="This is an inert version of Export. When one is ready \
 to actually perform the Export, Replace ExportDelayed with Export. These \
 ExportDelayed objects are handled differently by this package depending \
 on whether they are \"XML\" or non-XML types. The type is given in the third \
@@ -180,7 +180,8 @@ width and height from an EPS. Also, if the function is able to use GetBounding\
 BoxSizePacket, it writes a processing instruction into the XML that can be \
 for baseline adjustment.";
 
-XMLChain::usage="An XMLChain is a function that will Sow the XML in its \
+XMLChain::usage="XMLChain[XMLElement[..]] An XMLChain is a function that will \
+Sow the XML in its \
 argument just before Reaping the XML and non-XML tags (that are handled \
 by this package). An XMLChain is also the name given to a list of \
 ExportDelayed functions, because that is what this function generates. \
@@ -1174,16 +1175,18 @@ defineBadArgs@ToXML;
 (*XMLChain*)
 
 XMLChain[id:stringOrNothingPatternObject,
-	xmlexpr:heldExpressionPatternObject,
+	xmlexpr:xmlElementPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
-	Flatten@Reap[Sow[ExportDelayed[id,ReleaseHold@xmlexpr,xmlFileType,
+	Flatten@Reap[Sow[ExportDelayed[id,xmlexpr,xmlFileType,
 		FilterOptions[Export,opts]],xmlSewingTag],allSewingTags][[2]];
 
-XMLChain[xmlexpr:heldExpressionPatternObject,
+XMLChain[xmlexpr:xmlElementPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	XMLChain[None,xmlexpr,opts];
 
 defineBadArgs@XMLChain;
+
+Attributes@XMLChain={HoldAll};
 
 (*xmlDeclaration*)
 
