@@ -19,6 +19,13 @@ AllowMathPhrase::usage="This is an option with a boolean value (True|False) \
 that controls wether the particular export will use <mathphrase> to represent \
 the subclass of expressions that can be represented by pure DocBook markup.";
 
+BoldHeadings::usage="BoldHeadings is an option for DocBookTable that applies \
+StyleForm[#,FontWeight->\"Bold\"]& to the entries in the heading before they \
+are passed off to DocBookInlineEquation. This helps \"immutable\" output such \
+as pictures and vector renditions of mathematics and fonts match the default \
+styling the DocBook stylesheets would normally apply to such an entry if it \
+were plain text.";
+
 Caption::usage="This is an option for the DocBook* table, figure, and equation \
 functions that accepts a string, XMLElement or XMLChain as a caption.";
 
@@ -1780,6 +1787,7 @@ Options@docBookTableGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
 	docBookEquationVersionAttributeRule},
 	TitleAbbrev->Automatic,
+	BoldHeadings->True,
 	Caption->None,
 	DocBookInlineEquationOptions->
 		{Attributes->{},
@@ -1807,11 +1815,13 @@ docBookTableGeneral[id_String,
 	caption:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[
-		{options=Sequence[opts,Sequence@@Options@docBookTableGeneral]},
+		{options=Sequence[opts,Sequence@@Options@docBookTableGeneral],
+			boldHeadings},
 		Flatten@Reap[Sow[ExportDelayed[id,XMLElement["table",
 			{Sequence@@(Attributes/.{options}),
 				xmlIdAttributeRule[id,options]
 				},
+			boldHeadings=If[(BoldHeadings/.{options})===True,True,False];
 			{titleElements[hasTitle,title,TitleAbbrev/.{options}],
 				textObjectElement@processDescriptionPart@description,
 				Apply[
@@ -1832,7 +1842,10 @@ docBookTableGeneral[id_String,
 									ToXML@DocBookInlineEquation[
 										id<>StringJoin@@
 											Function["_"<>ToString[#]]/@#2,
-										#,
+										If[(First@#2)===1&&boldHeadings,
+											StyleForm[#1,FontWeight->"Bold"],
+											#1
+											],
 										Sequence@@
 											(DocBookInlineEquationOptions
 												/.{options}
