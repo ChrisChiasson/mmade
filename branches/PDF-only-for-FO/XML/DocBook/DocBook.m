@@ -30,6 +30,15 @@ CharacterReplacements::usage="This option for the XMLDocument accepts as its \
 right hand side a list of rules to be used in a StringReplace on all strings in
 the xmlchain argument.";
 
+SVGMathCompatibility::usage="This is an option for the DocBook*Equation \
+functions \
+that makes MathML format exports convert <mo>(</mo>...<mo>)</mo> markup to \
+<mfenced>...</mfenced> and removes <mtext> elements that containt \[NoBreak] \
+or \[InvisibleSpace]. It is useful for sending MathML to SVGMath because \
+SVGMath tends to draw parenthesis a bit low if the markup preceeding the \
+parenthesis has a subscript. SVGMath also has problems drawing those \
+aforementioned <mtext> elements.";
+
 DataAttributes::usage="These attributes are applied to the element inside the \
 <*object> element. This is usually an <imagedata> or <phrase> element.";
 
@@ -209,6 +218,7 @@ $ContextPath=Fold[Insert[##,2]&,$ContextPath,Reverse@{"XML`MathML`","XML`"}];
 (*patterns*)
 containsMsPatternObject=_?(!FreeQ[#,"ms"]&);
 containsMtextPatternObject=_?(!FreeQ[#,"mtext"]&);
+containsMoPatternObject=_?(!FreeQ[#,"mo"]&);
 
 superScriptAndSubscriptPatternObject=SuperscriptBox|SubscriptBox;
 
@@ -873,28 +883,80 @@ rawXML[mathMl_String,opts:optionsOrNullPseudoPatternObject]:=
 
 defineBadArgs@rawXML;
 
+sVGMathCompatibility[
+	xml:xmlElementPseudoPatternObject,
+	opts:optionsOrNullPseudoPatternObject
+	]/;If[(SVGMathCompatibility/.{opts})===True,True,False]:=
+	Module[
+		{containerElement,containerAttributes,moHead,moAttributes,pre,mid,post},
+		xml//.
+			{XMLElement[
+				containerElement_,
+				containerAttributes_,
+				{pre___,
+					XMLElement[
+						moHead:containsMoPatternObject,
+						moAttributes_,
+						{"("}
+						],
+					mid__,
+					XMLElement[
+						moHead_,
+						moAttributes_,
+						{")"}
+						],
+					post___
+					}
+				]:>
+					With[{mfenced=moHead/."mo"->"mfenced"},
+						XMLElement[
+							containerElement,
+							containerAttributes,
+							{pre,
+								XMLElement[mfenced,moAttributes,{mid}],
+								post
+								}
+							]
+						],
+				XMLElement[
+					containsMtextPatternObject,
+					_,
+					{"\[NoBreak]"|"\[InvisibleSpace]"}
+					]->
+					Sequence[]
+				}
+		];
+
+sVGMathCompatibility[xml:xmlElementPseudoPatternObject,
+	opts:optionsOrNullPseudoPatternObject
+	]:=xml;
+
+defineBadArgs@sVGMathCompatibility;
+
 expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
-	Module[{melement},rawXML@
-		StringReplace[
-			BoxesToMathML[
-				formatNumberFormMathMLBoxes[boxes],
-				"ElementFormatting"->None,
-				FilterOptions[
-					BoxesToMathML,
-					Sequence@@(ConversionOptions/.{opts}),
-					opts
-					]
-				],
-			StringExpression[
-				Whitespace,
-				"xmlns=",
-				quoteCharStringPatternObject,
-				mathMlNameSpace,
-				quoteCharStringPatternObject]->"",
-			1]/.melement:XMLElement[containsMsPatternObject,___]:>
-					reformatMs[melement]/.
-						melement:XMLElement[containsMtextPatternObject,___]:>
-							reformatMtext[melement]
+	Module[{melement},
+		sVGMathCompatibility[rawXML@
+			StringReplace[
+				BoxesToMathML[
+					formatNumberFormMathMLBoxes[boxes],
+					"ElementFormatting"->None,
+					FilterOptions[
+						BoxesToMathML,
+						Sequence@@(ConversionOptions/.{opts}),
+						opts
+						]
+					],
+				StringExpression[
+					Whitespace,
+					"xmlns=",
+					quoteCharStringPatternObject,
+					mathMlNameSpace,
+					quoteCharStringPatternObject]->"",
+				1]/.melement:XMLElement[containsMsPatternObject,___]:>
+						reformatMs[melement]/.
+(*indent adjusted*)		melement:XMLElement[containsMtextPatternObject,___]:>
+								reformatMtext[melement],
+			opts]
 		];
 
 defineBadArgs@expressionToSymbolicMathML;
@@ -1214,7 +1276,7 @@ Options@XMLDocument=
 	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
 	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\[Times]",
 	"\[Equal]"->"=","\[Rule]"->"\[RightArrow]",
-	"\[InvisibleSpace]"->"\:200b",
+	"\[InvisibleSpace]"->(*"\:200b"*)"",
 	"\[LeftBracketingBar]"|"\[RightBracketingBar]"|"\[VerticalSeparator]"->"|"}
 	};
 
@@ -1495,7 +1557,8 @@ SetOptions[DocBookInlineEquation,
 				AllowMathPhrase->True,
 				$docBookInlineEquationAdditionalExportOptions
 				},
-			Flatten@{$mathMlPdfExpressionExportOptions,AllowMathPhrase->True
+			Flatten@{$mathMlPdfExpressionExportOptions,
+				SVGMathCompatibility->True,AllowMathPhrase->False
 				(*$epsPdfExpressionExportOptions,AllowMathPhrase->False,
 				ReplaceBoundingBox->True,WriteDimensions->True,
 				UseMinimumWidthDimension->False,
@@ -1759,14 +1822,22 @@ docBookTableGeneral[id_String,
 					rowElement@@@
 						MapIndexed[
 							entryElement[
-								ToXML@DocBookInlineEquation[
-									id<>StringJoin@@
-										Function["_"<>ToString[#]]/@#2,
-									#,
-									Sequence@@
-										(DocBookInlineEquationOptions
-											/.{options}
-											)
+								Which[
+(*Handle as separate case in case of chnage*)
+									MatchQ[#,""],
+									"",
+									(*MatchQ[#,_String],
+									#,*)
+									True,
+									ToXML@DocBookInlineEquation[
+										id<>StringJoin@@
+											Function["_"<>ToString[#]]/@#2,
+										#,
+										Sequence@@
+											(DocBookInlineEquationOptions
+												/.{options}
+												)
+										]
 									],
 								options
 								]&,
