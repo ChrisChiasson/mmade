@@ -9,6 +9,8 @@
                 exclude-result-prefixes="xlink stext xtext lxslt simg ximg"
                 extension-element-prefixes="stext xtext"
                 version='1.0'>
+	<!--this stylesheet is originally from the DocBook project; it has been
+		modified for alignment-adjust fo processing instruction handling-->		
 <xsl:template name="process.image">
   <!-- When this template is called, the current node should be  -->
   <!-- a graphic, inlinegraphic, imagedata, or videodata. All    -->
