@@ -1,15 +1,16 @@
 <?xml version='1.0'?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:stext="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.TextFactory" xmlns:simg="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.ImageIntrinsics" xmlns:ximg="xaln://com.nwalsh.xalan.ImageIntrinsics" xmlns:xtext="com.nwalsh.xalan.Text" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink stext xtext lxslt simg ximg" extension-element-prefixes="stext xtext">
-
-<!--xhtml strict conformance parameters-->
-
-<xsl:param name="css.decoration">0</xsl:param>
-<xsl:param name="html.longdesc">0</xsl:param>
-<xsl:param name="ulink.target"></xsl:param>
-<xsl:param name="use.viewport">0</xsl:param>
-
-<!--end xhtml strict conformance parameters-->
-
+	<xsl:import href="xhtml-process-image.xsl"/>
+	
+	<!--xhtml strict conformance parameters-->
+	
+	<xsl:param name="css.decoration">0</xsl:param>
+	<xsl:param name="html.longdesc">0</xsl:param>
+	<xsl:param name="ulink.target"></xsl:param>
+	<xsl:param name="use.viewport">0</xsl:param>
+	
+	<!--end xhtml strict conformance parameters-->
+	
 	<!--this template is originally from the DocBook project; it has been
 		modified for caption handling-->
 	<xsl:template name="captionparagraph">

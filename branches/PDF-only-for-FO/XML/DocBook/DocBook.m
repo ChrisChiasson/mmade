@@ -193,12 +193,11 @@ UseMinimumHeightDimension, but is for the width.";
 
 WriteDimensions::usage="This is an option for graphic Exports of the DocBook*\
 Equation/Figure functions that (currently) causes the dimensions of the export \
-to be extracted from an EPS (if ReplaceBoundingBox is false or if the export \
-is a type of Graphics) or GetBoundingBoxSizePacket otherwise. Yes, this means \
-that enabling WriteDimensions on a bitmap export type would actually pull its \
-width and height from an EPS. Also, if the function is able to use GetBounding\
-BoxSizePacket, it writes a processing instruction into the XML that can be \
-for baseline adjustment.";
+to be extracted from an EPS ((if ReplaceBoundingBox is false or if the export \
+is a type of Graphics) and the export role isn't html) or \
+GetBoundingBoxSizePacket otherwise. Also, if the function is able to use \
+GetBoundingBoxSizePacket, it writes a processing instruction into the XML that \
+can be for baseline adjustment.";
 
 XMLChain::usage="XMLChain[XMLElement[..]] An XMLChain is a function that will \
 Sow the XML in its \
@@ -1042,6 +1041,15 @@ imageObjectElement[
 			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
 				fileRefAttribute[fileName]},{}]}]];
 
+getBoundingBoxSizePacket[expr_Notebook]:=
+	FrontEndExecute[GetBoundingBoxSizePacket[Append[expr,Magnification->1]]];
+
+getBoundingBoxSizePacket[expr_]:=
+	FrontEndExecute[GetBoundingBoxSizePacket[expr]]/Magnification^2/.
+		AbsoluteOptions[$FrontEnd,Magnification];
+
+defineBadArgs@getBoundingBoxSizePacket;
+
 (*returns adjustments and comment end position*)
 epsSystem[expr_,opts___?OptionQ]:=
 	Module[{commentEndPos,headerList,epsList,llx,lly,urx,ury,width,yUp,yDown,
@@ -1071,15 +1079,7 @@ epsSystem[expr_,opts___?OptionQ]:=
 							{llx,lly,urx,ury}
 						];
 		If[replaceBoundingBox&&!MatchQ[expr,graphicsPatternObject],
-			{{width,yUp,yDown}}=
-				If[MatchQ[expr,_Notebook],		
-					FrontEndExecute[
-						GetBoundingBoxSizePacket[Append[expr,Magnification->1]]
-						],
-					FrontEndExecute[GetBoundingBoxSizePacket[expr]]/
-						Magnification^2/.
-							AbsoluteOptions[$FrontEnd,Magnification]
-					];
+			{{width,yUp,yDown}}=getBoundingBoxSizePacket[expr];
 			height=yUp+yDown;
 			orgWidth=urx-llx;
 			If[useMinimumWidthDimension&&width>orgWidth,width=orgWidth];
@@ -1147,6 +1147,17 @@ epsBounds[expr_,opts___?OptionQ]:=
 
 defineBadArgs@epsBounds;
 
+prepareBaselineAdjustment[baseToBottom_?NumberQ,idExtension_String]:=
+	prepareBaselineAdjustment[ToString[-baseToBottom],idExtension];
+
+prepareBaselineAdjustment[negativeBaseToBottom_String,"html"|"xhtml"]/;
+	!DigitQ[StringTake[negativeBaseToBottom,-1]]:=
+	negativeBaseToBottom<>"0";
+
+prepareBaselineAdjustment[negativeBaseToBottom_String,_]:=negativeBaseToBottom;
+
+defineBadArgs@prepareBaselineAdjustment;
+
 imageObjectElement[
 	id_String,
 	expr_,
@@ -1169,16 +1180,19 @@ imageObjectElement[
 					]},
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
-		(*points are the units after these conversions*)
+		(*points are the units after these conversions*)		
 		If[writeDimensions,
 			{contentWidth,contentHeight,baseToBottom}=
-				epsBounds[
-					notebook,
-					ReleaseHold[Hold[opts]/.
-						ruleOrRuleDelayedPatternObject[
-							"IncludeSpecialFonts",_]->
-								"IncludeSpecialFonts"->False
-						]
+				If[idExtension==="html"&&!MatchQ[expr,graphicsPatternObject],
+					First@getBoundingBoxSizePacket[notebook],
+					epsBounds[
+						notebook,
+						ReleaseHold[Hold[opts]/.
+							ruleOrRuleDelayedPatternObject[
+								"IncludeSpecialFonts",_]->
+									"IncludeSpecialFonts"->False
+							]
+						]					
 					]
 			];
 		Sow[
@@ -1197,7 +1211,7 @@ imageObjectElement[
 			{XMLElement["imagedata",
 				{Sequence@@imageDataAttributes,
 					fileRefAttribute[fileName],
-					If[writeDimensions,
+					If[writeDimensions&&idExtension=!="html",
 						Identity[Sequence][
 							"contentwidth"->ToString@contentWidth<>"pt",
 							"contentdepth"->ToString@contentHeight<>"pt"
@@ -1208,7 +1222,9 @@ imageObjectElement[
 				{If[writeDimensions,
 					XMLObject["ProcessingInstruction"][
 						"db"<>(idExtension/."xhtml"->"html"),
-						"alignment-adjust=\""<>ToString[-baseToBottom]<>"pt\""
+						"alignment-adjust=\""<>
+(*indent adjusted*)		prepareBaselineAdjustment[baseToBottom,idExtension]<>
+								"pt\""
 						],
 					Identity[Sequence][]
 					]}
@@ -1402,6 +1418,7 @@ $mathMlXhtmlExpressionExportOptions={
 $pngHtmlExpressionExportOptions={
 	DataAttributes->{},
 	ExportType->"PNG",
+	WriteDimensions->True,
 	ImageResolution:>$ScreenResolution,
 	ObjectAttributes->{"role"->"html"},
 	Sequence@@$boxExportOptions
