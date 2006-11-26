@@ -39,6 +39,22 @@
 	<xsl:template match="mml:semantics">
 		<xsl:apply-templates select="mml:*[1]"/>
 	</xsl:template>
+	<!--This is the fo table.footnote.block template from the DocBook project.
+		It is patched to handle caption markup children of table from DocBook 5.
+		This is a rather weird place to add caption support; when the main
+		stylesheets add the support, MMADE users will probably end up with
+		double captions until this template is turned off.
+		Except for the modifications, this template did not originate from the
+		MMADE project or its authors.
+	-->
+	<xsl:template name="table.footnote.block">
+		<xsl:if test=".//footnote">
+			<fo:block keep-with-previous.within-column="always">
+				<xsl:apply-templates select=".//footnote" mode="table.footnote.mode"/>
+			</fo:block>
+		</xsl:if>
+		<xsl:apply-templates select="./caption"/>
+	</xsl:template>
 	<!--this is the xhtml imagedata template from the DocBook project
 		it is patched to handle SVG and MathML markup children of imagedata
 		from DocBook 5
