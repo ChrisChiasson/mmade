@@ -55,10 +55,14 @@ table,opts]";
 
 DocBookInlineEquation::usage="DocBookInlineEquation[\"id\",expr,opts]";
 
+DocBookInlineEquationOptions::usage="DocBookInlineEquationOptions is an option \
+for DocBookTable that allows one to specify the options fed to \
+DocBookInlineEquation."
+
 DocBookInlineMediaObject::usage="DocBookInlineMediaObject[\"id\",\
 \"description\",graphics,opts]";
 
-DocBookTable::usage="DocBookTable[\"id\",\"title\",\"description\",table,opts]";
+DocBookTable::usage="DocBookTable[\"id\",\"title\",\"alt text\",table,opts]";
 
 DocBookString::usage="DocBookString[str1,str2,...] displays as str1<>str2. \
 it is useful for avoiding quotation marks around exported strings.";
@@ -292,7 +296,7 @@ optionsOrNullPseudoPatternObject=optionPseudoPatternObject...;
 (*the subpattern that should be repeated for tablePseudoPatternObject is rather
 difficult to name - so I just left it as an expression*)
 
-tablePseudoPatternObject={{__}..};
+tablePseudoPatternObject={{__},{__}..}?MatrixQ;
 
 exportDelayedPseudoPatternObject=ExportDelayed[_String,_,_String,
 	optionsOrNullPseudoPatternObject];
@@ -1713,6 +1717,7 @@ Options@docBookTableGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
 	docBookEquationVersionAttributeRule},
 	TitleAbbrev->Automatic,
+	Caption->None,
 	DocBookInlineEquationOptions->
 		{Attributes->{},
 			SetIdAttribute->False,
@@ -1809,8 +1814,8 @@ Options@ExportDryRun=Options@ExportString;
 ExportDryRun[file_String,expr_,type_String,opts:
 	optionsOrNullPseudoPatternObject]:={file,ExportString[expr,type,opts]};
 
-(*file_ will trigger the ExportDryRun::chtype message in more cases than it
- should - such as when file is a stram and not a file name*)
+(*file_String will trigger the ExportDryRun::chtype message in more cases than
+it should - such as when file is a stream and not a file name*)
 
 ExportDryRun[file_,expr_,type_String,opts:optionsOrNullPseudoPatternObject]:=
 	{Message[Export::chtype,file];file,ExportString[expr,type,opts]};
