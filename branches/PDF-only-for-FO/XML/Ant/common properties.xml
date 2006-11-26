@@ -3,6 +3,8 @@
 	<!--file format info:
 		http://ant.apache.org/manual/CoreTasks/xmlproperty.html
 		-->
+	<!--Get the mfiles?-->
+	<property name="get-mfiles" value="true"/>
 	<!--xml source directory-->
 	<property name="src" location="${documentation}/src"/>
 	<basename property="xml-stem" file="${xml}" suffix=".xml"/>
