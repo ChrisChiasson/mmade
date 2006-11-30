@@ -5,11 +5,18 @@ BeginPackage["XML`DocBook`",{"Utilities`FilterOptions`"}];
 $ExportWidth::usage="$ExportWidth specifies the width at which to line \
 wrap exported expressions.";
 
+$MultipleGraphicsExportTypes::usage="Alternative file types for which \
+Mathematica can perform a direct export to an animation. Other file type \
+choices export only one frame (part), given by the value of \
+GraphicsListPart, in a list of graphics objects.";
+
 $PrintResolution::usage="$PrintResolution gives the default resolution \
 used to export graphics to raster formats destubed fir display in print.";
 
 $ScreenResolution::usage="$ScreenResolution is the default resolution \
-used to export graphics to raster formats destined for display on screen.";
+used to export graphics to raster formats destined for display on screen. You \
+should set this in your kernel's init.m file via \
+XML`DocBook`$ScreenResolution=dpi, where dpi is the dpi of your screen.";
 
 $ToBoxesFunction::usage="$ToBoxesFunction[expr,opts] converts and expression \
 to boxes using StyleForm nested inside ToBoxes. It allows you to control \
@@ -51,6 +58,14 @@ DataAttributes::usage="These attributes are applied to the element inside the \
 
 Declarations::usage="Declarations contains the rules for the pseudo attributes \
 of the xml declaration at the beginning of the output XML document.";
+
+GraphicsListPart::usage="This is an option for DocBook*Figure and \
+DocBookInlineMediaMediaObject with a right hand value that indicates the Part \
+of a list \
+of graphics objects to be exported in case Export is incapable of creating an \
+animated version of the plot in the format given by FileType. Plots for which \
+Export can create an animated \
+version are given by $MultipleGraphicsExportTypes.";
 
 DocBookEquation::usage="DocBookEquation[\"id\",\"title\",expr,opts]";
 
@@ -102,6 +117,21 @@ expr to \"file\" in \"format\" by returning {\"file\",ExportString[expr,\
 Exports::usage="Exports is an option for DocBookEquation and DocBookFigure \
 that gives a nested list of option lists for the functions that are called \
 in the process of making an equation or figure element.";
+
+ExportsOption::rlnf=
+    "An ObjectAttributes rule with an entry for the role `1` was not found in \
+the list of option lists. Therefore, the rule(s) `2` can't be added to the \
+exports for role `1`.";
+
+ExportsOption::usage="ExportsOption[optionListList,role,newOptions] gives \
+the optionListList with one of its entries having new rules corresponding to \
+newOptions. The entry that is replaced is the one that has a rule for \
+ObjectAttributes that includes \"role\"->role. ExportsOption[symb,role,\
+newOptions] does the same thing, but gets optionListList from the right hand \
+side of the Exports option given by Options[symb,Exports]. Both of these \
+call forms are useful for modifying the Exports option of the \
+DocBook*Equation/Figure/Table functions. A call might be as follows: \
+DocBookFigure[...,Exports->ExportsOption[DocBookFigure,\"fo\",ExportType->\"PNG\"]";
 
 ExportType::usage="This is the type of output that will be generated for the \
 expression being exported. It must be one of the types handled by Export.";
@@ -220,6 +250,8 @@ DocBookEquation, DocBookTable, etc.";
 Begin["`Private`"];
 
 $ContextPath=Fold[Insert[##,2]&,$ContextPath,Reverse@{"XML`MathML`","XML`"}];
+
+$MultipleGraphicsExportTypes=Alternatives@"GIF";
 
 (*patterns*)
 containsMsPatternObject=_?(!FreeQ[#,"ms"]&);
@@ -432,6 +464,61 @@ PickBadArguments[heldFunctionCall_Hold,opts___?OptionQ]:=
 		];
 
 defineBadArgs@PickBadArguments;
+
+(*rule handling*)
+
+ruleFlatUnion[opts__?OptionQ]:=
+	With[{rules=Flatten@{opts}},
+		Module[{encounteredLhses=Alternatives[],lhs,rule,ruleParser},
+			ruleParser[rule:ruleOrRuleDelayedPatternObject[lhs_,_]]:=
+				If[MatchQ[lhs,encounteredLhses],
+					Identity[Sequence][],
+					AppendTo[encounteredLhses,lhs];rule
+					];
+				ruleParser/@rules
+			]
+		];
+
+defineBadArgs[ruleFlatUnion];
+
+(*option switching by role*)
+
+ExportsOption[
+	oldExportsRhs:{__?OptionQ},
+	role_String,newExportsSubOptions__?OptionQ
+	]:=
+	With[
+		{rolePatternPositions=
+			Position[oldExportsRhs,
+				ruleOrRuleDelayedPatternObject[
+					ObjectAttributes,
+					{___,ruleOrRuleDelayedPatternObject["role",role],___}
+					]
+				],
+			opts=Flatten@{newExportsSubOptions}
+			},
+		With[{exportPosition=First@First@rolePatternPositions},
+			ReplacePart[oldExportsRhs,
+				ruleFlatUnion[newExportsSubOptions,
+					Extract[oldExportsRhs,exportPosition]
+					],
+				exportPosition
+				]
+			]/;If[rolePatternPositions=!={},
+				True,Message[ExportsOption::rlnf,role,opts]
+				]
+		];
+
+ExportsOption[
+	symb_Symbol,role_String,newExportsSubOptions__?OptionQ
+	]:=
+	With[
+		{result=Check[ExportsOption[Exports/.Options[symb,Exports],
+			role,newExportsSubOptions],$Failed]},
+		result/;result=!=$Failed
+		];
+
+defineBadArgs[ExportsOption];
 
 Unprotect[CopyFile];
 
@@ -1027,11 +1114,23 @@ imageObjectElement[
 	imageObjectAttributes:multipleNullXmlAttributePatternObject,
 	imageDataAttributes:multipleNullXmlAttributePatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
-	Module[{fileName=StringJoin[id,idExtension,".",fileExtension@filetype]},
+	With[{fileName=StringJoin[id,idExtension,".",fileExtension@filetype],
+		graphicsListPart=GraphicsListPart/.{opts}},
 		Sow[
 			ExportDelayed[
 				fileName,
-				graphics,
+				graphics[[
+					If[Head@graphics===List&&
+						!StringMatchQ[
+							filetype,
+							$MultipleGraphicsExportTypes,
+							IgnoreCase->True
+							],
+						If[Element[graphicsListPart,Integers],
+							graphicsListPart,
+							1],
+						All]
+					]],
 				filetype,
 				FilterOptions[Export,opts]
 				],
@@ -1509,14 +1608,20 @@ exportObjectListKernel[id_String,expr_,boxes_,
 
 defineBadArgs@exportObjectListKernel;
 
-exportObjectList[id_String,expr_,exports:exportsPatternObject]:=
-	exportObjectListKernel[id,expr,toBoxes[expr,Sequence@@#],Sequence@@#]&/@
-		exports;
+exportObjectList[
+	id_String,
+	expr_,
+	exports:exportsPatternObject,
+	opts:optionsOrNullPseudoPatternObject
+	]:=
+	exportObjectListKernel[id,expr,toBoxes[expr,Sequence@@#],Sequence@@#,
+		opts]&/@exports;
 
 docBookEquationGeneralKernel[id_String,expr_,
 	options:optionsOrNullPseudoPatternObject]:=
 	(ObjectContainer/.{options})[
-		Sequence@@exportObjectList[id,expr,Exports/.{options}]
+		Sequence@@exportObjectList[id,expr,Exports/.{options},
+			Sequence@@DeleteCases[{options},_[Exports,_]]]
 		];
 
 docBookEquationGeneral[id_String,
@@ -1621,6 +1726,7 @@ Options@docBookFigureGeneral={
 				$docBookFigureGeneralAdditionalOptions
 				]
 			},
+	GraphicsListPart->-1,
 	ObjectContainer->MediaObjectElement,
 	SetIdAttribute->True,
 	TitleAbbrev->Automatic
@@ -1629,7 +1735,8 @@ Options@docBookFigureGeneral={
 exportGraphicsObjectList[
 	id_String,
 	graphics:graphicsOrMultipleGraphicsPatternObject,
-	exports:exportsPatternObject]:=
+	exports:exportsPatternObject,
+	opts:optionsOrNullPseudoPatternObject]:=
 	Function[
 		imageObjectElement[
 			id,
@@ -1638,7 +1745,8 @@ exportGraphicsObjectList[
 			"role"/.(ObjectAttributes/.#),
 			ObjectAttributes/.#,
 			DataAttributes/.#,
-			Sequence@@#
+			Sequence@@#,
+			opts
 			]		
 		]/@exports;
 
@@ -1649,7 +1757,8 @@ docBookFigureGeneralKernel[
 	options:optionsOrNullPseudoPatternObject
 	]:=
 	(ObjectContainer/.{options})[
-		Sequence@@exportGraphicsObjectList[id,graphics,Exports/.{options}],
+		Sequence@@exportGraphicsObjectList[id,graphics,Exports/.{options},
+			Sequence@@DeleteCases[{options},_[Exports,_]]],
 		textObjectElement@processDescriptionPart@description
 		];
 
