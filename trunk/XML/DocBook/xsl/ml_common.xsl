@@ -23,129 +23,63 @@ set       toc,title
 </xsl:param>
 	<!--this template is originally from the DocBook project; it has been
 		modified for caption handling-->
-	<xsl:template match="caption/para">
-		<xsl:choose>
-			<xsl:when test="count(preceding-sibling::*)=0">
-				<xsl:call-template name="captionparagraph">
-					<xsl:with-param name="class">
-						<xsl:if test="@role and $para.propagates.style != 0">
-							<xsl:value-of select="@role"/>
-						</xsl:if>
-					</xsl:with-param>
-					<xsl:with-param name="content">
-						<xsl:if test="position() = 1 and parent::listitem">
-							<xsl:call-template name="anchor">
-								<xsl:with-param name="node" select="parent::listitem"/>
-							</xsl:call-template>
-						</xsl:if>
-						<xsl:call-template name="anchor"/>
-						<xsl:apply-templates/>
-					</xsl:with-param>
-				</xsl:call-template>
-			</xsl:when>
-			<xsl:otherwise>
-				<xsl:call-template name="$paragraph">
-					<xsl:with-param name="class">
-						<xsl:if test="@role and $para.propagates.style != 0">
-							<xsl:value-of select="@role"/>
-						</xsl:if>
-					</xsl:with-param>
-					<xsl:with-param name="content">
-						<xsl:if test="position() = 1 and parent::listitem">
-							<xsl:call-template name="anchor">
-								<xsl:with-param name="node" select="parent::listitem"/>
-							</xsl:call-template>
-						</xsl:if>
-						<xsl:call-template name="anchor"/>
-						<xsl:apply-templates/>
-					</xsl:with-param>
-				</xsl:call-template>
-			</xsl:otherwise>
-		</xsl:choose>
+	<xsl:template match="caption/para[count(preceding-sibling::*)=0]">
+		<xsl:call-template name="captionparagraph">
+			<xsl:with-param name="class">
+				<xsl:if test="@role and $para.propagates.style != 0">
+					<xsl:value-of select="@role"/>
+				</xsl:if>
+			</xsl:with-param>
+			<xsl:with-param name="content">
+				<xsl:if test="position() = 1 and parent::listitem">
+					<xsl:call-template name="anchor">
+						<xsl:with-param name="node" select="parent::listitem"/>
+					</xsl:call-template>
+				</xsl:if>
+				<xsl:call-template name="anchor"/>
+				<xsl:apply-templates/>
+			</xsl:with-param>
+		</xsl:call-template>
 	</xsl:template>
 	<!--this template is originally from the DocBook project; it has been
 		modified for question handling-->
-	<xsl:template match="question/para">
-		<xsl:choose>
-			<xsl:when test="count(preceding-sibling::*)=0">
-				<xsl:call-template name="questionparagraph">
-					<xsl:with-param name="class">
-						<xsl:if test="@role and $para.propagates.style != 0">
-							<xsl:value-of select="@role"/>
-						</xsl:if>
-					</xsl:with-param>
-					<xsl:with-param name="content">
-						<xsl:if test="position() = 1 and parent::listitem">
-							<xsl:call-template name="anchor">
-								<xsl:with-param name="node" select="parent::listitem"/>
-							</xsl:call-template>
-						</xsl:if>
-						<xsl:call-template name="anchor"/>
-						<xsl:apply-templates/>
-					</xsl:with-param>
-				</xsl:call-template>
-			</xsl:when>
-			<xsl:otherwise>
-				<xsl:call-template name="$paragraph">
-					<xsl:with-param name="class">
-						<xsl:if test="@role and $para.propagates.style != 0">
-							<xsl:value-of select="@role"/>
-						</xsl:if>
-					</xsl:with-param>
-					<xsl:with-param name="content">
-						<xsl:if test="position() = 1 and parent::listitem">
-							<xsl:call-template name="anchor">
-								<xsl:with-param name="node" select="parent::listitem"/>
-							</xsl:call-template>
-						</xsl:if>
-						<xsl:call-template name="anchor"/>
-						<xsl:apply-templates/>
-					</xsl:with-param>
-				</xsl:call-template>
-			</xsl:otherwise>
-		</xsl:choose>
+	<xsl:template match="question/para[count(preceding-sibling::*)=0]">
+		<xsl:call-template name="questionparagraph">
+			<xsl:with-param name="class">
+				<xsl:if test="@role and $para.propagates.style != 0">
+					<xsl:value-of select="@role"/>
+				</xsl:if>
+			</xsl:with-param>
+			<xsl:with-param name="content">
+				<xsl:if test="position() = 1 and parent::listitem">
+					<xsl:call-template name="anchor">
+						<xsl:with-param name="node" select="parent::listitem"/>
+					</xsl:call-template>
+				</xsl:if>
+				<xsl:call-template name="anchor"/>
+				<xsl:apply-templates/>
+			</xsl:with-param>
+		</xsl:call-template>
 	</xsl:template>
 	<!--this template is originally from the DocBook project; it has been
 		modified for answer handling-->
-	<xsl:template match="answer/para">
-		<xsl:choose>
-			<xsl:when test="count(preceding-sibling::*)=0">
-				<xsl:call-template name="answerparagraph">
-					<xsl:with-param name="class">
-						<xsl:if test="@role and $para.propagates.style != 0">
-							<xsl:value-of select="@role"/>
-						</xsl:if>
-					</xsl:with-param>
-					<xsl:with-param name="content">
-						<xsl:if test="position() = 1 and parent::listitem">
-							<xsl:call-template name="anchor">
-								<xsl:with-param name="node" select="parent::listitem"/>
-							</xsl:call-template>
-						</xsl:if>
-						<xsl:call-template name="anchor"/>
-						<xsl:apply-templates/>
-					</xsl:with-param>
-				</xsl:call-template>
-			</xsl:when>
-			<xsl:otherwise>
-				<xsl:call-template name="$paragraph">
-					<xsl:with-param name="class">
-						<xsl:if test="@role and $para.propagates.style != 0">
-							<xsl:value-of select="@role"/>
-						</xsl:if>
-					</xsl:with-param>
-					<xsl:with-param name="content">
-						<xsl:if test="position() = 1 and parent::listitem">
-							<xsl:call-template name="anchor">
-								<xsl:with-param name="node" select="parent::listitem"/>
-							</xsl:call-template>
-						</xsl:if>
-						<xsl:call-template name="anchor"/>
-						<xsl:apply-templates/>
-					</xsl:with-param>
-				</xsl:call-template>
-			</xsl:otherwise>
-		</xsl:choose>
+	<xsl:template match="answer/para[count(preceding-sibling::*)=0]">
+		<xsl:call-template name="answerparagraph">
+			<xsl:with-param name="class">
+				<xsl:if test="@role and $para.propagates.style != 0">
+					<xsl:value-of select="@role"/>
+				</xsl:if>
+			</xsl:with-param>
+			<xsl:with-param name="content">
+				<xsl:if test="position() = 1 and parent::listitem">
+					<xsl:call-template name="anchor">
+						<xsl:with-param name="node" select="parent::listitem"/>
+					</xsl:call-template>
+				</xsl:if>
+				<xsl:call-template name="anchor"/>
+				<xsl:apply-templates/>
+			</xsl:with-param>
+		</xsl:call-template>
 	</xsl:template>
 </xsl:stylesheet>
 <!--

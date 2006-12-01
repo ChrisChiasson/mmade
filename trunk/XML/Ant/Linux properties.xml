@@ -37,6 +37,10 @@
 	<property name="vncserver" location="/usr/bin/vncserver"/>
 	<property name="xvncgeometry" value="1024x768"/>
 	<property name="xvncdepth" value="24"/>
+	<!--python location-->
+	<!--property name="python" location=""/-->
+	<!--SVGMath-->
+	<!--property name="svgmathpath" location=""/-->
 </project>
 <!--
 	MMADE, a Mathematica DocBook Exporter

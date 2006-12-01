@@ -11,4 +11,7 @@
 			<xsl:apply-templates/>
 		</xsl:element>
 	</xsl:template>
+	<xsl:template match="mml:semantics">
+		<xsl:apply-templates select="mml:*[1]"/>
+	</xsl:template>
 </xsl:stylesheet>

@@ -1,6 +1,9 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns:fo="http://www.w3.org/1999/XSL/Format" version="1.0">
+	xmlns:fo="http://www.w3.org/1999/XSL/Format"
+	xmlns:mml="http://www.w3.org/1998/Math/MathML"
+	xmlns:mathematica="http://www.wolfram.com/XML/"
+	version="1.0">
 	<xsl:import
 		href="http://docbook.sourceforge.net/release/xsl/current/fo/docbook.xsl"/>
 	<xsl:import href="common.xsl"/>
@@ -10,74 +13,97 @@
 	<!--xsl:param name="fop1.extensions">1</xsl:param-->
 	<!--<xsl:param name="fop.extensions">1</xsl:param>-->
 	<xsl:param name="xep.extensions">1</xsl:param>
+	<!--we need to enable some symbol fonts-->
+	<xsl:param name="symbol.font.family"
+	select="'Symbol,ZapfDingbats,Arial Unicode MS, Lucida Sans Unicode'"/>
 	<!--included Mathematica source is usually 80 characters wide
 	    so having a small font size is probably necessary-->
 	<xsl:attribute-set name="monospace.verbatim.properties">
 		<xsl:attribute name="font-size">8pt</xsl:attribute>
 	</xsl:attribute-set>
-	<!--keep variable names from being segmented-->
-	<!--This template is used with the permission of its author, Bob Stayton.-->	
-	<!--xsl:template match="varname">
-		<fo:inline keep-together.within-line="always">
-			<xsl:apply-imports/>
-		</fo:inline>
-	</xsl:template-->	
-	<!--this template is originally from the DocBook project; it has been
-		modified for caption handling-->
-	<xsl:template match="caption/para">
+	<xsl:attribute-set name="root.properties">
+		<xsl:attribute
+			name="line-height-shift-adjustment">consider-shifts</xsl:attribute>
+	</xsl:attribute-set>
+	<!--this stylesheet is different than the "main" mathml.xsl because
+		I am trying to work around a problem where SVGMath seems to ignore
+		the fallback fonts when fontfamily is specified-->
+	<xsl:template match="mml:*">
+		<xsl:element name="{local-name(.)}" namespace="{namespace-uri(.)}">
+			<xsl:for-each select="@*[local-name()!='fontfamily' and (namespace-uri()='' or namespace-uri()=namespace-uri(parent::*))]">
+				<xsl:copy/>
+			</xsl:for-each>
+			<xsl:apply-templates/>
+		</xsl:element>
+	</xsl:template>
+	<xsl:template match="mml:semantics">
+		<xsl:apply-templates select="mml:*[1]"/>
+	</xsl:template>
+	<!--This is the fo table.footnote.block template from the DocBook project.
+		It is patched to handle caption markup children of table from DocBook 5.
+		This is a rather weird place to add caption support; when the main
+		stylesheets add the support, MMADE users will probably end up with
+		double captions until this template is turned off.
+		Except for the modifications, this template did not originate from the
+		MMADE project or its authors.
+	-->
+	<xsl:template name="table.footnote.block">
+		<xsl:if test=".//footnote">
+			<fo:block keep-with-previous.within-column="always">
+				<xsl:apply-templates select=".//footnote" mode="table.footnote.mode"/>
+			</fo:block>
+		</xsl:if>
+		<xsl:apply-templates select="./caption"/>
+	</xsl:template>
+	<!--this is the xhtml imagedata template from the DocBook project
+		it is patched to handle SVG and MathML markup children of imagedata
+		from DocBook 5
+		except for the modifications, this template did not originate from the
+		MMADE project or its authors
+	-->
+	<xsl:template match="imagedata">
 		<xsl:choose>
-			<xsl:when test="count(preceding-sibling::*)=0">
-				<fo:block xsl:use-attribute-sets="normal.para.spacing">
-					<xsl:call-template name="anchor"/>
-					<fo:inline font-weight="bold">Caption: </fo:inline>
+			<xsl:when xmlns:svg="http://www.w3.org/2000/svg" test="svg:*">
+				<fo:instream-foreign-object>
 					<xsl:apply-templates/>
-				</fo:block>
+				</fo:instream-foreign-object>
+			</xsl:when>
+			<xsl:when xmlns:mml="http://www.w3.org/1998/Math/MathML" test="mml:*">
+				<fo:instream-foreign-object>
+					<xsl:apply-templates/>
+				</fo:instream-foreign-object>
 			</xsl:when>
 			<xsl:otherwise>
-				<fo:block xsl:use-attribute-sets="normal.para.spacing">
-					<xsl:call-template name="anchor"/>
-					<xsl:apply-templates/>
-				</fo:block>
+				<xsl:apply-imports/>
 			</xsl:otherwise>
 		</xsl:choose>
+	</xsl:template>
+	<!--this template is originally from the DocBook project; it has been
+		modified for caption handling-->
+	<xsl:template match="caption/para[count(preceding-sibling::*)=0]">
+		<fo:block xsl:use-attribute-sets="normal.para.spacing">
+			<xsl:call-template name="anchor"/>
+			<fo:inline font-weight="bold">Caption: </fo:inline>
+			<xsl:apply-templates/>
+		</fo:block>
 	</xsl:template>
 	<!--this template is originally from the DocBook project; it has been
 		modified for question handling-->
-	<xsl:template match="question/para">
-		<xsl:choose>
-			<xsl:when test="count(preceding-sibling::*)=0">
-				<fo:block xsl:use-attribute-sets="normal.para.spacing">
-					<xsl:call-template name="anchor"/>
-					<fo:inline font-weight="bold">Q: </fo:inline>
-					<xsl:apply-templates/>
-				</fo:block>
-			</xsl:when>
-			<xsl:otherwise>
-				<fo:block xsl:use-attribute-sets="normal.para.spacing">
-					<xsl:call-template name="anchor"/>
-					<xsl:apply-templates/>
-				</fo:block>
-			</xsl:otherwise>
-		</xsl:choose>
+	<xsl:template match="question/para[count(preceding-sibling::*)=0]">
+		<fo:block xsl:use-attribute-sets="normal.para.spacing">
+			<xsl:call-template name="anchor"/>
+			<fo:inline font-weight="bold">Q: </fo:inline>
+			<xsl:apply-templates/>
+		</fo:block>
 	</xsl:template>
 	<!--this template is originally from the DocBook project; it has been
 		modified for answer handling-->
-	<xsl:template match="answer/para">
-		<xsl:choose>
-			<xsl:when test="count(preceding-sibling::*)=0">
-				<fo:block xsl:use-attribute-sets="normal.para.spacing">
-					<xsl:call-template name="anchor"/>
-					<fo:inline font-weight="bold">A: </fo:inline>
-					<xsl:apply-templates/>
-				</fo:block>
-			</xsl:when>
-			<xsl:otherwise>
-				<fo:block xsl:use-attribute-sets="normal.para.spacing">
-					<xsl:call-template name="anchor"/>
-					<xsl:apply-templates/>
-				</fo:block>
-			</xsl:otherwise>
-		</xsl:choose>
+	<xsl:template match="answer/para[count(preceding-sibling::*)=0]">
+		<fo:block xsl:use-attribute-sets="normal.para.spacing">
+			<xsl:call-template name="anchor"/>
+			<fo:inline font-weight="bold">A: </fo:inline>
+			<xsl:apply-templates/>
+		</fo:block>
 	</xsl:template>
 </xsl:stylesheet>
 <!--
