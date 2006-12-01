@@ -1027,7 +1027,7 @@ sVGMathCompatibility[xml:xmlElementPseudoPatternObject,
 defineBadArgs@sVGMathCompatibility;
 
 expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
-	Module[{melement},
+	Module[{melement,aHead,pre,mid,post,body},
 		sVGMathCompatibility[rawXML@
 			StringReplace[
 				BoxesToMathML[
@@ -1049,7 +1049,11 @@ expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 						reformatMs[melement]/.
 (*indent adjusted*)		melement:XMLElement[containsMtextPatternObject,___]:>
 								reformatMtext[melement],
-			opts]
+			opts]/.XMLElement[
+					aHead_,
+					{pre___,"mathsize"->mid_String/;DigitQ@mid,post___},
+					body_]:>
+						XMLElement[aHead,{pre,"mathsize"->mid<>"pt",post},body]
 		];
 
 defineBadArgs@expressionToSymbolicMathML;
