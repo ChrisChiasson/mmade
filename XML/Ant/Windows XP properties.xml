@@ -30,6 +30,10 @@
 		location="C:\Program Files\Wolfram Research\Mathematica\5.2\"/>
 	<property name="math" location="${math_top_dir}\MathKernel.exe"/>
 	<property name="usefrontend" value="true"/>
+	<!--python location-->
+	<property name="python" location="C:\Python25\python.exe"/>
+	<!--SVGMath-->
+	<property name="svgmathpath" location="C:\Program Files\SVGMath\SVGMath-0.3.1"/>
 </project>
 <!--
 	MMADE, a Mathematica DocBook Exporter

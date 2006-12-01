@@ -9,6 +9,7 @@
 	<xsl:import href="ml_common.xsl"/>
 	<xsl:import href="xhtml_common.xsl"/>
 	<xsl:param name="html.ext">.xhtml</xsl:param>
+	<xsl:param name="chunker.output.encoding" select="'UTF-8'"/>	
 	<xsl:param name="chunker.output.doctype-public" select="'-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN'"/>
 	<xsl:param name="chunker.output.doctype-system" select="'http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd'"/>
 </xsl:stylesheet>

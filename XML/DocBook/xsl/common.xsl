@@ -6,7 +6,8 @@
 	<xsl:param name="chapter.autolabel">1</xsl:param>
 	<!--restart chapter numbering at each part? (0 is the default)-->
 	<xsl:param name="label.from.part">0</xsl:param>
-	<!--indication of part number in hot link automatic text (0 default)-->
+	<!--indication of part number in hot link automatic text (0 default) - 
+		include part numbers if there are any parts to the book-->
 	<xsl:param name="component.label.includes.part.label">1</xsl:param>
 	<!--section numbering (so it will be used in hot text) (0 default)-->
 	<xsl:param name="section.autolabel">1</xsl:param>
@@ -24,8 +25,6 @@
 	<xsl:param name="draft.mode">no</xsl:param>
 	<!--include, for example, chapter numbers in section numbers-->
 	<xsl:param name="section.label.includes.component.label">1</xsl:param>
-	<!--include part numbers if there are any parts to the book-->
-	<xsl:param name="component.label.includes.part.label">1</xsl:param>
 	<!--some abbreviations for common xrefs-->
 	<xsl:param name="local.l10n.xml" select="document('')"/>
 	<l:i18n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">
