@@ -253,6 +253,8 @@ $ContextPath=Fold[Insert[##,2]&,$ContextPath,Reverse@{"XML`MathML`","XML`"}];
 
 $MultipleGraphicsExportTypes=Alternatives@"GIF";
 
+vectorGraphicsTypes="EPS"|"PDF"|"SVG";
+
 (*patterns*)
 containsMsPatternObject=_?(!FreeQ[#,"ms"]&);
 containsMtextPatternObject=_?(!FreeQ[#,"mtext"]&);
@@ -1144,14 +1146,30 @@ imageObjectElement[
 			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
 				fileRefAttribute[fileName]},{}]}]];
 
+(*this next definition masks a problem where Magnification->1 added to a
+Notebook sometimes gives an incorrect baseline*)
+
+getBoundingBoxSizePacket[
+	expr_Notebook,
+	filetype_String/;
+		!StringMatchQ[filetype,vectorGraphicsTypes,IgnoreCase->True]
+	]:=
+	(getBoundingBoxSizePacketThenAdjustForMagnification[expr]+
+		getBoundingBoxSizePacket[expr])/2;
+
 getBoundingBoxSizePacket[expr_Notebook]:=
 	FrontEndExecute[GetBoundingBoxSizePacket[Append[expr,Magnification->1]]];
 
 getBoundingBoxSizePacket[expr_]:=
+	getBoundingBoxSizePacketThenAdjustForMagnification[expr];
+
+defineBadArgs@getBoundingBoxSizePacket;
+
+getBoundingBoxSizePacketThenAdjustForMagnification[expr_]:=
 	FrontEndExecute[GetBoundingBoxSizePacket[expr]]/Magnification^2/.
 		AbsoluteOptions[$FrontEnd,Magnification];
 
-defineBadArgs@getBoundingBoxSizePacket;
+defineBadArgs@getBoundingBoxSizePacketThenAdjustForMagnification;
 
 (*returns adjustments and comment end position*)
 epsSystem[expr_,opts___?OptionQ]:=
@@ -1273,21 +1291,25 @@ imageObjectElement[
 	Module[
 		{contentHeight,contentWidth,baseToBottom,notebook,
 			fileName=StringJoin[id,idExtension,".",fileExtension@filetype],
-			writeDimensions=If[(WriteDimensions/.{opts})===True,True,False]
+			writeDimensions=If[(WriteDimensions/.{opts})===True,True,False],
+			vectorGraphicsType=
+				StringMatchQ[filetype,
+					vectorGraphicsTypes,
+					IgnoreCase->True
+					]
 			},
 		notebook=
 			Notebook[
 				{Cell[
-					BoxData[boxes],
+					StripBoxes[boxes],
 					Sequence@@Rule@@@(CellOptions/.{opts})	
 					]},
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
-		(*points are the units after these conversions*)		
+		(*points are the units after these conversions*)
 		If[writeDimensions,
 			{contentWidth,contentHeight,baseToBottom}=
-				If[idExtension==="html"&&!MatchQ[expr,graphicsPatternObject],
-					First@getBoundingBoxSizePacket[notebook],
+				If[vectorGraphicsType||MatchQ[expr,graphicsPatternObject],
 					epsBounds[
 						notebook,
 						ReleaseHold[Hold[opts]/.
@@ -1295,7 +1317,8 @@ imageObjectElement[
 								"IncludeSpecialFonts",_]->
 									"IncludeSpecialFonts"->False
 							]
-						]					
+						],
+					First@getBoundingBoxSizePacket[notebook,filetype]
 					]
 			];
 		Sow[
@@ -1314,7 +1337,7 @@ imageObjectElement[
 			{XMLElement["imagedata",
 				{Sequence@@imageDataAttributes,
 					fileRefAttribute[fileName],
-					If[writeDimensions&&idExtension=!="html",
+					If[writeDimensions&&vectorGraphicsType,
 						Identity[Sequence][
 							"contentwidth"->ToString@contentWidth<>"pt",
 							"contentdepth"->ToString@contentHeight<>"pt"
