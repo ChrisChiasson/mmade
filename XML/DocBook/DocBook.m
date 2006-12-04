@@ -1975,7 +1975,7 @@ docBookTableGeneral[id_String,
 	Module[
 		{options=Sequence[opts,Sequence@@Options@docBookTableGeneral],
 			boldHeadings},
-		Flatten@Reap[Sow[ExportDelayed[id,XMLElement["table",
+		Flatten@Reap[Sow[ExportDelayed[id,XMLElement[tableTag,
 			{Sequence@@(Attributes/.{options}),
 				xmlIdAttributeRule[id,options]
 				},
