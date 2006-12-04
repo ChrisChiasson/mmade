@@ -26,6 +26,12 @@ AllowMathPhrase::usage="This is an option with a boolean value (True|False) \
 that controls wether the particular export will use <mathphrase> to represent \
 the subclass of expressions that can be represented by pure DocBook markup.";
 
+AlternateSizePacketMethod::usage="This is an option for the DocBook*Equation \
+commands makes calculation of the baseline and bounding box of a particular \
+piece of typeset mathematics take Magnification into account after the call to \
+the front end - instead of before. Sometimes, this can result in a better \
+baseline shift value."
+
 BoldHeadings::usage="BoldHeadings is an option for DocBookTable that applies \
 StyleForm[#,FontWeight->\"Bold\"]& to the entries in the heading before they \
 are passed off to DocBookInlineEquation. This helps \"immutable\" output such \
@@ -1146,21 +1152,15 @@ imageObjectElement[
 			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
 				fileRefAttribute[fileName]},{}]}]];
 
-(*this next definition masks a problem where Magnification->1 added to a
-Notebook sometimes gives an incorrect baseline*)
+Options@getBoundingBoxSizePacket={AlternateSizePacketMethod->False};
 
-getBoundingBoxSizePacket[
-	expr_Notebook,
-	filetype_String/;
-		!StringMatchQ[filetype,vectorGraphicsTypes,IgnoreCase->True]
-	]:=
-	(getBoundingBoxSizePacketThenAdjustForMagnification[expr]+
-		getBoundingBoxSizePacket[expr])/2;
+getBoundingBoxSizePacket[expr_Notebook,opts___?OptionQ]:=
+	If[AlternateSizePacketMethod/.{opts}/.Options@getBoundingBoxSizePacket,
+		getBoundingBoxSizePacketThenAdjustForMagnification[expr],
+		insertMagnificationThenGetBoundingBoxSizePacket[expr]
+		];
 
-getBoundingBoxSizePacket[expr_Notebook]:=
-	FrontEndExecute[GetBoundingBoxSizePacket[Append[expr,Magnification->1]]];
-
-getBoundingBoxSizePacket[expr_]:=
+getBoundingBoxSizePacket[expr_,___?OptionQ]:=
 	getBoundingBoxSizePacketThenAdjustForMagnification[expr];
 
 defineBadArgs@getBoundingBoxSizePacket;
@@ -1170,6 +1170,11 @@ getBoundingBoxSizePacketThenAdjustForMagnification[expr_]:=
 		AbsoluteOptions[$FrontEnd,Magnification];
 
 defineBadArgs@getBoundingBoxSizePacketThenAdjustForMagnification;
+
+insertMagnificationThenGetBoundingBoxSizePacket[expr_]:=
+	FrontEndExecute[GetBoundingBoxSizePacket[Append[expr,Magnification->1]]];
+
+defineBadArgs@insertMagnificationThenGetBoundingBoxSizePacket;
 
 (*returns adjustments and comment end position*)
 epsSystem[expr_,opts___?OptionQ]:=
@@ -1200,7 +1205,7 @@ epsSystem[expr_,opts___?OptionQ]:=
 							{llx,lly,urx,ury}
 						];
 		If[replaceBoundingBox&&!MatchQ[expr,graphicsPatternObject],
-			{{width,yUp,yDown}}=getBoundingBoxSizePacket[expr];
+			{{width,yUp,yDown}}=getBoundingBoxSizePacket[expr,opts];
 			height=yUp+yDown;
 			orgWidth=urx-llx;
 			If[useMinimumWidthDimension&&width>orgWidth,width=orgWidth];
@@ -1318,7 +1323,7 @@ imageObjectElement[
 									"IncludeSpecialFonts"->False
 							]
 						],
-					First@getBoundingBoxSizePacket[notebook,filetype]
+					First@getBoundingBoxSizePacket[notebook,opts]
 					]
 			];
 		Sow[
@@ -1970,7 +1975,7 @@ docBookTableGeneral[id_String,
 	Module[
 		{options=Sequence[opts,Sequence@@Options@docBookTableGeneral],
 			boldHeadings},
-		Flatten@Reap[Sow[ExportDelayed[id,XMLElement["table",
+		Flatten@Reap[Sow[ExportDelayed[id,XMLElement[tableTag,
 			{Sequence@@(Attributes/.{options}),
 				xmlIdAttributeRule[id,options]
 				},
