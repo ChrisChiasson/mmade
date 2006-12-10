@@ -1941,6 +1941,31 @@ entryElement[entryContent:sequenceXmlPseudoPatternObject,
 
 defineBadArgs@rowElement;
 
+tableEntryToXML[id_String,arg_SequenceForm,position:{__Integer},
+	opts___?OptionQ
+	]:=
+	Sequence@@MapIndexed[tableEntryToXML[id,#,Join[position,#2],opts]&,arg];
+
+tableEntryToXML[id_String,arg_String/;StringQ@arg,_,opts___?OptionQ]:=
+	Sequence@@StringSplit[arg,{"\n"->XMLObject["ProcessingInstruction"]["lb"]}];
+
+tableEntryToXML[id_String,arg_,position:{1,__Integer},
+	opts___?OptionQ/;(BoldHeadings/.{opts})
+	]:=
+	tableEntryToXML[id,StyleForm[arg,FontWeight->"Bold"],position,
+		Sequence@@
+			DeleteCases[{opts},ruleOrRuleDelayedPatternObject[BoldHeadings,__]]
+		];
+
+tableEntryToXML[id_String,arg_,position:{__Integer},opts___?OptionQ]:=
+	ToXML[
+		DocBookInlineEquation[id<>StringJoin@@("_"<>ToString[#1]&)/@position,
+			arg,Sequence@@(DocBookInlineEquationOptions/.{opts})
+			]
+		];
+
+defineBadArgs@tableEntryToXML;
+
 Options@docBookTableGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
 	docBookEquationVersionAttributeRule},
@@ -1990,26 +2015,7 @@ docBookTableGeneral[id_String,
 					rowElement@@@
 						MapIndexed[
 							entryElement[
-								Which[
-(*Handle as separate case in case of chnage*)
-									MatchQ[#,""],
-									"",
-									(*MatchQ[#,_String],
-									#,*)
-									True,
-									ToXML@DocBookInlineEquation[
-										id<>StringJoin@@
-											Function["_"<>ToString[#]]/@#2,
-										If[(First@#2)===1&&boldHeadings,
-											StyleForm[#1,FontWeight->"Bold"],
-											#1
-											],
-										Sequence@@
-											(DocBookInlineEquationOptions
-												/.{options}
-												)
-										]
-									],
+								tableEntryToXML[id,##,options],
 								options
 								]&,
 							tablexpr,
