@@ -1,6 +1,10 @@
 <?xml version='1.0'?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:stext="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.TextFactory" xmlns:simg="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.ImageIntrinsics" xmlns:ximg="xaln://com.nwalsh.xalan.ImageIntrinsics" xmlns:xtext="com.nwalsh.xalan.Text" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="xlink stext xtext lxslt simg ximg" extension-element-prefixes="stext xtext">
 	<xsl:import href="xhtml-process-image.xsl"/>
+	<!--line break handling-->
+	<xsl:template match="processing-instruction('lb')">
+		<br/>
+	</xsl:template>
 	
 	<!--xhtml strict conformance parameters-->
 	
