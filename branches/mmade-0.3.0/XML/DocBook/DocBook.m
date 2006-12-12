@@ -238,8 +238,8 @@ can be for baseline adjustment.";
 XMLChain::usage="XMLChain[XMLElement[..]] An XMLChain is a function that will \
 Sow the XML in its \
 argument just before Reaping the XML and non-XML tags (that are handled \
-by this package). An XMLChain is also the name given to a list of \
-ExportDelayed functions, because that is what this function generates. \
+by this package). Xml chain is also the term used to describe a list of \
+ExportDelayed functions, because that is what XMLChain generates. \
 Similarly, there are other functions that generate these ExportDelayed \
 lists, and they are called XMLChain generating functions. See \
 ExportDelayed and ToXML.";
@@ -1400,6 +1400,10 @@ XMLChain[id:stringOrNothingPatternObject,
 	Flatten@Reap[Sow[ExportDelayed[id,xmlexpr,xmlFileType,
 		FilterOptions[Export,opts]],xmlSewingTag],allSewingTags][[2]];
 
+(*consider removing this definition below -
+it can cause problems with user input
+when XMLChain is used unnecessarily*)
+
 XMLChain[xmlexpr:xmlElementPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	XMLChain[None,xmlexpr,opts];
@@ -1941,6 +1945,33 @@ entryElement[entryContent:sequenceXmlPseudoPatternObject,
 
 defineBadArgs@rowElement;
 
+tableEntryToXML[id_String,arg_SequenceForm,position:{__Integer},
+	opts___?OptionQ
+	]:=
+	Sequence@@MapIndexed[tableEntryToXML[id,#,Join[position,#2],opts]&,arg];
+
+tableEntryToXML[id_String,"",__]:="";
+
+tableEntryToXML[id_String,arg_String/;StringQ@arg,_,opts___?OptionQ]:=
+	Sequence@@StringSplit[arg,{"\n"->XMLObject["ProcessingInstruction"]["lb"]}];
+
+tableEntryToXML[id_String,arg_,position:{1,__Integer},
+	opts___?OptionQ/;(BoldHeadings/.{opts})
+	]:=
+	tableEntryToXML[id,StyleForm[arg,FontWeight->"Bold"],position,
+		Sequence@@
+			DeleteCases[{opts},ruleOrRuleDelayedPatternObject[BoldHeadings,__]]
+		];
+
+tableEntryToXML[id_String,arg_,position:{__Integer},opts___?OptionQ]:=
+	ToXML[
+		DocBookInlineEquation[id<>StringJoin@@("_"<>ToString[#1]&)/@position,
+			arg,Sequence@@(DocBookInlineEquationOptions/.{opts})
+			]
+		];
+
+defineBadArgs@tableEntryToXML;
+
 Options@docBookTableGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
 	docBookEquationVersionAttributeRule},
@@ -1990,26 +2021,7 @@ docBookTableGeneral[id_String,
 					rowElement@@@
 						MapIndexed[
 							entryElement[
-								Which[
-(*Handle as separate case in case of chnage*)
-									MatchQ[#,""],
-									"",
-									(*MatchQ[#,_String],
-									#,*)
-									True,
-									ToXML@DocBookInlineEquation[
-										id<>StringJoin@@
-											Function["_"<>ToString[#]]/@#2,
-										If[(First@#2)===1&&boldHeadings,
-											StyleForm[#1,FontWeight->"Bold"],
-											#1
-											],
-										Sequence@@
-											(DocBookInlineEquationOptions
-												/.{options}
-												)
-										]
-									],
+								tableEntryToXML[id,##,options],
 								options
 								]&,
 							tablexpr,
