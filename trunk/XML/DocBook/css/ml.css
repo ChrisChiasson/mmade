@@ -23,6 +23,8 @@ h6 {font-size:1em;}
 
 p.title {font-size:1.2em;}
 
+.italic {font-style:italic;}
+
 a img,:link img,:visited img {
                                border:none;
                                }
