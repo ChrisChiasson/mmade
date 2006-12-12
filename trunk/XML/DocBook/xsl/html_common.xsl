@@ -7,6 +7,10 @@
 		indent="no"
 		doctype-public="-//W3C//DTD HTML 4.01 Transitional//EN"
 		doctype-system="http://www.w3.org/TR/html4/loose.dtd"/>
+	<!--line break handling-->
+	<xsl:template match="processing-instruction('lb')">
+		<br/>
+	</xsl:template>
 	<!--this template is originally from the DocBook project; it has been
 		modified for caption handling-->
 	<xsl:template name="captionparagraph">
