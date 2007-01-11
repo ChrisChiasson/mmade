@@ -640,8 +640,8 @@ toString::"usb"="Can't convert `1` into a string.";
 
 toStringKernel[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 	Module[{strippedBoxes},
-		strippedBoxes=removeUnwantedBoxes[boxes]/.
-			str_String:>formatString@str;
+		strippedBoxes=removeUnwantedBoxes[boxes]/.str_String:>formatString@str/.
+			optionPseudoPatternObject->Sequence[];
 		If[unStringableBoxesQ[strippedBoxes],
 			Message[toString::"usb",expr];Abort[]
 			];
