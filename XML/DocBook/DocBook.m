@@ -328,7 +328,8 @@ figureElementNameStringsPatternObject="figure"|"informalfigure";
 
 tableElementNameStringsPatternObject="table"|"informaltable";
 
-xmlElementPseudoPatternObject=_?(Function[SymbolicXMLQ[#,True]]);
+xmlElementPseudoPatternObject=(_XMLElement|XMLObject[_String][__])(*?(Function[
+	SymbolicXMLQ[#,True]])*);
 
 xmlPseudoPatternObject:=_String|xmlElementPseudoPatternObject;
 
