@@ -8,6 +8,7 @@
 		href="http://docbook.sourceforge.net/release/xsl/current/fo/docbook.xsl"/>
 	<xsl:import href="common.xsl"/>
 	<xsl:import href="fo-process-image.xsl"/>
+	<xsl:import href="fo-landscape.xsl"/>
 	<!--line break handling-->
 	<xsl:template match="processing-instruction('lb')">
 		<fo:block/>
