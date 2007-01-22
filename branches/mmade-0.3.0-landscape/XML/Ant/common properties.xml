@@ -27,6 +27,7 @@
 	<property name="xhtml-profile.xsl" location="${xsl}/xhtml-profile.xsl"/>
 	<property name="xhtml_chunk.xsl" location="${xsl}/xhtml_chunk.xsl"/>
 	<property name="db_5_to_db_4.xsl" location="${xsl}/db_5_to_db_4.xsl"/>
+	<property name="psmi.xsl" location="${xsl}/psmi.xsl"/>
 	<!--css directory (contents are copied to dist)
 		(defaults to the files that come with MMADE)-->
 	<property name="css" location="${mmade_xml_parent_dir}/XML/DocBook/css"/>
