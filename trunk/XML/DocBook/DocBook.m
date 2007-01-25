@@ -2094,6 +2094,12 @@ Update/@{Export};
 quote="\""<>#<>"\""&;
 
 If[$SystemID==="Windows",
+	(*debug code*)
+	(*run=With[{outStream=OpenWrite["C:\\runLog.txt"]},
+			WriteString[outStream,
+				StringJoin@BoxForm`Intercalate[{##}," "],
+				"\n"]&
+			],*)
 	run=Run@quote@StringJoin@BoxForm`Intercalate[{##}," "]&,
 	run=Run
 	];
