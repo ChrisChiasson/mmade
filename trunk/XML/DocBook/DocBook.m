@@ -2146,8 +2146,8 @@ Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
 		If[0===
 			run[quote@Ghostscript`Executable,
 				"-dCompatibilityLevel=1.4","-q","-dSAFER","-dNOPAUSE","-dBATCH",
-				"-sDEVICE=pdfwrite","-sOutputFile="<>pdfFile,"-c",
-				".setpdfwrite","-f",fullPathNameExport[epsFile,"EPS"]
+				"-sDEVICE=pdfwrite","-sOutputFile="<>quote@pdfFile,"-c",
+				".setpdfwrite","-f",quote@fullPathNameExport[epsFile,"EPS"]
 				],
 			pdfFile,
 			$Failed
