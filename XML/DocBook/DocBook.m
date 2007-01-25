@@ -11,7 +11,7 @@ choices export only one frame (part), given by the value of \
 GraphicsListPart, in a list of graphics objects.";
 
 $PrintResolution::usage="$PrintResolution gives the default resolution \
-used to export graphics to raster formats destubed fir display in print.";
+used to export graphics to raster formats destined for display in print.";
 
 $ScreenResolution::usage="$ScreenResolution is the default resolution \
 used to export graphics to raster formats destined for display on screen. You \
@@ -432,7 +432,7 @@ If[!ValueQ[$ExportWidth],$ExportWidth=450];
 
 (*dpi*)
 If[!ValueQ[$PrintResolution],$PrintResolution=300];
-If[!ValueQ[$ScreenResolution],$ScreenResolution=86];
+If[!ValueQ[$ScreenResolution],$ScreenResolution=96];
 pdfScaleAttribute="scale":>ToString@N[$ScreenResolution/$PrintResolution*100];
 
 (*functions*)
