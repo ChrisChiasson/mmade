@@ -2120,10 +2120,9 @@ If[!ValueQ@Ghostscript`Executable,
 
 If[!StringQ[Ghostscript`Executable],
 	Ghostscript`Executable=
-		Switch[$SystemID,
-			"Windows",
+		Which[StringMatchQ[$SystemID,___~~"Windows"~~___],
 			"C:\\Program Files\\gs\\gs8.54\\bin\\gswin32c.exe",
-			"Linux",
+			StringMatchQ[$SystemID,___~~"Linux"~~___],
 			"/usr/bin/gs"
 			]
 	];
