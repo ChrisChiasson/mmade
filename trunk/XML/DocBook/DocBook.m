@@ -2096,9 +2096,9 @@ quote="\""<>#<>"\""&;
 If[$SystemID==="Windows",
 	(*debug code*)
 	(*run=With[{outStream=OpenWrite["C:\\runLog.txt"]},
-			WriteString[outStream,
+			(WriteString[outStream,
 				StringJoin@BoxForm`Intercalate[{##}," "],
-				"\n"]&
+				"\n"];0)&
 			],*)
 	run=Run@quote@StringJoin@BoxForm`Intercalate[{##}," "]&,
 	run=Run
