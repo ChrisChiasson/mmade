@@ -149,7 +149,17 @@
 			<arg value="${xml-stem}.fo"/>
 			<arg value="${adjustbase.xsl}"/>
 			<arg value="${xml-stem}.fo-intermediate2"/>
-		</exec>		
+		</exec>
+		<property name="RemoveMathMLXMLNS.m"
+			location="${mmade_xml_parent_dir}/XML/Ant/RemoveMathMLXMLNS.m"/>
+		<path id="removemathmlxmlnsfiles">
+			<fileset dir="${build}">
+				<include name="${xml-stem}.fo"/>
+			</fileset>
+		</path>
+		<mathematica exe="${math}">
+			<![CDATA[Get@AntProperty["RemoveMathMLXMLNS.m"]]]>
+		</mathematica>
 	</target>
 	<!--if unrequested, don't handle MathML in fo-->
 	<target name="skip-SVGMath-unless-foMathMLIntermediate"
@@ -221,7 +231,8 @@
 	</target>
 	<!--transformation to pdf-->
 	<target name="to-pdf"
-		depends="to-pdf-if-ps-intermediate,to-pdf-unless-ps-intermediate"/>
+		depends="to-pdf-if-ps-intermediate,to-pdf-unless-ps-intermediate">
+	</target>
 	<!--transformation to html-->
 	<target name="to-html"
 		depends="init-xsl,check-html.xsl,check-src-xml">
