@@ -684,6 +684,8 @@ escapeStrings[expr_]:=Module[{string},expr/.string_String:>
 
 (*fromFileName is given in the function reference under ToFileName*)
 
+fromFileName[arg_FrontEnd`FileName]:=List@@arg[[{1,2}]]/.""->Sequence[];
+
 fromFileName[path_String]:=Module[{dir,file},(dir=Most[#];file=#[[-1]])&@
 	StringSplit[path,$PathnameSeparator|"/",All];
 	If[Length[dir]>0&&dir[[1]]=="",dir[[1]]=$PathnameSeparator];
@@ -695,9 +697,9 @@ fullPathNameExport=System`ConvertersDump`fullPathNameExport;
 
 FromRelativePath[relativeFileName_String]:=
 	Check[
-		If[
-			relativeFileName==="",
-			"",
+		If[relativeFileName==="",
+			"FileName"/.
+				NotebookInformation[EvaluationNotebook[]],
 			First[
 				(Pick[#,FileType/@#,File]&)[Prepend[
 					(#<>$PathnameSeparator<>relativeFileName&)/@
@@ -713,6 +715,8 @@ InputFileName[]:=FromRelativePath[$Input];
 
 defineBadArgs@InputFileName;
 
+FileBaseName[arg_FrontEnd`FileName]:=arg[[2]];
+
 FileBaseName[fileName_String]:=fromFileName[fileName][[2]];
 
 defineBadArgs@FileBaseName;
@@ -721,7 +725,7 @@ InputFileBaseName[]:=FileBaseName@InputFileName[];
 
 defineBadArgs@InputFileBaseName;
 
-InputDirectoryName[]:=DirectoryName[InputFileName[]];
+InputDirectoryName[]:=ToFileName@@Most@fromFileName@InputFileName[];
 
 defineBadArgs@InputDirectoryName;
 
