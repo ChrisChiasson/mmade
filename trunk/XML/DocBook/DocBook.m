@@ -529,26 +529,36 @@ ExportsOption[
 
 defineBadArgs[ExportsOption];
 
+toFileName[str_String]=str;
+
+toFileName[file_FrontEnd`FileName]:=ToFileName@file;
+
 Unprotect[CopyFile];
 
 Update[CopyFile];
 
 Options@CopyFile={Overwrite->True};
 
-CopyFile[srcFile_String,
-	destFile_String,
+(*I haven't decided how to make any of my file functions that use
+	the front end work when the front end and the kernel are using
+	different file systems.*)
+
+CopyFile[src:(_String|_FrontEnd`FileName),
+	dest:(_String|_FrontEnd`FileName),
 	Overwrite->True]:=
-	Module[{tmpFile},
+	With[{srcFile=toFileName@src,
+			destFile=toFileName@dest},
 		Switch[FileType[destFile],
 			None,
 			CopyFile[srcFile,destFile],
 			File,
-			tmpFile=Close[OpenTemporary[]];
+			With[{tmpFile=Close[OpenTemporary[]]},
 				DeleteFile[tmpFile];
 				CopyFile[srcFile,tmpFile];
 				DeleteFile[destFile];
 				CopyFile[tmpFile,destFile];
-				DeleteFile[tmpFile],
+				DeleteFile[tmpFile]
+				],
 			Directory,
 			Abort[]
 			]
