@@ -1169,7 +1169,7 @@ imageObjectElement[
 
 Options@getBoundingBoxSizePacket={AlternateSizePacketMethod->False};
 
-getBoundingBoxSizePacket[expr_Notebook,opts___?OptionQ]:=
+getBoundingBoxSizePacket[expr:(_Notebook|_Cell),opts___?OptionQ]:=
 	If[AlternateSizePacketMethod/.{opts}/.Options@getBoundingBoxSizePacket,
 		getBoundingBoxSizePacketThenAdjustForMagnification[expr],
 		insertMagnificationThenGetBoundingBoxSizePacket[expr]
@@ -1326,6 +1326,8 @@ imageObjectElement[
 					]},
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
+		If[$VersionNumber>=6&&ToUpperCase@filetype==="PDF",
+			notebook=First@First@notebook];
 		(*points are the units after these conversions*)
 		If[writeDimensions,
 			{contentWidth,contentHeight,baseToBottom}=
@@ -1548,6 +1550,7 @@ $boxExportOptions=
 		TextOptions->Options@$ToBoxesFunction};
 
 $cellExportOptions={
+	If[$VersionNumber>=6,ShowStringCharacters->False,Identity[Sequence][]],
 	Background->None,
 	CellFrameMargins->{{0,0},{0,0}},
 	CellMargins->{{0,0},{0,0}},
@@ -2122,7 +2125,7 @@ If[$SystemID==="Windows",
 
 If[!ValueQ@OverloadExport,OverloadExport=True];
 
-If[OverloadExport,
+If[OverloadExport&&$VersionNumber<6,
 Ghostscript`Executable::notfound="The XML`DocBook` package can't find \
 Ghostscript. The package needs Ghostscript to overload the Export function for \
 PDFs. Please set Ghostscript`Executable equal to the path of your copy of \
