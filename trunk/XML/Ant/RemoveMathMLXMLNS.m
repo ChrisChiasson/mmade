@@ -12,7 +12,7 @@ Export[#,
 			HoldPattern[{"http://www.w3.org/2000/xmlns/","xmlns"}->
 				"http://www.w3.org/1998/Math/MathML"
 				]->Sequence[],
-		"Encoding"->"UTF-8",
+		"Encoding"->"US-ASCII"(*"UTF-8"*),
 		{1,1,-1}
 		],
 	"XML",
