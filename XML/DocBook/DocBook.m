@@ -874,6 +874,10 @@ defineBadArgs@titleElements;
 
 $mspaceWidth="0.5em";
 
+reformatMtext[(*\[COMPATIBILITYNoBreak]*)
+	XMLElement[mtextHead:containsMtextPatternObject,{attributes___},{"\:f3a2"}]
+	]=(*XMLElement[mtextHead,{attributes},{""}]*)Sequence[]
+
 reformatMtext[
 	XMLElement[
 		mtextHead:containsMtextPatternObject,{attributes___},{str_String}
@@ -1075,8 +1079,8 @@ expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 			opts]/.XMLElement[
 					aHead_,
 					{pre___,"mathsize"->mid_String/;DigitQ@mid,post___},
-					body_]:>
-						XMLElement[aHead,{pre,"mathsize"->mid<>"pt",post},body]
+					body_]:>XMLElement[aHead,{pre,"mathsize"->mid<>"pt",post},
+						body]
 		];
 
 defineBadArgs@expressionToSymbolicMathML;
