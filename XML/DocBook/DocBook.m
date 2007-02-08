@@ -137,7 +137,8 @@ newOptions] does the same thing, but gets optionListList from the right hand \
 side of the Exports option given by Options[symb,Exports]. Both of these \
 call forms are useful for modifying the Exports option of the \
 DocBook*Equation/Figure/Table functions. A call might be as follows: \
-DocBookFigure[...,Exports->ExportsOption[DocBookFigure,\"fo\",ExportType->\"PNG\"]";
+DocBookFigure[...,Exports->ExportsOption[DocBookFigure,\"fo\",ExportType->\"PNG\
+\"]";
 
 ExportType::usage="This is the type of output that will be generated for the \
 expression being exported. It must be one of the types handled by Export.";
