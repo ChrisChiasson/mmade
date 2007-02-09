@@ -1304,6 +1304,23 @@ prepareBaselineAdjustment[negativeBaseToBottom_String,_]:=negativeBaseToBottom;
 
 defineBadArgs@prepareBaselineAdjustment;
 
+callFePdfCellToNotebook[cellExpr_Cell,notebookExpr_Notebook]:=
+	Module[{$trapCallFrontEnd=True},
+		Unprotect@MathLink`CallFrontEnd;
+		MathLink`CallFrontEnd[
+			ExportPacket[cellExpr,"PDF",exportPacketOtherArgs___],
+			callFrontEndOtherArgs___]/;$trapCallFrontEnd:=
+			Block[{$trapCallFrontEnd=False},
+				MathLink`CallFrontEnd[
+					ExportPacket[notebookExpr,"PDF",exportPacketOtherArgs],
+					callFrontEndOtherArgs
+					]
+				];
+		Protect@MathLink`CallFrontEnd
+		]
+
+defineBadArgs@callFePdfCellToNotebook
+
 imageObjectElement[
 	id_String,
 	expr_,
@@ -1314,7 +1331,7 @@ imageObjectElement[
 	imageDataAttributes:multipleNullXmlAttributePatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[
-		{contentHeight,contentWidth,baseToBottom,notebook,
+		{contentHeight,contentWidth,baseToBottom,notebook,cell,
 			fileName=StringJoin[id,idExtension,".",fileExtension@filetype],
 			writeDimensions=If[(WriteDimensions/.{opts})===True,True,False],
 			vectorGraphicsType=
@@ -1325,14 +1342,16 @@ imageObjectElement[
 			},
 		notebook=
 			Notebook[
-				{Cell[
+				{cell=Cell[
 					StripBoxes[boxes],
 					Sequence@@Rule@@@(CellOptions/.{opts})	
 					]},
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
 		If[$VersionNumber>=6&&ToUpperCase@filetype==="PDF",
-			notebook=First@First@notebook];
+			callFePdfCellToNotebook[cell,notebook];
+			notebook=cell
+			];
 		(*points are the units after these conversions*)
 		If[writeDimensions,
 			{contentWidth,contentHeight,baseToBottom}=
