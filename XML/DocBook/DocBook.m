@@ -101,8 +101,10 @@ DocBookInlineMediaObject::usage="DocBookInlineMediaObject[\"id\",\
 
 DocBookTable::usage="DocBookTable[\"id\",\"title\",\"alt text\",table,opts]";
 
+(*
 DocBookString::usage="DocBookString[str1,str2,...] displays as str1<>str2. \
 it is useful for avoiding quotation marks around exported strings.";
+*)
 
 DownValueParts::usage="DownValueParts is an option for PickBadArguments that \
 gives the appropriate Part argument to select the proper DownValue of the \
@@ -569,7 +571,9 @@ Protect[CopyFile];
 
 Update[CopyFile];
 
+(*
 MakeBoxes[DocBookString[strs__String],_]:=StringJoin[strs];
+*)
 
 (*expression to string conversion*)
 
@@ -873,7 +877,7 @@ defineBadArgs@titleElements;
 
 (*imageobject*)
 
-$mspaceWidth="0.5em";
+$mspaceWidth="0.25em";
 
 reformatMtext[(*\[COMPATIBILITYNoBreak]*)
 	XMLElement[mtextHead:containsMtextPatternObject,{attributes___},{"\:f3a2"}]
@@ -977,7 +981,7 @@ defineBadArgs@formatNumberFormMathMLInterpretationBox;
 
 formatNumberFormMathMLBoxes[boxes_]:=
 	Module[{intBoxes,number,otherArgs,result},
-		boxes/.InterpretationBox[intBoxes_,number_?NumberQ,otherArgs___]:>
+		boxes(*/.InterpretationBox[intBoxes_,number_?NumberQ,otherArgs___]:>
 			Block[
 				{InterpretationBox},
 				formatNumberFormMathMLInterpretationBox[
@@ -985,7 +989,7 @@ formatNumberFormMathMLBoxes[boxes_]:=
 					number,
 					otherArgs
 					]/;True
-				]
+				]*)
 		];
 
 defineBadArgs@formatNumberFormMathMLBoxes;
