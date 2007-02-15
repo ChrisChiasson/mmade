@@ -1,6 +1,7 @@
 (* ::Package:: *)
 
-BeginPackage["XML`DocBook`",{"Utilities`FilterOptions`"}];
+BeginPackage["XML`DocBook`",
+	{"Utilities`FilterOptions`","XML`MathML`Workarounds`"}];
 
 $ExportWidth::usage="$ExportWidth specifies the width at which to line \
 wrap exported expressions.";
@@ -101,15 +102,6 @@ DocBookInlineMediaObject::usage="DocBookInlineMediaObject[\"id\",\
 
 DocBookTable::usage="DocBookTable[\"id\",\"title\",\"alt text\",table,opts]";
 
-(*
-DocBookString::usage="DocBookString[str1,str2,...] displays as str1<>str2. \
-it is useful for avoiding quotation marks around exported strings.";
-*)
-
-DownValueParts::usage="DownValueParts is an option for PickBadArguments that \
-gives the appropriate Part argument to select the proper DownValue of the \
-function call to be debugged.";
-
 ExportDelayed::usage="This is an inert version of Export. When one is ready \
 to actually perform the Export, Replace ExportDelayed with Export. These \
 ExportDelayed objects are handled differently by this package depending \
@@ -185,10 +177,6 @@ the generated equations (inline or regular block level.";
 Overwrite::usage="Overwrite is an option for CopyFile that allows it to "<>
 	"safely overwrite the destination file";
 
-PickBadArguments::usage="PickBadArguments[heldFunctionCall,opts] \
-heldFunctionCall must have Head Hold that contains an expression which does \
-not match any DownValues for the Symbol immediately within Hold.";
-
 PrependDirectory::usage="PrependDirectory is an option for XMLDocument that \
 allows prepension of a directory name to each id in an XML chain. This option \
 provides an easy method to set the output directory of the files in the chain. \
@@ -257,6 +245,8 @@ list of ExportDelayed objects of the kind produced by XMLChain, \
 DocBookEquation, DocBookTable, etc.";
 
 Begin["`Private`"];
+
+If[!NameQ[#<>"*"],Get@#]&/@{"Utilities`BadArgumentHandling`"}
 
 $ContextPath=Fold[Insert[##,2]&,$ContextPath,Reverse@{"XML`MathML`","XML`"}];
 
@@ -440,42 +430,7 @@ pdfScaleAttribute="scale":>ToString@N[$ScreenResolution/$PrintResolution*100];
 
 (*functions*)
 
-(*argument debugging*)
 
-defineBadArgs[symbol_Symbol]:=Module[{args},symbol[args__]:=(Message[
-	General::badargs,symbol,HoldForm[symbol[args]]];Abort[])];
-
-defineDebugArgs[symbol_Symbol]:=Module[{args,debugString,debugSymbol,result,
-	rules},rules={debugString->"debug`"<>SymbolName[symbol]};
-	AppendTo[rules,debugSymbol->ToExpression[debugString/.rules]];
-	result=ReleaseHold[Hold[symbol[args__]:=Dialog[DialogProlog:>Print[
-		debugString],DialogSymbols:>{debugSymbol=Hold[symbol[args]]}]]/.rules];
-	If[MatchQ[{result},{$Failed}],Abort[],result]];
-
-(*PickBadArguments*)
-
-Options@PickBadArguments={DownValueParts->Sequence[1,1],PadExpression->0};
-
-PickBadArguments[heldFunctionCall_Hold,opts___?OptionQ]:=
-	Module[
-		{argumentLists,downValueParts,functionHead=heldFunctionCall[[1,0]],
-			options=Sequence[opts,Sequence@@Options@PickBadArguments],
-			padLength},
-		downValueParts=DownValueParts/.{options};
-		argumentLists=ReleaseHold[
-			{heldFunctionCall,
-				Part[Block[{DownValues},DownValues[functionHead]],
-					downValueParts
-					]
-				}/.functionHead->List
-			];
-		padLength=Max[Length/@argumentLists];
-		MapThread[
-			If[MatchQ[##],Unevaluated[Sequence[]],{##}]&,
-			PadRight[#,padLength,PadExpression/.{options}]&/@argumentLists]
-		];
-
-defineBadArgs@PickBadArguments;
 
 (*rule handling*)
 
@@ -491,7 +446,7 @@ ruleFlatUnion[opts__?OptionQ]:=
 			]
 		];
 
-defineBadArgs[ruleFlatUnion];
+GeneralDownValue[ruleFlatUnion];
 
 (*option switching by role*)
 
@@ -530,7 +485,7 @@ ExportsOption[
 		result/;result=!=$Failed
 		];
 
-defineBadArgs[ExportsOption];
+GeneralDownValue[ExportsOption];
 
 toFileName[str_String]=str;
 
@@ -571,15 +526,11 @@ Protect[CopyFile];
 
 Update[CopyFile];
 
-(*
-MakeBoxes[DocBookString[strs__String],_]:=StringJoin[strs];
-*)
-
 (*expression to string conversion*)
 
 removeRowBoxes[expr_]:=Module[{args},expr//.RowBox[{args__}]:>Sequence[args]];
 
-defineBadArgs@removeRowBoxes;
+GeneralDownValue@removeRowBoxes;
 
 docBookSuperscript[expr:rowBoxOrStringPatternObject]:=
 	RowBox[{
@@ -589,7 +540,7 @@ docBookSuperscript[expr:rowBoxOrStringPatternObject]:=
 				removeRowBoxes@Rest@{expr}
 		}];
 
-defineBadArgs@docBookSuperscript;
+GeneralDownValue@docBookSuperscript;
 
 docBookSubscript[expr:rowBoxOrStringPatternObject]:=
 	RowBox[{
@@ -599,7 +550,7 @@ docBookSubscript[expr:rowBoxOrStringPatternObject]:=
 				removeRowBoxes@Rest@{expr}
 		}];
 
-defineBadArgs@docBookSubscript;
+GeneralDownValue@docBookSubscript;
 
 stringFormattableQ[boxes_]:=
 	Module[{subXpr,sewingTag},
@@ -613,7 +564,7 @@ stringFormattableQ[boxes_]:=
 			]
 		];
 	
-defineBadArgs@stringFormattableQ;
+GeneralDownValue@stringFormattableQ;
 
 constantStringReplacements=Sequence["\\n"->"\n"];
 
@@ -623,7 +574,7 @@ formatString[str_String/;AtomQ[Unevaluated[str]]&&
 
 formatString[str_String]:=StringReplace[str,{constantStringReplacements}];
 
-defineBadArgs@formatString;
+GeneralDownValue@formatString;
 
 removeUnwantedBoxes[boxes_]:=
 	Module[{unwantedBoxExpr,symb},
@@ -632,7 +583,7 @@ removeUnwantedBoxes[boxes_]:=
 				unwantedBoxExpr[[1]]
 		];
 
-defineBadArgs@removeUnwantedBoxes;
+GeneralDownValue@removeUnwantedBoxes;
 
 unStringableBoxesQ[boxes_/;FreeQ[boxes,notBoxExpressionPatternObject]]:=False;
 
@@ -642,7 +593,7 @@ a box or a string*)
 
 unStringableBoxesQ[boxes_]:=True;
 
-defineBadArgs@unStringableBoxesQ;
+GeneralDownValue@unStringableBoxesQ;
 
 toBoxes[expr_,opts___?OptionQ]:=
 	(ToBoxesFunction/.{opts})[
@@ -650,7 +601,7 @@ toBoxes[expr_,opts___?OptionQ]:=
 		Sequence@@Rule@@@(TextOptions/.{opts})
 		];
 
-defineBadArgs@toBoxes;
+GeneralDownValue@toBoxes;
 
 toString::"usb"="Can't convert `1` into a string.";
 
@@ -677,7 +628,7 @@ toString[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 		Sequence@@Rule@@@{FilterOptions[ToString,TextOptions/.{opts},opts]}
 		];
 
-defineBadArgs@toString;
+GeneralDownValue@toString;
 
 (*the BoxesToMathML call on the greek character is needed to define
 System`Convert`MathMLDump`BoxesToSMML,
@@ -724,29 +675,29 @@ FromRelativePath[relativeFileName_String]:=
 		$Failed
 		];
 
-defineBadArgs@FromRelativePath;
+GeneralDownValue@FromRelativePath;
 
 InputFileName[]:=FromRelativePath[$Input];
 
-defineBadArgs@InputFileName;
+GeneralDownValue@InputFileName;
 
 FileBaseName[arg_FrontEnd`FileName]:=arg[[2]];
 
 FileBaseName[fileName_String]:=fromFileName[fileName][[2]];
 
-defineBadArgs@FileBaseName;
+GeneralDownValue@FileBaseName;
 
 InputFileBaseName[]:=FileBaseName@InputFileName[];
 
-defineBadArgs@InputFileBaseName;
+GeneralDownValue@InputFileBaseName;
 
 InputDirectoryName[]:=ToFileName@@Most@fromFileName@InputFileName[];
 
-defineBadArgs@InputDirectoryName;
+GeneralDownValue@InputDirectoryName;
 
 idLast[id_String]:=Last@fromFileName@fullPathNameExport[id,"XML"];
 
-defineBadArgs@idLast;
+GeneralDownValue@idLast;
 
 (*xmlIdAttributeRule*)
 
@@ -756,16 +707,16 @@ xmlIdAttributeRule[id_String,opts:optionsOrNullPseudoPatternObject]:=If[
 	SetIdAttribute/.{opts}/.Options@xmlIdAttributeRule,xmlIdAttribute->idLast@
 		id,Unevaluated[Sequence[]]];
 
-defineBadArgs@xmlIdAttributeRule;
+GeneralDownValue@xmlIdAttributeRule;
 
 fileRefAttribute[id_String]:="fileref"->idLast@id;
 
-defineBadArgs@fileRefAttribute;
+GeneralDownValue@fileRefAttribute;
 
 noAttributeXmlElement[element_String,content:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=XMLElement[element,{},{content}];
 
-defineBadArgs@noAttributeXmlElement;
+GeneralDownValue@noAttributeXmlElement;
 
 processDescriptionPart[descriptionPart_String,
 	opts:optionsOrNullPseudoPatternObject]:=
@@ -774,7 +725,7 @@ processDescriptionPart[descriptionPart_String,
 processDescriptionPart[descriptionPart:xmlElementPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=descriptionPart;
 
-defineBadArgs@processDescriptionPart;
+GeneralDownValue@processDescriptionPart;
 
 textObjectElement[attributes:multipleNullXmlAttributePatternObject,
 	xml:multipleXmlOrNothingPseudoPatternObject]:=
@@ -784,13 +735,13 @@ textObjectElement[alt:sequenceXmlPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=noAttributeXmlElement["textobject",alt,
 	opts];
 
-defineBadArgs@textObjectElement;
+GeneralDownValue@textObjectElement;
 
 mathPhraseElement[phrase:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["mathphrase",phrase,opts];
 
-defineBadArgs@mathPhraseElement;
+GeneralDownValue@mathPhraseElement;
 
 phraseElement[attributes:multipleNullXmlAttributePatternObject,
 	xml:multipleXmlOrNothingPseudoPatternObject]:=
@@ -800,19 +751,19 @@ phraseElement[phrase:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["phrase",phrase,opts];
 
-defineBadArgs@phraseElement;
+GeneralDownValue@phraseElement;
 
 inlineEquationElement[attributes:multipleNullXmlAttributePatternObject,
 	xml:multipleXmlOrNothingPseudoPatternObject]:=
 	XMLElement["inlineequation",attributes,xml];
 
-defineBadArgs@inlineEquationElement;
+GeneralDownValue@inlineEquationElement;
 
 altElement[alt:sequenceXmlPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["alt",alt,opts];
 
-defineBadArgs@altElement;
+GeneralDownValue@altElement;
 
 (*captionElement*)
 
@@ -824,7 +775,7 @@ processCaptionPart[captionPart_String,opts:optionsOrNullPseudoPatternObject]:=
 processCaptionPart[captionPart:xmlElementPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=captionPart;
 
-defineBadArgs@processCaptionPart;
+GeneralDownValue@processCaptionPart;
 
 captionElement[caption:exportXmlChainPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=captionElement[ToXML[caption,opts]];
@@ -835,7 +786,7 @@ captionElement[caption:sequenceXmlPseudoPatternObject,opts:
 
 captionElement[nothing,opts:optionsOrNullPseudoPatternObject]:=Sequence[];
 
-defineBadArgs@captionElement;
+GeneralDownValue@captionElement;
 
 (*titleElements*)
 
@@ -845,7 +796,7 @@ titleElement[title:sequenceXmlPseudoPatternObject,opts:
 
 titleElement[nothing,opts:optionsOrNullPseudoPatternObject]:=Sequence[];
 
-defineBadArgs@titleElement;
+GeneralDownValue@titleElement;
 
 titleabbrevElement[titleabbrev:sequenceXmlPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=noAttributeXmlElement["titleabbrev",
@@ -853,7 +804,7 @@ titleabbrevElement[titleabbrev:sequenceXmlPseudoPatternObject,opts:
 
 titleabbrevElement[nothing,opts:optionsOrNullPseudoPatternObject]:=Sequence[];
 
-defineBadArgs@titleabbrevElement;
+GeneralDownValue@titleabbrevElement;
 
 (*needs a switch to something more formal - perhaps it will be made when 
 I move other functions to have titleabbrev ability*)
@@ -873,126 +824,9 @@ titleabbrevElement[titleabbrev:sequenceXmlPseudoPatternObject,opts:
 
 titleElements[False,___]=Sequence[];
 
-defineBadArgs@titleElements;
+GeneralDownValue@titleElements;
 
 (*imageobject*)
-
-$mspaceWidth="0.25em";
-
-reformatMtext[(*\[COMPATIBILITYNoBreak]*)
-	XMLElement[mtextHead:containsMtextPatternObject,{attributes___},{"\:f3a2"}]
-	]=(*XMLElement[mtextHead,{attributes},{""}]*)Sequence[]
-
-reformatMtext[
-	XMLElement[
-		mtextHead:containsMtextPatternObject,{attributes___},{str_String}
-		]
-	]/;AtomQ[Unevaluated[str]]&&StringLength[str]>=1&&
-		StringMatchQ[StringTake[str,-1],Whitespace]:=
-	Sequence[
-		reformatMtext[XMLElement[mtextHead,{attributes},{StringDrop[str,-1]}]],
-		XMLElement[
-			mtextHead/."mtext"->"mspace",
-			{"width"->$mspaceWidth,attributes},
-			{}
-			]
-		];
-
-reformatMtext[
-	XMLElement[
-		mtextHead:containsMtextPatternObject,{attributes___},{str_String}
-		]
-	]/;AtomQ[Unevaluated[str]]&&StringLength[str]>=1&&
-		StringMatchQ[StringTake[str,1],Whitespace]:=
-	Sequence[
-		XMLElement[
-			mtextHead/."mtext"->"mspace",
-			{"width"->$mspaceWidth,attributes},
-			{}
-			],
-		reformatMtext[XMLElement[mtextHead,{attributes},{StringDrop[str,1]}]]
-		];
-
-reformatMtext[element:XMLElement[containsMtextPatternObject,{___},{___String}]]=
-	element;
-
-defineBadArgs@reformatMtext;
-
-reformatMs[
-	XMLElement[msHead:containsMsPatternObject,{attributes___},{str_String}]/;
-		AtomQ[Unevaluated[str]]&&(!ShowStringCharacters/.
-			AbsoluteOptions[$FrontEnd,ShowStringCharacters])
-	]:=
-	Module[{midStr,strMod=StringReplace[str,{constantStringReplacements}]},
-		If[StringMatchQ[str,StringExpression["\\\"",midStr__,"\\\""]],
-			XMLElement[msHead/."ms"->"ms",
-				{attributes},
-				{StringTake[strMod,{3,-3}]}
-				],
-			XMLElement[msHead/."ms"->"mtext",{attributes},{strMod}]
-			]
-		];
-
-(*do not remove the condition from this function evaluation it is part of a 
-two by two decision matrix - you will need to look at all four conditions
-to be sure you can remove it*)
-reformatMs[XMLElement[msHead:containsMsPatternObject,{attributes___},{}]/;
-		(!ShowStringCharacters/.
-			AbsoluteOptions[$FrontEnd,ShowStringCharacters])]:=
-		XMLElement[msHead/."ms"->"mtext",{attributes},{}];
-
-reformatMs[elem:XMLElement[containsMsPatternObject,__]]:=elem;
-
-defineBadArgs@reformatMs;
-
-formatNumberFormMathMLNumber[
-	str_String/;AtomQ[Unevaluated[str]]&&SyntaxQ[str]
-	]:=
-	Module[
-		{number},
-		(*this should be a regular ToBoxes call, not toBoxes*)
-		ToBoxes@number/;
-			validateGiveNumber[ToExpression[str,InputForm,HoldComplete],number]
-		];
-
-formatNumberFormMathMLNumber[str_String]:=str;
-
-defineBadArgs@formatNumberFormMathMLNumber;
-
-validateGiveNumber[HoldComplete[str_String],number_Symbol]/;
-	AtomQ[Unevaluated[str]]&&SyntaxQ[str]:=
-	validateGiveNumberKernel[ToExpression[str,InputForm,HoldComplete],number];
-
-validateGiveNumber[_,number_Symbol]=False;
-
-defineBadArgs@validateGiveNumber;
-
-validateGiveNumberKernel[HoldComplete[numberVal:_Real|_Integer],number_Symbol]:=
-	(number=numberVal;True);
-
-validateGiveNumberKernel[_,number_Symbol]=False;
-
-defineBadArgs@validateGiveNumberKernel;
-
-formatNumberFormMathMLInterpretationBox[boxes_,number_?NumberQ,otherArgs___]:=
-	Module[{str},boxes/.str_String:>formatNumberFormMathMLNumber[str]];
-
-defineBadArgs@formatNumberFormMathMLInterpretationBox;
-
-formatNumberFormMathMLBoxes[boxes_]:=
-	Module[{intBoxes,number,otherArgs,result},
-		boxes(*/.InterpretationBox[intBoxes_,number_?NumberQ,otherArgs___]:>
-			Block[
-				{InterpretationBox},
-				formatNumberFormMathMLInterpretationBox[
-					intBoxes,
-					number,
-					otherArgs
-					]/;True
-				]*)
-		];
-
-defineBadArgs@formatNumberFormMathMLBoxes;
 
 (*the rawXML + expressionToSymbolicMathML trick overcomes a bug preventing
 Mathematica from generating namespace prefixed MathML*)
@@ -1006,7 +840,7 @@ rawXML[mathMl_String,opts:optionsOrNullPseudoPatternObject]:=
 			FilterOptions[ImportString,opts]
 			][[2,3]];
 
-defineBadArgs@rawXML;
+GeneralDownValue@rawXML;
 
 sVGMathCompatibility[
 	xml:xmlElementPseudoPatternObject,
@@ -1056,7 +890,7 @@ sVGMathCompatibility[xml:xmlElementPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject
 	]:=xml;
 
-defineBadArgs@sVGMathCompatibility;
+GeneralDownValue@sVGMathCompatibility;
 
 expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 	Module[{melement,aHead,pre,mid,post,body},
@@ -1088,13 +922,13 @@ expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 						body]
 		];
 
-defineBadArgs@expressionToSymbolicMathML;
+GeneralDownValue@expressionToSymbolicMathML;
 
 imageDataElement[xml:sequenceXmlPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=noAttributeXmlElement["imagedata",xml,
 	opts];
 
-defineBadArgs@imageDataElement;
+GeneralDownValue@imageDataElement;
 
 (*the xmlid attribute rule was commented out because the attribute is
 unneeded and because it causes id collisions if an inline equation is used more
@@ -1140,7 +974,7 @@ fileExtension[filetype_String]:=ToLowerCase@StringReplace[filetype,
 	{"EPSTIFF"->"eps"},
 	IgnoreCase->True];
 
-defineBadArgs@fileExtension;
+GeneralDownValue@fileExtension;
 
 imageObjectElement[
 	id_String,
@@ -1187,18 +1021,18 @@ getBoundingBoxSizePacket[expr:(_Notebook|_Cell),opts___?OptionQ]:=
 getBoundingBoxSizePacket[expr_,___?OptionQ]:=
 	getBoundingBoxSizePacketThenAdjustForMagnification[expr];
 
-defineBadArgs@getBoundingBoxSizePacket;
+GeneralDownValue@getBoundingBoxSizePacket;
 
 getBoundingBoxSizePacketThenAdjustForMagnification[expr_]:=
 	FrontEndExecute[GetBoundingBoxSizePacket[expr]]/Magnification^2/.
 		AbsoluteOptions[$FrontEnd,Magnification];
 
-defineBadArgs@getBoundingBoxSizePacketThenAdjustForMagnification;
+GeneralDownValue@getBoundingBoxSizePacketThenAdjustForMagnification;
 
 insertMagnificationThenGetBoundingBoxSizePacket[expr_]:=
 	FrontEndExecute[GetBoundingBoxSizePacket[Append[expr,Magnification->1]]];
 
-defineBadArgs@insertMagnificationThenGetBoundingBoxSizePacket;
+GeneralDownValue@insertMagnificationThenGetBoundingBoxSizePacket;
 
 (*returns adjustments and comment end position*)
 epsSystem[expr_,opts___?OptionQ]:=
@@ -1274,7 +1108,7 @@ epsSystem[expr_,opts___?OptionQ]:=
 			Join[headerList,Take[epsList,{commentEndPos+2,-1}]]}
 		];
 
-defineBadArgs@epsSystem;
+GeneralDownValue@epsSystem;
 
 epsList[expr_,opts___?OptionQ]:=
 	Module[{epsList,commentEndPos,llx,lly,urx,ury,width,height,yDown},
@@ -1290,12 +1124,12 @@ epsList[expr_,opts___?OptionQ]:=
 			]
 		];
 
-defineBadArgs@epsList;
+GeneralDownValue@epsList;
 
 epsBounds[expr_,opts___?OptionQ]:=
 	ToExpression/@epsSystem[expr,opts][[2]];
 
-defineBadArgs@epsBounds;
+GeneralDownValue@epsBounds;
 
 prepareBaselineAdjustment[baseToBottom_?NumberQ,idExtension_String]:=
 	prepareBaselineAdjustment[ToString[-baseToBottom],idExtension];
@@ -1306,7 +1140,7 @@ prepareBaselineAdjustment[negativeBaseToBottom_String,"html"|"xhtml"]/;
 
 prepareBaselineAdjustment[negativeBaseToBottom_String,_]:=negativeBaseToBottom;
 
-defineBadArgs@prepareBaselineAdjustment;
+GeneralDownValue@prepareBaselineAdjustment;
 
 callFePdfCellToNotebook[cellExpr_Cell,notebookExpr_Notebook]:=
 	Module[{$trapCallFrontEnd=True},
@@ -1323,7 +1157,7 @@ callFePdfCellToNotebook[cellExpr_Cell,notebookExpr_Notebook]:=
 		Protect@MathLink`CallFrontEnd
 		]
 
-defineBadArgs@callFePdfCellToNotebook
+GeneralDownValue@callFePdfCellToNotebook
 
 imageObjectElement[
 	id_String,
@@ -1408,19 +1242,19 @@ imageObjectElement[
 			]
 		];
 
-defineBadArgs@imageObjectElement;
+GeneralDownValue@imageObjectElement;
 
 InlineMediaObjectElement[imageObjects:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["inlinemediaobject",imageObjects,opts];
 
-defineBadArgs@InlineMediaObjectElement;
+GeneralDownValue@InlineMediaObjectElement;
 
 MediaObjectElement[imageObjects:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["mediaobject",imageObjects,opts];
 
-defineBadArgs@MediaObjectElement;
+GeneralDownValue@MediaObjectElement;
 
 (*ToXML*)
 
@@ -1435,7 +1269,7 @@ ToXML[xml:xmlPseudoPatternObject,opts:optionsOrNullPseudoPatternObject]:=xml;
 
 ToXML[nothing,opts:optionsOrNullPseudoPatternObject]:=Sequence[];
 
-defineBadArgs@ToXML;
+GeneralDownValue@ToXML;
 
 (*XMLChain*)
 
@@ -1453,7 +1287,7 @@ XMLChain[xmlexpr:xmlElementPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	XMLChain[None,xmlexpr,opts];
 
-defineBadArgs@XMLChain;
+GeneralDownValue@XMLChain;
 
 Attributes@XMLChain={HoldAll};
 
@@ -1463,7 +1297,7 @@ xmlDeclaration[declarations__?OptionQ]:=XMLObject["Declaration"][declarations];
 
 xmlDeclaration[]=Sequence[];
 
-defineBadArgs@xmlDeclaration;
+GeneralDownValue@xmlDeclaration;
 
 (*XMLDocument*)
 
@@ -1550,7 +1384,7 @@ XMLDocument[file_String,
 			]
 		];
 
-defineBadArgs@XMLDocument;
+GeneralDownValue@XMLDocument;
 
 (*equations*)
 
@@ -1571,7 +1405,7 @@ $ToBoxesFunction[expr_,
 			]
 		];
 
-defineBadArgs@$ToBoxesFunction;
+GeneralDownValue@$ToBoxesFunction;
 
 $boxExportOptions=
 	{ToBoxesFunction->$ToBoxesFunction,
@@ -1688,7 +1522,7 @@ exportObjectListKernel[id_String,expr_,boxes_,
 		opts
 		];
 
-defineBadArgs@exportObjectListKernel;
+GeneralDownValue@exportObjectListKernel;
 
 exportObjectList[
 	id_String,
@@ -1728,7 +1562,7 @@ docBookEquationGeneral[id_String,
 			allSewingTags][[2]]
 		];
 
-defineBadArgs@docBookEquationGeneral;
+GeneralDownValue@docBookEquationGeneral;
 
 Options@DocBookEquation:=Options@docBookEquationGeneral;
 
@@ -1738,7 +1572,7 @@ DocBookEquation[id_String,title:
 		Options@DocBookEquation]},docBookEquationGeneral[id,"equation",True,
 			title,expr,Caption/.{options},options]];
 
-defineBadArgs@DocBookEquation;
+GeneralDownValue@DocBookEquation;
 
 Options@DocBookInformalEquation:=Options@docBookEquationGeneral;
 
@@ -1747,7 +1581,7 @@ DocBookInformalEquation[id_String,expr_,opts:optionsOrNullPseudoPatternObject]:=
 		DocBookInformalEquation]},docBookEquationGeneral[id,"informalequation",
 		False,None,expr,Caption/.{options},options]];
 
-defineBadArgs@DocBookInformalEquation;
+GeneralDownValue@DocBookInformalEquation;
 
 $docBookInlineEquationAdditionalExportOptions=
 	{CellOptions->$cellExportOptions,
@@ -1784,7 +1618,7 @@ DocBookInlineEquation[id_String,expr_,opts:optionsOrNullPseudoPatternObject]:=
 	docBookEquationGeneral[id,"inlineequation",False,None,expr,None,Sequence[
 		opts,Sequence@@Options@DocBookInlineEquation]];
 
-defineBadArgs@DocBookInlineEquation;
+GeneralDownValue@DocBookInlineEquation;
 
 (*graphics*)
 
@@ -1889,7 +1723,7 @@ docBookFigureGeneral[
 				allSewingTags][[2]]
 		];
 
-defineBadArgs@docBookFigureGeneral;
+GeneralDownValue@docBookFigureGeneral;
 
 Options@DocBookFigure=Options@docBookFigureGeneral;
 
@@ -1901,7 +1735,7 @@ DocBookFigure[id_String,title:xmlOrExportXmlChainPseudoPatternObject,
 		DocBookFigure]},docBookFigureGeneral[id,"figure",True,title,description,
 		graphics,Caption/.{options},options]];
 
-defineBadArgs@DocBookFigure;
+GeneralDownValue@DocBookFigure;
 
 Options@DocBookInformalFigure=Options@docBookFigureGeneral;
 
@@ -1912,7 +1746,7 @@ DocBookInformalFigure[id_String,description:xmlPseudoPatternObject,graphics:
 		"informalfigure",False,None,description,graphics,Caption/.{options},
 			options]];
 
-defineBadArgs@DocBookInformalFigure;
+GeneralDownValue@DocBookInformalFigure;
 
 Options@DocBookInlineMediaObject=DeleteCases[Options@docBookFigureGeneral,
 	Rule[Caption,_]];
@@ -1957,7 +1791,7 @@ DocBookInlineMediaObject[
 		allSewingTags
 		][[2]];
 
-defineBadArgs@DocBookInlineMediaObject;
+GeneralDownValue@DocBookInlineMediaObject;
 
 (*tables*)
 
@@ -1965,31 +1799,31 @@ tGroupElement[attributes:multipleNullXmlAttributePatternObject,
 	xml:multipleXmlOrNothingPseudoPatternObject]:=
 	XMLElement["tgroup",attributes,xml];
 
-defineBadArgs@tGroupElement;
+GeneralDownValue@tGroupElement;
 
 tHeadElement[headRow:xmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["thead",headRow,opts];
 
-defineBadArgs@tHeadElement;
+GeneralDownValue@tHeadElement;
 
 tBodyElement[bodyRows:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["tbody",bodyRows,opts];
 
-defineBadArgs@tBodyElement;
+GeneralDownValue@tBodyElement;
 
 rowElement[entries:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["row",entries,opts];
 
-defineBadArgs@rowElement;
+GeneralDownValue@rowElement;
 
 entryElement[entryContent:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["entry",entryContent,opts];
 
-defineBadArgs@rowElement;
+GeneralDownValue@rowElement;
 
 tableEntryToXML[id_String,arg_SequenceForm,position:{__Integer},
 	opts___?OptionQ
@@ -2016,7 +1850,7 @@ tableEntryToXML[id_String,arg_,position:{__Integer},opts___?OptionQ]:=
 			]
 		];
 
-defineBadArgs@tableEntryToXML;
+GeneralDownValue@tableEntryToXML;
 
 Options@docBookTableGeneral={
 	Attributes->{docBookNameSpaceAttributeRule,
@@ -2080,7 +1914,7 @@ docBookTableGeneral[id_String,
 				allSewingTags][[2]]
 		];
 
-defineBadArgs@docBookTableGeneral;
+GeneralDownValue@docBookTableGeneral;
 
 Options@DocBookTable=Options@docBookTableGeneral;
 
@@ -2093,7 +1927,7 @@ DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 			Caption/.{options},options]
 		];
 
-defineBadArgs@DocBookTable;
+GeneralDownValue@DocBookTable;
 
 Options@DocBookInformalTable=Options@docBookTableGeneral;
 
@@ -2105,7 +1939,7 @@ DocBookInformalTable[id_String,description:xmlPseudoPatternObject,
 			Caption/.{options},options]
 		];
 
-defineBadArgs@DocBookInformalTable;
+GeneralDownValue@DocBookInformalTable;
 
 (*ExportDryRun*)
 
@@ -2120,7 +1954,7 @@ it should - such as when file is a stream and not a file name*)
 ExportDryRun[file_,expr_,type_String,opts:optionsOrNullPseudoPatternObject]:=
 	{Message[Export::chtype,file];file,ExportString[expr,type,opts]};
 
-defineBadArgs@ExportDryRun;
+GeneralDownValue@ExportDryRun;
 
 (*adding options to export -- this is not the "overload" mention in 
 the PDF export message*)
