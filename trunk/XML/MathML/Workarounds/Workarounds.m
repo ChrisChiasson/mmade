@@ -3,6 +3,11 @@
 BeginPackage["XML`MathML`Workarounds`"]
 
 
+BoxesToMathMLBoxes::"usage"=
+	"BoxesToMathMLBoxes[boxes] creates a modified form of boxes that is more \
+easily handled by XML`MathML`BoxesToMathML and other functions."
+
+
 Begin["`Private`"]
 
 (*context handling*)
@@ -11,6 +16,60 @@ If[!NameQ[#<>"*"],Get@#]&/@{"Utilities`BadArgumentHandling`"}
 old$ContextPath=$ContextPath
 $ContextPath=Flatten@{$ContextPath,"XML`","XML`MathML`",
 	"Utilities`BadArgumentHandling`"}
+
+
+(*Boolean opposite of current value of ShowStringCharacters from the front end*)
+dontShowStringCharacters:=!ShowStringCharacters/.
+	AbsoluteOptions[$FrontEnd,ShowStringCharacters]
+
+
+BoxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
+	MemberQ[Unevaluated@boxes,InterpretationBox,{0,Infinity},Heads->True]:=
+	With[{intBoxesPos=
+			Position[Unevaluated@boxes,
+				InterpretationBox[_,
+					(number:_Real|_Integer)/;AtomQ@Unevaluated@number,
+					___
+					]
+				]
+			},
+		(*reference: MMA 5.2 help on ReplacePart, specifically ReplaceAt*)
+		With[{intFirstBoxes=
+			Extract[Unevaluated@boxes,
+				Append[#,1]&/@intBoxesPos,
+				HoldComplete
+				]},
+			With[{intReplacedBoxes=intFirstBoxes/.str_String:>
+					With[{result=StringReplace[str,"\""->""]},
+						result/;AtomQ@Unevaluated@str&&SyntaxQ@str
+						]
+					},
+				ReplacePart[Unevaluated@boxes,
+					intReplacedBoxes,
+					intBoxesPos,
+					Thread[{Range@Length[intBoxesPos],1}]
+					]
+				]
+			]
+		]
+
+BoxesToMathMLBoxes[boxes_]=boxes
+
+GeneralDownValue@BoxesToMathMLBoxes;
+
+
+$ContextPath=old$ContextPath
+Remove@old$ContextPath
+
+
+End[]
+
+
+EndPackage[]
+(*patterns*)
+(*containsMsPatternObject=(_List|_String)?(!FreeQ[#,"ms"]&);
+containsMtextPatternObject=(_List|_String)?(!FreeQ[#,"mtext"]&);
+containsMoPatternObject=(_List|_String)?(!FreeQ[#,"mo"]&);*)
 
 (*questionable old workarounds
 
@@ -83,53 +142,6 @@ reformatMs[elem:XMLElement[containsMsPatternObject,__]]:=elem;
 GeneralDownValue@reformatMs;
 
 end of questionable old workarounds*)
-
-
-
-formatNumberFormMathMLNumber[str_String]:=
-	Module[
-		{number},
-		(*this should be a regular ToBoxes call, not toBoxes*)
-		ToBoxes@number/;
-			validateGiveNumber[ToExpression[str,InputForm,HoldComplete],number]
-		];
-
-GeneralDownValue@formatNumberFormMathMLNumber;
-
-
-formatNumberFormMathMLInterpretationBox[
-	boxes_,(number:_Real|_Integer)?NumberQ,otherArgs___
-	]:=
-	Module[{str},boxes/.str_String/;AtomQ[Unevaluated[str]]:>
-										formatNumberFormMathMLNumber[str]];
-
-GeneralDownValue@formatNumberFormMathMLInterpretationBox;
-
-
-formatNumberFormMathMLBoxes[boxes_]:=
-	Module[{intBoxes,number,otherArgs,result},
-		boxes/.InterpretationBox[intBoxes_,number_?NumberQ,otherArgs___]:>
-			Block[
-				{InterpretationBox},
-				formatNumberFormMathMLInterpretationBox[
-					intBoxes,
-					number,
-					otherArgs
-					]/;True
-				]
-		];
-
-GeneralDownValue@formatNumberFormMathMLBoxes;
-
-
-$ContextPath=old$ContextPath
-Remove@old$ContextPath
-
-
-End[]
-
-
-EndPackage[]
 
 
 (*
