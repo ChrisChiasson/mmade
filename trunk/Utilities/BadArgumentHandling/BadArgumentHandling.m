@@ -1,11 +1,15 @@
 (* ::Package:: *)
-Begin["Utilities`BadArgumentHandling`"]
+BeginPackage["Utilities`BadArgumentHandling`"]
 
 
 DownValueParts::"usage"="Utilities`BadArgumentHandling`DownValueParts is an \
 option for Utilities`BadArgumentHandling`PickBadArguments that \
 gives the appropriate Part argument to select the proper DownValue of the \
 function call to be debugged."
+
+
+General::"badargs"="Bad arguments were supplied to `1`. The call was as \
+follows: `2`"
 
 
 GeneralDownValue::"usage"="Utilities`BadArgumentHandling`GeneralDownValue[symbo\
@@ -36,14 +40,13 @@ Begin["`Private`"]
 
 
 GeneralDownValue[symbol_Symbol]:=
-	Module[{args},
-		symbol[args__]:=(
-			Message[General::badargs,
-				symbol,
-				HoldForm[symbol[args]]
-				];
-			Abort[]
-			)]
+	symbol[args__]:=(
+		Message[General::"badargs",
+			symbol,
+			HoldForm[symbol[args]]
+			];
+		Abort[]
+		)
 
 GeneralDownValue@GeneralDownValue
 
@@ -93,7 +96,11 @@ GeneralDownValue@PickBadArguments;
 End[]
 
 
-End[]
+EndPackage[]
+
+
+$ContextPath=DeleteCases[$ContextPath,"Utilities`BadArgumentHandling`"]
+
 
 (*
 MMADE, a Mathematica DocBook Exporter
