@@ -1,6 +1,6 @@
 (* Mathematica Init File *)
 
-Get["XML`MathML`Workarounds`Workarounds`"]
+Get["XML`Workarounds`Workarounds`"]
 (*
 MMADE, a Mathematica DocBook Exporter
 The license and Copyright information for MMADE is included in rights.txt
