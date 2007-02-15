@@ -143,9 +143,6 @@ FileBaseName::usage="FileBaseName[\"fileName\"] returns the name of the file "<>
 FromRelativePath::usage="FromRelativePath[\"relativeFileName\"] returns the "<>
 	"full path of the file if it exists under $Path";
 
-General::badargs="Bad arguments were supplied to `1`. The call was as follows: \
-`2`";
-
 InlineMediaObjectElement::usage"InlineMediaObjectElement is the type of \
 element used to contain inlineequation media.";
 
@@ -255,9 +252,6 @@ $MultipleGraphicsExportTypes=Alternatives@"GIF";
 vectorGraphicsTypes="EPS"|"PDF"|"SVG";
 
 (*patterns*)
-containsMsPatternObject=_?(!FreeQ[#,"ms"]&);
-containsMtextPatternObject=_?(!FreeQ[#,"mtext"]&);
-containsMoPatternObject=_?(!FreeQ[#,"mo"]&);
 
 superScriptAndSubscriptPatternObject=SuperscriptBox|SubscriptBox;
 
