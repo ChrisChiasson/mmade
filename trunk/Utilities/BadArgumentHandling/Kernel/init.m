@@ -1,6 +1,6 @@
 (* Mathematica Init File *)
 
-Get["XML`MathML`Workarounds`Workarounds`"]
+Get["Utilities`BadArgumentHandling`BadArgumentHandling`"]
 (*
 MMADE, a Mathematica DocBook Exporter
 The license and Copyright information for MMADE is included in rights.txt
