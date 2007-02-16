@@ -18,14 +18,52 @@ $ContextPath=Flatten@{$ContextPath,"XML`","XML`MathML`",
 	"Utilities`BadArgumentHandling`"}
 
 
+(*take care of missing invisible times for ExpressionToMathML[0.2*a]*)
+System`Convert`MathMLDump`operandQ[token_String]/;
+	AtomQ@Unevaluated@token&&SyntaxQ@token&&
+		ToExpression[token,InputForm,NumberQ]=True
+
+
+(*take care of annotations appearing even after telling them not to as in
+XML`MathML`ExpressionToSymbolicMathML[
+	NumberForm[5],
+	"Annotations"->{},
+	"Formats"->{"PresentationMathML"},
+	"IncludeMarkupAnnotations"->False,
+	"MathAttributes"->{}
+	]
+*)
+DownValues@System`Convert`MathMLDump`BoxesToSMML=
+	With[{oDv=DownValues@System`Convert`MathMLDump`BoxesToSMML},
+		Insert[oDv,
+			HoldPattern[
+				System`Convert`MathMLDump`BoxesToSMML[
+					TagBox[boxes_,
+						"AnnotationsTagWrapper"[
+							TagBox[_,"MathMLContentTag",___]
+							],
+						___
+						]
+					]
+				]/;!MemberQ[System`Convert`MathMLDump`formats,"ContentMathML"]:>
+				System`Convert`MathMLDump`BoxesToSMML@boxes,
+			Position[oDv,"AnnotationsTagWrapper",Infinity,1][[1,1]]
+			]
+		];
+
+
 (*Boolean opposite of current value of ShowStringCharacters from the front end*)
 dontShowStringCharacters:=!ShowStringCharacters/.
 	AbsoluteOptions[$FrontEnd,ShowStringCharacters]
 
 
+(*take care of strings having extra quotation marks within InterpretationBox's
+first boxes argument*)
+(*If the front end isn't showing string characters, then the MathML box
+processing should ignore those string characters.*)
 BoxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
 	MemberQ[Unevaluated@boxes,InterpretationBox,{0,Infinity},Heads->True]:=
-	With[{intBoxesPos=
+	With[{intBoxesPos=Append[#,1]&/@
 			Position[Unevaluated@boxes,
 				InterpretationBox[_,
 					(number:_Real|_Integer)/;AtomQ@Unevaluated@number,
@@ -36,7 +74,7 @@ BoxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
 		(*reference: MMA 5.2 help on ReplacePart, specifically ReplaceAt*)
 		With[{intFirstBoxes=
 			Extract[Unevaluated@boxes,
-				Append[#,1]&/@intBoxesPos,
+				intBoxesPos,
 				HoldComplete
 				]},
 			With[{intReplacedBoxes=intFirstBoxes/.str_String:>
