@@ -3,11 +3,6 @@
 BeginPackage["XML`MathML`Workarounds`"]
 
 
-BoxesToMathMLBoxes::"usage"=
-	"BoxesToMathMLBoxes[boxes] creates a modified form of boxes that is more \
-easily handled by XML`MathML`BoxesToMathML and other functions."
-
-
 Begin["`Private`"]
 
 (*context handling*)
@@ -53,15 +48,20 @@ DownValues@System`Convert`MathMLDump`BoxesToSMML=
 
 
 (*Boolean opposite of current value of ShowStringCharacters from the front end*)
-dontShowStringCharacters:=!ShowStringCharacters/.
-	AbsoluteOptions[$FrontEnd,ShowStringCharacters]
+If[$Notebooks,
+	dontShowStringCharacters:=!ShowStringCharacters/.
+		AbsoluteOptions[$FrontEnd,ShowStringCharacters],
+	dontShowStringCharacters=True
+	]
 
 
-(*take care of strings having extra quotation marks within InterpretationBox's
-first boxes argument*)
 (*If the front end isn't showing string characters, then the MathML box
 processing should ignore those string characters.*)
-BoxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
+boxesToMathMLBoxes::"usage"=
+	"BoxesToMathMLBoxes[boxes] creates a modified form of boxes that is more \
+easily handled by XML`MathML`BoxesToMathML and other functions."
+
+boxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
 	MemberQ[Unevaluated@boxes,InterpretationBox,{0,Infinity},Heads->True]:=
 	With[{intBoxesPos=Append[#,1]&/@
 			Position[Unevaluated@boxes,
@@ -91,9 +91,27 @@ BoxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
 			]
 		]
 
-BoxesToMathMLBoxes[boxes_]=boxes
+boxesToMathMLBoxes[boxes_]=boxes
 
-GeneralDownValue@BoxesToMathMLBoxes;
+GeneralDownValue@boxesToMathMLBoxes;
+
+
+(*
+take care of strings having extra quotation marks within InterpretationBox's
+first boxes argument, for example:
+XML`MathML`ExpressionToMathML@NumberForm@5
+*)
+System`Convert`MathMLDump`BoxesToSMMLPreProcess[
+	System`Convert`MathMLDump`data_
+	]:=(MakeExpression["System`Hold",TraditionalForm];
+		MakeExpression[TagBox["System`Hold",MatrixForm]];
+		MakeBoxes[InverseFunction[Hold]];
+		boxesToMathMLBoxes@System`Convert`MathMLDump`data/.
+			StyleBox[
+				RowBox[{(pieces__)?System`Convert`MathMLDump`richTextPieceQ}]
+				]->
+				System`Convert`MathMLDump`RichText[pieces]
+			)
 
 
 $ContextPath=old$ContextPath
