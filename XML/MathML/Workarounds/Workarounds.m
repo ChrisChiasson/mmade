@@ -13,6 +13,13 @@ $ContextPath=Flatten@{$ContextPath,"XML`","XML`MathML`",
 	"Utilities`BadArgumentHandling`"}
 
 
+(*
+load the System`Convert`MathMLDump` functions by using them
+XML`MathML`BoxesToMathML once
+*)
+BoxesToMathML["\[Beta]"];
+
+
 (*take care of missing invisible times for ExpressionToMathML[0.2*a]*)
 System`Convert`MathMLDump`operandQ[token_String]/;
 	AtomQ@Unevaluated@token&&SyntaxQ@token&&
@@ -112,6 +119,12 @@ System`Convert`MathMLDump`BoxesToSMMLPreProcess[
 				]->
 				System`Convert`MathMLDump`RichText[pieces]
 			)
+
+
+(*a good example ExpressionToMathML call that showcases fixes from this file:
+XML`MathML`ExpressionToMathML[NumberForm[5.3``0.7*a],
+	"Formats"->{"PresentationMathML"},"IncludeMarkupAnnotations"->False]
+*)
 
 
 $ContextPath=old$ContextPath
