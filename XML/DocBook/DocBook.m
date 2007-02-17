@@ -625,22 +625,9 @@ toString[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 GeneralDownValue@toString;
 
 (*the BoxesToMathML call on the greek character is needed to define
-System`Convert`MathMLDump`BoxesToSMML,
-System`Convert`XMLDump`generateNumericEntityFromCharacterCode and
 System`ConvertersDump`fullPathNameExport*)
 
 BoxesToMathML["\[Beta]"];
-
-(*escapeStringXML should convert non ASCII character codes to SGML numeric
-entities*)
-
-escapeStringXML[strxpr_String]:=Apply[StringJoin,If[Or[33<=#<=127,#==10],
-	FromCharacterCode[#],
-	System`Convert`XMLDump`generateNumericEntityFromCharacterCode@#]&/@
-		ToCharacterCode[strxpr]]
-
-escapeStrings[expr_]:=Module[{string},expr/.string_String:>
-	escapeStringXML[string]];
 
 (*fromFileName is given in the function reference under ToFileName*)
 

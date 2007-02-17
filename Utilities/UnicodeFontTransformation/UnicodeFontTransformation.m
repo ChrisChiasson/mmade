@@ -16,6 +16,26 @@ day and I like it. Note that it isn't being maintained.
 Begin["`Private`"]
 
 
+(*the BoxesToMathML call on the greek character is needed to define
+System`Convert`XMLDump`generateNumericEntityFromCharacterCode, and
+System`Convert`XMLDump`determineEntityExportFunction*)
+XML`MathML`BoxesToMathML["\[Beta]"]
+
+
+(*escapeStringXML should convert non ASCII character codes to SGML numeric
+entities*)
+(*generateNumericEntityFromCharacterCode might be more useful than 
+determineEntityExportFunction from below, but things work ok without using the
+former*)
+escapeStringXML[strxpr_String]:=Apply[StringJoin,If[Or[33<=#<=127,#==10],
+	FromCharacterCode[#],
+	System`Convert`XMLDump`generateNumericEntityFromCharacterCode@#]&/@
+		ToCharacterCode[strxpr]]
+
+escapeStrings[expr_]:=Module[{string},expr/.string_String:>
+	escapeStringXML[string]];
+
+
 If[!ValueQ@FontTools`Executable,
 	FontTools`Executable=
 		Switch[
