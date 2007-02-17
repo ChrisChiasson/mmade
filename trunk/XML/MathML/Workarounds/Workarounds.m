@@ -14,7 +14,7 @@ $ContextPath=Flatten@{$ContextPath,"XML`","XML`MathML`",
 
 
 (*
-load the System`Convert`MathMLDump` functions by using them
+load the System`Convert`MathMLDump`* functions by using
 XML`MathML`BoxesToMathML once
 *)
 BoxesToMathML["\[Beta]"];
