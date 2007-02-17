@@ -280,6 +280,55 @@ reformatMs[elem:XMLElement[containsMsPatternObject,__]]:=elem;
 
 GeneralDownValue@reformatMs;
 
+formatNumberFormMathMLNumber[
+	str_String/;AtomQ[Unevaluated[str]]&&SyntaxQ[str]
+	]:=
+	Module[
+		{number},
+		(*this should be a regular ToBoxes call, not toBoxes*)
+		ToBoxes@number/;
+			validateGiveNumber[ToExpression[str,InputForm,HoldComplete],number]
+		];
+
+formatNumberFormMathMLNumber[str_String]:=str;
+
+GeneralDownValue@formatNumberFormMathMLNumber;
+
+validateGiveNumber[HoldComplete[str_String],number_Symbol]/;
+	AtomQ[Unevaluated[str]]&&SyntaxQ[str]:=
+	validateGiveNumberKernel[ToExpression[str,InputForm,HoldComplete],number];
+
+validateGiveNumber[_,number_Symbol]=False;
+
+GeneralDownValue@validateGiveNumber;
+
+validateGiveNumberKernel[HoldComplete[numberVal:_Real|_Integer],number_Symbol]:=
+	(number=numberVal;True);
+
+validateGiveNumberKernel[_,number_Symbol]=False;
+
+GeneralDownValue@validateGiveNumberKernel;
+
+formatNumberFormMathMLInterpretationBox[boxes_,number_?NumberQ,otherArgs___]:=
+	Module[{str},boxes/.str_String:>formatNumberFormMathMLNumber[str]];
+
+GeneralDownValue@formatNumberFormMathMLInterpretationBox;
+
+formatNumberFormMathMLBoxes[boxes_]:=
+	Module[{intBoxes,number,otherArgs,result},
+		boxes/.InterpretationBox[intBoxes_,number_?NumberQ,otherArgs___]:>
+			Block[
+				{InterpretationBox},
+				formatNumberFormMathMLInterpretationBox[
+					intBoxes,
+					number,
+					otherArgs
+					]/;True
+				]
+		];
+
+GeneralDownValue@formatNumberFormMathMLBoxes;
+
 end of questionable old workarounds*)
 
 
