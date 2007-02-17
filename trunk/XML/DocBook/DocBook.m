@@ -243,9 +243,13 @@ DocBookEquation, DocBookTable, etc.";
 
 Begin["`Private`"];
 
+(*context handling*)
 If[!NameQ[#<>"*"],Get@#]&/@{"Utilities`BadArgumentHandling`"}
 
-$ContextPath=Fold[Insert[##,2]&,$ContextPath,Reverse@{"XML`MathML`","XML`"}];
+old$ContextPath=$ContextPath
+$ContextPath=Flatten@{$ContextPath,"XML`","XML`MathML`",
+	"Utilities`BadArgumentHandling`"}
+
 
 $MultipleGraphicsExportTypes=Alternatives@"GIF";
 
@@ -2027,8 +2031,16 @@ Update/@{System`ConvertersDump`exportFormatQ,Message,Export};
 ]
 
 
+$ContextPath=old$ContextPath
+Remove@old$ContextPath
+
+
 End[];
+
+
 EndPackage[];
+
+
 (*
 MMADE, a Mathematica DocBook Exporter
 The license and Copyright information for MMADE is included in rights.txt
