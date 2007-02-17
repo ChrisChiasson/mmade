@@ -52,13 +52,9 @@ right hand side a list of rules to be used in a StringReplace on all strings in
 the xmlchain argument.";
 
 SVGMathCompatibility::usage="This is an option for the DocBook*Equation \
-functions \
-that makes MathML format exports convert <mo>(</mo>...<mo>)</mo> markup to \
-<mfenced>...</mfenced> and removes <mtext> elements that containt \[NoBreak] \
-or \[InvisibleSpace]. It is useful for sending MathML to SVGMath because \
-SVGMath tends to draw parenthesis a bit low if the markup preceeding the \
-parenthesis has a subscript. SVGMath also has problems drawing those \
-aforementioned <mtext> elements.";
+functions that will set $SVGMathCompatibility=True at appropriate times during \
+output generation. For more information, see the usage message for \
+$SVGMathCompatibility.";
 
 DataAttributes::usage="These attributes are applied to the element inside the \
 <*object> element. This is usually an <imagedata> or <phrase> element.";
@@ -826,59 +822,9 @@ GeneralDownValue@titleElements;
 
 (*imageobject*)
 
-sVGMathCompatibility[
-	xml:xmlElementPseudoPatternObject,
-	opts:optionsOrNullPseudoPatternObject
-	]/;If[(SVGMathCompatibility/.{opts})===True,True,False]:=
-	Module[
-		{containerElement,containerAttributes,moHead,moAttributes,pre,mid,post},
-		xml//.
-			{XMLElement[
-				containerElement_,
-				containerAttributes_,
-				{pre___,
-					XMLElement[
-						moHead:containsMoPatternObject,
-						moAttributes_,
-						{"("}
-						],
-					mid__,
-					XMLElement[
-						moHead_,
-						moAttributes_,
-						{")"}
-						],
-					post___
-					}
-				]:>
-					With[{mfenced=moHead/."mo"->"mfenced"},
-						XMLElement[
-							containerElement,
-							containerAttributes,
-							{pre,
-								XMLElement[mfenced,moAttributes,{mid}],
-								post
-								}
-							]
-						],
-				XMLElement[
-					containsMtextPatternObject,
-					_,
-					{"\[NoBreak]"|"\[InvisibleSpace]"}
-					]->
-					Sequence[]
-				}
-		];
-
-sVGMathCompatibility[xml:xmlElementPseudoPatternObject,
-	opts:optionsOrNullPseudoPatternObject
-	]:=xml;
-
-GeneralDownValue@sVGMathCompatibility;
-
 expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 	Module[{melement,aHead,pre,mid,post,body},
-		sVGMathCompatibility[rawXML@
+		Identity[rawXML@
 			StringReplace[
 				BoxesToMathML[
 					formatNumberFormMathMLBoxes[boxes],
