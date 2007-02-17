@@ -5,6 +5,7 @@ BeginPackage["XML`MathML`Workarounds`"]
 
 Begin["`Private`"]
 
+
 (*context handling*)
 If[!NameQ[#<>"*"],Get@#]&/@{"Utilities`BadArgumentHandling`"}
 
