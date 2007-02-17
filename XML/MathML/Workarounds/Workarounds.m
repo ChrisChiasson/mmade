@@ -3,6 +3,12 @@
 BeginPackage["XML`MathML`Workarounds`"]
 
 
+SVGMathCompatibility::"usage"="SVGMathCompatibility is a variable that, if \
+true, causes the XML`MathML` functions to change MathML markup so that it is \
+more compatable with the program SVGMath. At the time of this writing, that \
+means <mo>(</mo>stuff<mo>)</mo> is marked up as <mfenced>stuff</mfenced>."
+
+
 Begin["`Private`"]
 
 
@@ -128,6 +134,58 @@ XML`MathML`ExpressionToMathML[NumberForm[5.3``0.7*a],
 *)
 
 
+containsMtextPatternObject=(_List|_String)?(!FreeQ[#,"mtext"]&);
+
+containsMoPatternObject=(_List|_String)?(!FreeQ[#,"mo"]&);
+
+sVGMathCompatibilityFunction[xml_]:=
+	xml//.
+		{XMLElement[
+			containerElement_,
+			containerAttributes_,
+			{pre___,
+				XMLElement[
+					moHead:containsMoPatternObject,
+					moAttributes_,
+					{"("}
+					],
+				mid__,
+				XMLElement[
+					moHead_,
+					moAttributes_,
+					{")"}
+					],
+				post___
+				}
+			]:>
+				With[{mfenced=moHead/."mo"->"mfenced"},
+					XMLElement[
+						containerElement,
+						containerAttributes,
+						{pre,
+							XMLElement[mfenced,moAttributes,{mid}],
+							post
+							}
+						]
+					](*,
+			XMLElement[
+				containsMtextPatternObject,
+				_,
+				{"\[NoBreak]"|"\[InvisibleSpace]"}
+				]->
+				Sequence[]
+			*)}
+
+
+PrependTo[DownValues@System`Convert`MathMLDump`BoxesToSMMLPostProcess,
+	g:System`Convert`MathMLDump`BoxesToSMMLPostProcess[__]/;
+		TrueQ[SVGMathCompatibility]:>
+		Block[{SVGMathCompatibility=False},
+			ReleaseHold@MapAt[sVGMathCompatibilityFunction,Hold[g],{1,1}]
+			]
+	]
+
+
 $ContextPath=old$ContextPath
 Remove@old$ContextPath
 
@@ -136,11 +194,11 @@ End[]
 
 
 EndPackage[]
-(*patterns*)
-(*containsMsPatternObject=(_List|_String)?(!FreeQ[#,"ms"]&);
-containsMtextPatternObject=(_List|_String)?(!FreeQ[#,"mtext"]&);
-containsMoPatternObject=(_List|_String)?(!FreeQ[#,"mo"]&);*)
 
+
+(*patterns
+containsMsPatternObject=(_List|_String)?(!FreeQ[#,"ms"]&);
+*)
 (*questionable old workarounds
 
 $mspaceWidth="5pt";
