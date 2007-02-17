@@ -3,10 +3,21 @@
 BeginPackage["XML`MathML`Workarounds`"]
 
 
-SVGMathCompatibility::"usage"="SVGMathCompatibility is a variable that, if \
-true, causes the XML`MathML` functions to change MathML markup so that it is \
-more compatable with the program SVGMath. At the time of this writing, that \
-means <mo>(</mo>stuff<mo>)</mo> is marked up as <mfenced>stuff</mfenced>."
+$SVGMathCompatibility::"usage"="$SVGMathCompatibility is a variable that, if \
+True, causes the XML`MathML` functions to change MathML markup so that it is \
+more compatible with the program SVGMath. At the time of this writing, that \
+means <mo>(</mo>stuff<mo>)</mo> is marked up as <mfenced>stuff</mfenced>"<>
+(*
+" and <mtext> elements containing only \[NoBreak] or \[InvisibleSpace] are \
+removed"<>
+*)
+". This is useful for sending MathML to SVGMath because SVGMath tends to draw \
+parenthesis a bit low if the markup preceeding the parenthesis has a \
+subscript"<>
+(*
+" SVGMath also has problems drawing those aforementioned <mtext> elements"<>
+*)
+"."
 
 
 Begin["`Private`"]
@@ -179,8 +190,8 @@ sVGMathCompatibilityFunction[xml_]:=
 
 PrependTo[DownValues@System`Convert`MathMLDump`BoxesToSMMLPostProcess,
 	g:System`Convert`MathMLDump`BoxesToSMMLPostProcess[__]/;
-		TrueQ[SVGMathCompatibility]:>
-		Block[{SVGMathCompatibility=False},
+		TrueQ[$SVGMathCompatibility]:>
+		Block[{$SVGMathCompatibility=False},
 			ReleaseHold@MapAt[sVGMathCompatibilityFunction,Hold[g],{1,1}]
 			]
 	]
