@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["XML`MathML`Workarounds`"]
+BeginPackage["XML`MathML`Workarounds`",{"XML`Workarounds`"}]
 
 
 $SVGMathCompatibility::"usage"="$SVGMathCompatibility is a variable that, if \
