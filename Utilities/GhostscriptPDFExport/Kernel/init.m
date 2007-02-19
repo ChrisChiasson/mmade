@@ -1,6 +1,6 @@
 (* Mathematica Init File *)
 
-Get["Utilities`UnicodeFontTransformation`UnicodeFontTransformation`"]
+Get["Utilities`GhostscriptPDFExport`GhostscriptPDFExport`"]
 (*
 MMADE, a Mathematica DocBook Exporter
 The license and Copyright information for MMADE is included in rights.txt
