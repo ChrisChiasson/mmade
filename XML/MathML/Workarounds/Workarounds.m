@@ -340,6 +340,36 @@ formatNumberFormMathMLBoxes[boxes_]:=
 
 GeneralDownValue@formatNumberFormMathMLBoxes;
 
+expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
+	Module[{melement,aHead,pre,mid,post,body},
+		sVGMathCompatibility[rawXML@
+			StringReplace[
+				BoxesToMathML[
+					formatNumberFormMathMLBoxes[boxes],
+					"ElementFormatting"->None,
+					FilterOptions[
+						BoxesToMathML,
+						Sequence@@(ConversionOptions/.{opts}),
+						opts
+						]
+					],
+				StringExpression[
+					Whitespace,
+					"xmlns=",
+					quoteCharStringPatternObject,
+					mathMlNameSpace,
+					quoteCharStringPatternObject]->"",
+				1]/.melement:XMLElement[containsMsPatternObject,___]:>
+						reformatMs[melement]/.
+(*indent adjusted*)		melement:XMLElement[containsMtextPatternObject,___]:>
+								reformatMtext[melement],
+			opts]/.XMLElement[
+					aHead_,
+					{pre___,"mathsize"->mid_String/;DigitQ@mid,post___},
+					body_]:>XMLElement[aHead,{pre,"mathsize"->mid<>"pt",post},
+						body]
+		];
+
 end of questionable old workarounds*)
 
 
