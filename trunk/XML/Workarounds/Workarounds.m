@@ -14,7 +14,15 @@ XML`MathML`BoxesToMathML["\[Beta]"]
 (*Prevent default namespace assignments from appearing if they are identical
 to any of the prefixed namespace assignments. This change makes it possible to
 keep namespace prefixes intact during imports and exports, which is important
-when doing xslt (version 1.0) based on prefixes.*)
+when doing xslt (version 1.0) based on prefixes. Example affected code:
+XML`MathML`ExpressionToMathML[5,
+	"NamespacePrefixes"->{System`Convert`MathMLDump`$MathMLNS->"mml"}]
+ImportString[%,"SymbolicXML"]
+ExportString[%,"XML"]
+ImportString[%,"SymbolicXML"]
+(doesn't work if using "XML" instead of "SymbolicXML", as mentioned below, or
+without this workaround)
+*)
 PrependTo[
 	DownValues@
 		System`Convert`XMLDump`includeQNameInAttributes,
