@@ -51,10 +51,11 @@ CharacterReplacements::usage="This option for the XMLDocument accepts as its \
 right hand side a list of rules to be used in a StringReplace on all strings in
 the xmlchain argument.";
 
-SVGMathCompatibility::usage="This is an option for the DocBook*Equation \
-functions that will set $SVGMathCompatibility=True at appropriate times during \
+CommonMathMLCompatibility::usage="This is an option for the DocBook*Equation \
+functions that will set $CommonMathMLCompatibility=True at appropriate times \
+during \
 output generation. For more information, see the usage message for \
-$SVGMathCompatibility.";
+$CommonMathMLCompatibility.";
 
 DataAttributes::usage="These attributes are applied to the element inside the \
 <*object> element. This is usually an <imagedata> or <phrase> element.";
@@ -136,6 +137,12 @@ expression being exported. It must be one of the types handled by Export.";
 FileBaseName::usage="FileBaseName[\"fileName\"] returns the name of the file "<>
 	"after the last path separator.";
 
+FirefoxMathMLCompatibility::usage="This is an option for the DocBook*Equation \
+functions that will set $FirefoxMathMLCompatibility=True at appropriate times \
+during \
+output generation. For more information, see the usage message for \
+$FirefoxMathMLCompatibility.";
+
 FromRelativePath::usage="FromRelativePath[\"relativeFileName\"] returns the "<>
 	"full path of the file if it exists under $Path";
 
@@ -182,6 +189,12 @@ bounding box with the information from GetBoundingBoxSizePacket.";
 
 SetIdAttribute::usage="An boolean option for the DocBook* functions that \
 states whether or not to set the xml:id attribute on the generated element.";
+
+SVGMathMathMLCompatibility::usage="This is an option for the DocBook*Equation \
+functions that will set $SVGMathMathMLCompatibility=True at appropriate times \
+during \
+output generation. For more information, see the usage message for \
+$SVGMathMathMLCompatibility.";
 
 TextOptions::usage="A sub option of the Exports option. It affects downstream"<>
 	"ToBoxes and StyleBox calls. Well, some of them. It typically contains"<>
@@ -856,7 +869,9 @@ imageObjectElement[id_String,expr_,boxes_,"MathML",idExtension_String,
 		{Sequence@@imageObjectAttributes
 			(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
 		{imageDataElement@
-			Block[{$SVGMathCompatibility=SVGMathCompatibility/.{opts}},
+			Block[{$SVGMathMathMLCompatibility=SVGMathMathMLCompatibility/.{opts},
+					$FirefoxMathMLCompatibility=FirefoxMathMLCompatibility/.{opts},
+					$CommonCompatibility=CommonCompatibility/.{opts}},
 				ImportString[
 					BoxesToMathML[boxes,
 						FilterOptions[BoxesToMathML,
@@ -1208,13 +1223,7 @@ Options@XMLDocument=
 			},
 	PrependDirectory->False,
 	symbolicMLConversionOptions,
-	CharacterReplacements->{
-	"\[LongEqual]"->"="(*"\:ff1d"*)(*FULL WIDTH EQUALS SIGN can't be used due 
-	to FOP and XEP incompatability*),"\[Piecewise]"->"{",
-	"\[InvisibleApplication]"->""(*Firefox workaround*),"\[Cross]"->"\[Times]",
-	"\[Equal]"->"=","\[Rule]"->"\[RightArrow]",
-	"\[InvisibleSpace]"->(*"\:200b"*)"",
-	"\[LeftBracketingBar]"|"\[RightBracketingBar]"|"\[VerticalSeparator]"->"|"}
+	CharacterReplacements->{}
 	};
 
 XMLDocument[file_String,
@@ -1503,7 +1512,7 @@ SetOptions[DocBookInlineEquation,
 				$docBookInlineEquationAdditionalExportOptions
 				},
 			Flatten@{$mathMlPdfExpressionExportOptions,
-				SVGMathCompatibility->True,AllowMathPhrase->False
+				SVGMathMathMLCompatibility->True,AllowMathPhrase->False
 				(*$epsPdfExpressionExportOptions,AllowMathPhrase->False,
 				ReplaceBoundingBox->True,WriteDimensions->True,
 				UseMinimumWidthDimension->False,

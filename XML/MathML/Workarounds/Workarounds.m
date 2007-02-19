@@ -3,7 +3,22 @@
 BeginPackage["XML`MathML`Workarounds`",{"XML`Workarounds`"}]
 
 
-$SVGMathCompatibility::"usage"="$SVGMathCompatibility is a variable that, if \
+$CommonMathMLCompatibility::"usage"="$CommonMathMLCompatibility is a variable \
+that, if \
+True, causes the XML`MathML` functions to change MathML markup so that it is \
+more compatible with other programs. Specifically, some character replacements \
+are done so that the programs can display the equations properly."
+
+
+$FirefoxMathMLCompatibility::"usage"="$FirefoxMathMLCompatibility is a \
+variable that, if \
+True, causes the XML`MathML` functions to change MathML markup so that it is \
+more compatible with the Firefox web browser. Specifically, some character \
+replacements are done so that Firefox can display the equations properly."
+
+
+$SVGMathMathMLCompatibility::"usage"="$SVGMathMathMLCompatibility is a \
+variable that, if \
 True, causes the XML`MathML` functions to change MathML markup so that it is \
 more compatible with the program SVGMath. At the time of this writing, that \
 means <mo>(</mo>stuff<mo>)</mo> is marked up as <mfenced>stuff</mfenced>"<>
@@ -17,7 +32,7 @@ subscript"<>
 (*
 " SVGMath also has problems drawing those aforementioned <mtext> elements"<>
 *)
-"."
+". Some character replacements are also made."
 
 
 Begin["`Private`"]
@@ -179,8 +194,7 @@ sVGMathCompatibilityFunction[xml_]:=
 					],
 				post___
 				}
-			]:>
-				With[{mfenced=moHead/."mo"->"mfenced"},
+			]:>With[{mfenced=moHead/."mo"->"mfenced"},
 					XMLElement[
 						containerElement,
 						containerAttributes,
@@ -189,23 +203,49 @@ sVGMathCompatibilityFunction[xml_]:=
 							post
 							}
 						]
-					](*,
+					],
+			XMLElement["annotation-xml",
+				{___,"encoding"->"MathML-Content",___},_]->Sequence[](*,
 			XMLElement[
 				containsMtextPatternObject,
 				_,
 				{"\[NoBreak]"|"\[InvisibleSpace]"}
 				]->
-				Sequence[]
-			*)}
+				Sequence[]*),
+			str_String/;StringQ@Unevaluated@str:>
+				StringReplace[str,{"\[LongEqual]"->"="(*,
+						"\[InvisibleSpace]"->"",
+						"\[LeftBracketingBar]"|"\[RightBracketingBar]"|
+							"\[VerticalSeparator]"->"|"
+						*)}]
+			}
+
+
+firefoxCompatibilityFunction[xml_]:=
+	xml/.
+		{str_String/;StringQ@Unevaluated@str:>
+				StringReplace[str,
+					{"\[LongEqual]"->"\:ff1d"(*FULL WIDTH EQUALS SIGN*),
+						"\[Piecewise]"->"{"(*,
+						"\[InvisibleApplication]"->"",
+						"\[Cross]"->"\[Times]",
+						"\[Equal]"->"=",
+						"\[Rule]"->"\[RightArrow]"
+						"\[InvisibleSpace]"->"\:200b"
+						*)}]
+			}
 
 
 PrependTo[DownValues@System`Convert`MathMLDump`BoxesToSMMLPostProcess,
 	g:System`Convert`MathMLDump`BoxesToSMMLPostProcess[__]/;
-		TrueQ[$SVGMathCompatibility]:>
-		Block[{$SVGMathCompatibility=False},
-			ReleaseHold@MapAt[sVGMathCompatibilityFunction,Hold[g],{1,1}]
+		TrueQ[#1]:>
+		Block[{#1=False},
+			ReleaseHold@MapAt[#2,Hold[g],{1,1}]
 			]
-	]
+	]&@@@{{$CommonMathMLCompatibility,commonCompatibilityFunction},
+		{$FirefoxMathMLCompatibility,firefoxCompatibilityFunction},
+		{$SVGMathMathMLCompatibility,sVGMathCompatibilityFunction}
+		}
 
 
 $ContextPath=old$ContextPath
