@@ -809,38 +809,6 @@ GeneralDownValue@titleElements;
 
 (*imageobject*)
 
-expressionToSymbolicMathML[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
-	Module[{melement,aHead,pre,mid,post,body},
-		Identity[rawXML@
-			StringReplace[
-				BoxesToMathML[
-					formatNumberFormMathMLBoxes[boxes],
-					"ElementFormatting"->None,
-					FilterOptions[
-						BoxesToMathML,
-						Sequence@@(ConversionOptions/.{opts}),
-						opts
-						]
-					],
-				StringExpression[
-					Whitespace,
-					"xmlns=",
-					quoteCharStringPatternObject,
-					mathMlNameSpace,
-					quoteCharStringPatternObject]->"",
-				1]/.melement:XMLElement[containsMsPatternObject,___]:>
-						reformatMs[melement]/.
-(*indent adjusted*)		melement:XMLElement[containsMtextPatternObject,___]:>
-								reformatMtext[melement],
-			opts]/.XMLElement[
-					aHead_,
-					{pre___,"mathsize"->mid_String/;DigitQ@mid,post___},
-					body_]:>XMLElement[aHead,{pre,"mathsize"->mid<>"pt",post},
-						body]
-		];
-
-GeneralDownValue@expressionToSymbolicMathML;
-
 imageDataElement[xml:sequenceXmlPseudoPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=noAttributeXmlElement["imagedata",xml,
 	opts];
@@ -883,9 +851,24 @@ imageObjectElement[id_String,expr_,boxes_,"Text",idExtension_String,
 
 imageObjectElement[id_String,expr_,boxes_,"MathML",idExtension_String,
 	imageObjectAttributes:multipleNullXmlAttributePatternObject,_List,
-	opts:optionsOrNullPseudoPatternObject]:=XMLElement["imageobject",{Sequence@@
-		imageObjectAttributes(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
-		{imageDataElement@expressionToSymbolicMathML[expr,boxes,opts]}];
+	opts:optionsOrNullPseudoPatternObject]:=
+	XMLElement["imageobject",
+		{Sequence@@imageObjectAttributes
+			(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
+		{imageDataElement@
+			Block[{$SVGMathCompatibility=SVGMathCompatibility/.{opts}},
+				ImportString[
+					BoxesToMathML[boxes,
+						FilterOptions[BoxesToMathML,
+							Sequence@@(ConversionOptions/.{opts}),
+							opts
+							]
+						],
+					"SymbolicXML"
+					]
+				]
+			}
+		];
 
 fileExtension[filetype_String]:=ToLowerCase@StringReplace[filetype,
 	{"EPSTIFF"->"eps"},
