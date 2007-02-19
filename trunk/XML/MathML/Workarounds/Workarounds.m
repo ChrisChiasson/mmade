@@ -221,7 +221,7 @@ EndPackage[]
 (*patterns
 containsMsPatternObject=(_List|_String)?(!FreeQ[#,"ms"]&);
 *)
-(*questionable old workarounds
+(*questionable old workarounds (for reference in writing new functionality)
 
 $mspaceWidth="5pt";
 
