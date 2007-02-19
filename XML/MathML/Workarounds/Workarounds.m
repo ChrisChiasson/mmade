@@ -139,8 +139,19 @@ System`Convert`MathMLDump`BoxesToSMMLPreProcess[
 			)
 
 
+(*take care of lack of font size unit on mathsize attribute, as in:
+XML`MathML`ExpressionToMathML@StyleForm[5,FontSize->11]
+*)
+DownValues@System`Convert`MathMLDump`convertOptionToAttribute=
+	DeleteCases[DownValues@System`Convert`MathMLDump`convertOptionToAttribute,
+		_?(!FreeQ[#,FontSize]&)
+		];
+System`Convert`MathMLDump`convertOptionToAttribute[_,FontSize,val_?NumberQ]:=
+	"mathsize"->ToString@SequenceForm[val,"pt"]
+
+
 (*a good example ExpressionToMathML call that showcases fixes from this file:
-XML`MathML`ExpressionToMathML[NumberForm[5.3``0.7*a],
+XML`MathML`ExpressionToMathML[StyleForm[NumberForm[5.3``0.7*a],FontSize->11],
 	"Formats"->{"PresentationMathML"},"IncludeMarkupAnnotations"->False]
 *)
 
