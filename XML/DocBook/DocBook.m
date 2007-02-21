@@ -162,11 +162,6 @@ allows prepension of a directory name to each id in an XML chain. This option \
 provides an easy method to set the output directory of the files in the chain. \
 Set the option to the path string that you would like to append to the ids."; 
 
-ReplaceBoundingBox::usage"This is an option for graphic Exports of the DocBook*\
-Equation functions that, under the conditions mentioned in the usage message \
-for WriteDimensions, where GetBoundingBoxSizePacket is used, rewrites the \
-bounding box with the information from GetBoundingBoxSizePacket.";
-
 SetIdAttribute::usage="An boolean option for the DocBook* functions that \
 states whether or not to set the xml:id attribute on the generated element.";
 
@@ -191,18 +186,6 @@ and the Sequenced right hand side of TextOptions.";
 
 ToXML::usage="This function sequences the XML out of an XMLChain and Sows \
 all the rest of the ExportDelayed types. See ExportDelayed and XMLChain.";
-
-UseMinimumHeightDimension::usage="This is an option for graphic Exports of the \
-DocBook*Equation functions that will cause the bounding box rewriting routine \
-to use the minimum height for the exported graphic at the expense of an \
-incorrect baseline shift. It is useful as a sub-option of DocBookTable because \
-DocBookTable uses DocBookInlineEquation for the contents of its cells, which \
-should be as tightly wrapped to the contents as possible (because it currently \
-can't be made very tight at all and this eliminates the most white space). It \
-also causes other \"random\" problems with things dropping out of place.";
-
-UseMinimumWidthDimension::usage="This option is the same as \
-UseMinimumHeightDimension, but is for the width.";
 
 WriteDimensions::usage="This is an option for graphic Exports of the DocBook*\
 Equation/Figure functions that (currently) causes the dimensions of the export \

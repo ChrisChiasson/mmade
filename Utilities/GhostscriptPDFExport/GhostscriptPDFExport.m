@@ -240,6 +240,23 @@ GeneralDownValue@epsBounds;
 (*adding options to export -- this is not the "overload" mention in 
 the PDF export message*)
 
+UseMinimumHeightDimension::usage="This is an option for graphic Exports of the \
+DocBook*Equation functions that will cause the bounding box rewriting routine \
+to use the minimum height for the exported graphic at the expense of an \
+incorrect baseline shift. It is useful as a sub-option of DocBookTable because \
+DocBookTable uses DocBookInlineEquation for the contents of its cells, which \
+should be as tightly wrapped to the contents as possible (because it currently \
+can't be made very tight at all and this eliminates the most white space). It \
+also causes other \"random\" problems with things dropping out of place.";
+
+UseMinimumWidthDimension::usage="This option is the same as \
+UseMinimumHeightDimension, but is for the width.";
+
+ReplaceBoundingBox::usage"This is an option for graphic Exports of the DocBook*\
+Equation functions that, under the conditions mentioned in the usage message \
+for WriteDimensions, where GetBoundingBoxSizePacket is used, rewrites the \
+bounding box with the information from GetBoundingBoxSizePacket.";
+
 Unprotect[Export];
 Update/@{Export};
 Options@Export=
