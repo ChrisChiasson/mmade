@@ -137,12 +137,19 @@ End[]
 EndPackage[]
 
 
-
-(*old eps handling code (which has more capabilities)*)
+(*old handling code (which has more capabilities in terms of returning
+more tightly bound files in MMA 5 at the cost of higher complexity)*)
+(*returns adjustments and comment end position*)
 (*
 epsSystem[expr_,opts___?OptionQ]:=
 	Module[{commentEndPos,headerList,epsList,llx,lly,urx,ury,width,yUp,yDown,
-		height,newLlx,newLly,newUrx,newUry,rht,orgWidth,orgHeight},
+		height,newLlx,newLly,newUrx,newUry,rht,orgWidth,orgHeight,
+		replaceBoundingBox=If[(ReplaceBoundingBox/.{opts})===True,True,False],
+		useMinimumWidthDimension=
+			If[(UseMinimumWidthDimension/.{opts})===True,True,False],
+		useMinimumHeightDimension=
+			If[(UseMinimumHeightDimension/.{opts})===True,True,False]
+		},
 		epsList=
 			ImportString[
 				ExportString[
@@ -206,7 +213,32 @@ epsSystem[expr_,opts___?OptionQ]:=
 			commentEndPos,
 			Join[headerList,Take[epsList,{commentEndPos+2,-1}]]}
 		];
+
+GeneralDownValue@epsSystem;
+
+epsList[expr_,opts___?OptionQ]:=
+	Module[{epsList,commentEndPos,llx,lly,urx,ury,width,height,yDown},
+		{{llx,lly,urx,ury},{width,height,yDown},commentEndPos,epsList}=
+			epsSystem[expr,opts];
+		Fold[Insert[#1,#2,commentEndPos+1]&,
+			epsList,
+			ToString/@{SequenceForm[llx," neg ",lly," neg translate"],
+				SequenceForm[
+					"<</PageSize [",width," ",height,"]>>setpagedevice"
+					]
+				}
+			]
+		];
+
+GeneralDownValue@epsList;
+
+epsBounds[expr_,opts___?OptionQ]:=
+	ToExpression/@epsSystem[expr,opts][[2]];
+
+GeneralDownValue@epsBounds;
 *)
+
+
 (*
 MMADE, a Mathematica DocBook Exporter
 The license and Copyright information for MMADE is included in rights.txt
