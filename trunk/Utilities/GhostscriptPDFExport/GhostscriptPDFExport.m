@@ -121,10 +121,10 @@ Protect[System`ConvertersDump`exportFormatQ,Message,Export];
 Update/@{System`ConvertersDump`exportFormatQ,Message,Export};
 
 
-XML`DocBook`ExportDryRun[file_String,expr_,"PDF",opts___]:=
+Utilities`ExportDryRun`ExportDryRun[file_String,expr_,"PDF",opts___]:=
 	{file,ExportString[expr,"EPS",opts]};
 
-XML`DocBook`ExportDryRun[file_,expr_,"PDF",opts___]:=
+Utilities`ExportDryRun`ExportDryRun[file_,expr_,"PDF",opts___]:=
 	{Message[Export::"chtype",file];file,ExportString[expr,"EPS",opts]};
 
 
