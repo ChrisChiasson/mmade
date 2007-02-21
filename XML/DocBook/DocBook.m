@@ -346,7 +346,9 @@ sequenceNullXmlPseudoPatternObject=xmlPseudoPatternObject...;
 
 multipleNullXmlPseudoPatternObject={sequenceNullXmlPseudoPatternObject};
 
-optionPseudoPatternObject=((Rule|RuleDelayed)[_,_])?OptionQ;
+ruleHeadPatternObject=Rule|RuleDelayed;
+
+optionPseudoPatternObject=(ruleHeadPatternObject[_,_])?OptionQ;
 
 optionsOrNullPseudoPatternObject=optionPseudoPatternObject...;
 
@@ -411,8 +413,6 @@ mathMLConversionOptions=Sequence["Formats"->{"PresentationMathML"},
 	"NamespacePrefixes"->{mathMlNameSpace->"mml"},
 	"IncludeMarkupAnnotations"->False];
 
-ruleHeadPatternObject=Rule|RuleDelayed;
-
 xmlAttributePatternObject=ruleHeadPatternObject[_String,_String];
 
 multipleXmlAttributePatternObject={xmlAttributePatternObject..};
@@ -438,22 +438,31 @@ pdfScaleAttribute="scale":>ToString@N[$ScreenResolution/$PrintResolution*100];
 (*functions*)
 
 
-
 (*rule handling*)
+(*these rule functions return a flat list of unique rules in input order*)
+ruleUnionNoCheck[ruleList_]:=
+	Module[{encounteredLhses=Alternatives[],ruleParser},
+		ruleParser[rule:_[lhs_,_]]:=
+			If[MatchQ[lhs,encounteredLhses],
+				Identity[Sequence][],
+				AppendTo[encounteredLhses,lhs];rule
+				];
+			ruleParser/@ruleList
+		]
 
-ruleFlatUnion[opts__?OptionQ]:=
-	With[{rules=Flatten@{opts}},
-		Module[{encounteredLhses=Alternatives[],lhs,rule,ruleParser},
-			ruleParser[rule:ruleOrRuleDelayedPatternObject[lhs_,_]]:=
-				If[MatchQ[lhs,encounteredLhses],
-					Identity[Sequence][],
-					AppendTo[encounteredLhses,lhs];rule
-					];
-				ruleParser/@rules
-			]
-		];
+(*a symbol version of ruleUnion isn't needed because I can use FilterOptions*)
+
+ruleUnion[opts:optionsOrNullPseudoPatternObject]:=ruleUnionNoCheck[{opts}]
+
+GeneralDownValue[ruleUnion];
+
+ruleFlatUnion[opts___?OptionQ]:=ruleUnionNoCheck@Flatten@{opts}
+
+ruleFlatUnion[symb_Symbol/;AtomQ@symb,opts___?OptionQ]:=
+	ruleUnionNoCheck{FilterOptions[symb,##]&@@Flatten@{opts}}
 
 GeneralDownValue[ruleFlatUnion];
+
 
 (*option switching by role*)
 
