@@ -1,4 +1,5 @@
-BeginPackage["Utilities`GhostscriptPDFExport`",{"Utilities`Run`Workarounds`"}]
+BeginPackage["Utilities`GhostscriptPDFExport`",
+	{"Utilities`Run`Workarounds`","Utilities`FilterOptions`"}]
 
 
 Begin["`Private`"]
@@ -10,7 +11,7 @@ System`ConvertersDump`exportFormatQ*)
 XML`MathML`BoxesToMathML["\[Beta]"]
 
 
-If[!ValueQ@OverloadExport,OverloadExport=True];
+If[!ValueQ@OverloadExport,OverloadExport=True]
 
 
 If[OverloadExport&&$VersionNumber<6,
@@ -62,26 +63,58 @@ System`ConvertersDump`exportFormatQ["PDF"]=False;
 Message[Export::"format","PDF"]=Sequence[];
 
 
+Export::"gsrunf"="The Run to call Ghostscript failed with an exit status of `1`\
+.";
+
+
 Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
 	StringQ@Ghostscript`Executable&&FileType@Ghostscript`Executable===File:=
-	Module[{args,epsFile,stem},
-		epsFile=StringReplace[pdfFile,
-			stem__~~".pdf"->stem~~".eps",IgnoreCase->True];
-		Export[epsFile,epsList[expr,opts],"Lines"];
-		If[0===
-			Run[quote@Ghostscript`Executable,
+	Module[{args,commentEndPos,epsFile,epsList,exitStatus,llx,lly,urx,ury},
+		Check[
+			epsFile=StringReplace[pdfFile,stem__~~".pdf"->stem~~".eps",
+				IgnoreCase->True];
+			epsList=ImportString[
+				ExportString[expr,"EPS",FilterOptions[ExportString,opts]],
+				"Lines"];
+			commentEndPos=First@First@Position[epsList,"%%EndComments"];
+			(*{{llx, lly},{urx, ury}}=MathLink`CallFrontEnd[
+				ExportPacket[expr,"PostScript",Verbose->False]
+				][[2]];*)
+			{llx,lly,urx,ury}=ToExpression/@Flatten@StringCases[
+				Take[epsList,{1,commentEndPos}],
+				StringExpression[
+					"%%HiResBoundingBox: ",
+					llx__," ",lly__," ",
+					urx__," ",ury__]->
+						{llx,lly,urx,ury}
+					];
+			epsList=Insert[epsList,
+				Unevaluated[
+					ToString@SequenceForm["<</PageSize [",urx-llx," ",ury-lly,
+						"]>>setpagedevice"
+						],
+					ToString@SequenceForm[llx," neg ",lly," neg translate"]
+					],
+				commentEndPos+1
+				];
+			Print@Export[epsFile,epsList,"Lines"];
+			exitStatus=Run[Ghostscript`Executable,
 				"-dCompatibilityLevel=1.4","-q","-dSAFER","-dNOPAUSE","-dBATCH",
-				"-sDEVICE=pdfwrite","-sOutputFile="<>quote@pdfFile,"-c",
-				".setpdfwrite","-f",quote@
-					System`ConvertersDump`fullPathNameExport[epsFile,"EPS"]
+				"-sDEVICE=pdfwrite","-sOutputFile="<>pdfFile,"-c",
+				".setpdfwrite","-f",
+				System`ConvertersDump`fullPathNameExport[epsFile,"EPS"]
+				];
+			If[0===exitStatus,
+				pdfFile,
+				Message[Export::"gsrunf",exitStatus]
 				],
-			pdfFile,
 			$Failed
 			]
 		];
 
+
 Export[pdfFile_String,xpr_,"PDF",opts___?OptionQ]:=
-	Message[Ghostscript`Executable::notfound];
+	Message[Ghostscript`Executable::"notfound"];
 
 
 Protect[System`ConvertersDump`exportFormatQ,Message,Export];
@@ -94,15 +127,86 @@ XML`DocBook`ExportDryRun[file_String,expr_,"PDF",opts___]:=
 XML`DocBook`ExportDryRun[file_,expr_,"PDF",opts___]:=
 	{Message[Export::"chtype",file];file,ExportString[expr,"EPS",opts]};
 
+
 ]
 
 
-End[];
+End[]
 
 
-EndPackage[];
+EndPackage[]
 
 
+
+(*old eps handling code (which has more capabilities)*)
+(*
+epsSystem[expr_,opts___?OptionQ]:=
+	Module[{commentEndPos,headerList,epsList,llx,lly,urx,ury,width,yUp,yDown,
+		height,newLlx,newLly,newUrx,newUry,rht,orgWidth,orgHeight},
+		epsList=
+			ImportString[
+				ExportString[
+					expr,
+					"EPS",
+					FilterOptions[ExportString,opts]
+					],
+				"Lines"];
+		commentEndPos=First@First@Position[epsList,"%%EndComments"];
+		headerList=Take[epsList,{1,commentEndPos+1}];
+		{llx,lly,urx,ury}=ToExpression/@Flatten@StringCases[
+					headerList,
+					StringExpression[
+						"%%HiResBoundingBox: ",
+						llx__," ",lly__," ",
+						urx__," ",ury__]->
+							{llx,lly,urx,ury}
+						];
+		If[replaceBoundingBox&&!MatchQ[expr,graphicsPatternObject],
+			{{width,yUp,yDown}}=getBoundingBoxSizePacket[expr,opts];
+			height=yUp+yDown;
+			orgWidth=urx-llx;
+			If[useMinimumWidthDimension&&width>orgWidth,width=orgWidth];
+			orgHeight=ury-lly;
+			If[useMinimumHeightDimension&&height>orgHeight,
+				{yUp,yDown,height}={yUp,yDown,height}*orgHeight/height];
+			{newLlx,newUrx,newLly,newUry}=Sequence@@@
+				{Mean[{llx,urx}]+{-1,1}width/2,Mean[{lly,ury}]+{-1,1}height/2};
+			headerList=
+				StringReplace[
+					headerList,
+					{"%%BoundingBox:"~~__->
+						ToString[SequenceForm@@
+							BoxForm`Intercalate[
+								{"%%BoundingBox:",
+									Floor@newLlx,Floor@newLly,
+									Ceiling@newUrx,Ceiling@newUry},
+								" "
+								]
+							],
+						"%%HiResBoundingBox:"~~__->
+							ToString[SequenceForm@@
+								BoxForm`Intercalate[
+									{"%%HiResBoundingBox:",
+										newLlx,newLly,newUrx,newUry},
+									" "
+									]
+								],
+						(ToString@SequenceForm[lly," ",ury]~~" trans"~~rht__):>
+  							ToString@SequenceForm[newLly," ",newUry]~~
+  								" trans"~~rht
+  						}
+  					],
+  			width=urx-llx;
+  			height=ury-lly;
+  			yDown=0;
+			{newLlx,newLly,newUrx,newUry}={llx,lly,urx,ury}
+			];
+		{{newLlx,newLly,newUrx,newUry},
+			{width,height,yDown},
+			commentEndPos,
+			Join[headerList,Take[epsList,{commentEndPos+2,-1}]]}
+		];
+*)
 (*
 MMADE, a Mathematica DocBook Exporter
 The license and Copyright information for MMADE is included in rights.txt
