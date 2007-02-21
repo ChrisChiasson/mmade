@@ -236,6 +236,20 @@ epsBounds[expr_,opts___?OptionQ]:=
 	ToExpression/@epsSystem[expr,opts][[2]];
 
 GeneralDownValue@epsBounds;
+
+(*adding options to export -- this is not the "overload" mention in 
+the PDF export message*)
+
+Unprotect[Export];
+Update/@{Export};
+Options@Export=
+	Flatten@{Options@Export,
+		UseMinimumWidthDimension->False,
+		UseMinimumHeightDimension->False,
+		ReplaceBoundingBox->False}
+Protect[Export];
+Update/@{Export};
+
 *)
 
 
