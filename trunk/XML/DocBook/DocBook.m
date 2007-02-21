@@ -1878,26 +1878,6 @@ Options@Export=
 Protect[Export];
 Update/@{Export};
 
-(*executable stuff*)
-quote="\""<>#<>"\""&;
-
-If[$SystemID==="Windows",
-	(*debug code*)
-	(*run=With[{outStream=OpenWrite["C:\\runLog.txt"]},
-			(WriteString[outStream,
-				StringJoin@BoxForm`Intercalate[{##}," "],
-				"\n"];0)&
-			],*)
-	run=Run@quote@StringJoin@BoxForm`Intercalate[{##}," "]&,
-	run=Run
-	];
-
-(*ghostscript*)
-
-If[!ValueQ@OverloadExport,OverloadExport=True];
-
-
-
 
 $ContextPath=old$ContextPath
 Remove@old$ContextPath
