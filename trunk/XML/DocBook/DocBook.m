@@ -1,6 +1,6 @@
 (* ::Package:: *)
 BeginPackage["XML`DocBook`",
-	{"Utilities`FilterOptions`","XML`MathML`Workarounds`",
+	{"Utilities`FilterOptions`Extensions`","XML`MathML`Workarounds`",
 		"Utilities`GhostscriptPDFExport`"}];
 
 $ExportWidth::usage="$ExportWidth specifies the width at which to line \
@@ -436,32 +436,6 @@ If[!ValueQ[$ScreenResolution],$ScreenResolution=96];
 pdfScaleAttribute="scale":>ToString@N[$ScreenResolution/$PrintResolution*100];
 
 (*functions*)
-
-
-(*rule handling*)
-(*these rule functions return a flat list of unique rules in input order*)
-ruleUnionNoCheck[ruleList_]:=
-	Module[{encounteredLhses=Alternatives[],ruleParser},
-		ruleParser[rule:_[lhs_,_]]:=
-			If[MatchQ[lhs,encounteredLhses],
-				Identity[Sequence][],
-				AppendTo[encounteredLhses,lhs];rule
-				];
-			ruleParser/@ruleList
-		]
-
-(*a symbol version of ruleUnion isn't needed because I can use FilterOptions*)
-
-ruleUnion[opts:optionsOrNullPseudoPatternObject]:=ruleUnionNoCheck[{opts}]
-
-GeneralDownValue[ruleUnion];
-
-ruleFlatUnion[opts___?OptionQ]:=ruleUnionNoCheck@Flatten@{opts}
-
-ruleFlatUnion[symb_Symbol/;AtomQ@symb,opts___?OptionQ]:=
-	ruleUnionNoCheck{FilterOptions[symb,##]&@@Flatten@{opts}}
-
-GeneralDownValue[ruleFlatUnion];
 
 
 (*option switching by role*)
