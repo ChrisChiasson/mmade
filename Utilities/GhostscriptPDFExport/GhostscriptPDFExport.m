@@ -67,12 +67,10 @@ Export::"gsrunf"="The Run to call Ghostscript failed with an exit status of `1`\
 .";
 
 
-Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
+Export[pdfPathFragment_String,expr_,"PDF",opts___?OptionQ]/;
 	StringQ@Ghostscript`Executable&&FileType@Ghostscript`Executable===File:=
-	Module[{args,commentEndPos,epsFile,epsList,exitStatus,llx,lly,urx,ury},
+	Module[{pdfFile,commentEndPos,epsFile,epsList,exitStatus,llx,lly,urx,ury},
 		Check[
-			epsFile=StringReplace[pdfFile,stem__~~".pdf"->stem~~".eps",
-				IgnoreCase->True];
 			epsList=ImportString[
 				ExportString[expr,"EPS",FilterOptions[ExportString,opts]],
 				"Lines"];
@@ -97,12 +95,14 @@ Export[pdfFile_String,expr_,"PDF",opts___?OptionQ]/;
 					],
 				commentEndPos+1
 				];
-			Print@Export[epsFile,epsList,"Lines"];
-			exitStatus=Run[Ghostscript`Executable,
-				"-dCompatibilityLevel=1.4","-q","-dSAFER","-dNOPAUSE","-dBATCH",
-				"-sDEVICE=pdfwrite","-sOutputFile="<>pdfFile,"-c",
-				".setpdfwrite","-f",
-				System`ConvertersDump`fullPathNameExport[epsFile,"EPS"]
+			pdfFile=System`ConvertersDump`fullPathNameExport[pdfPathFragment,
+				"PDF"];
+			epsFile=StringReplace[pdfFile,stem__~~".pdf"->stem~~".eps",
+				IgnoreCase->True];
+			Export[epsFile,epsList,"Lines"];
+			exitStatus=Run[Ghostscript`Executable,"-dCompatibilityLevel=1.4",
+				"-q","-dSAFER","-dNOPAUSE","-dBATCH","-sDEVICE=pdfwrite",
+				"-sOutputFile="<>pdfFile,"-c",".setpdfwrite","-f",epsFile
 				];
 			If[0===exitStatus,
 				pdfFile,
