@@ -105,12 +105,6 @@ ExportDelayed objects are handled differently by this package depending \
 on whether they are \"XML\" or non-XML types. The type is given in the third \
 argument. See ToXML and XMLChain.";
 
-ExportDryRun::chtype=StringReplace[Export::chtype,"Export"->"ExportDryRun"];
-
-ExportDryRun::usage="ExportDryRun[\"file\",expr,\"format\"] pretends to export \
-expr to \"file\" in \"format\" by returning {\"file\",ExportString[expr,\
-\"format\"]}.";
-
 Exports::usage="Exports is an option for DocBookEquation and DocBookFigure \
 that gives a nested list of option lists for the functions that are called \
 in the process of making an equation or figure element.";
@@ -1617,21 +1611,6 @@ DocBookInformalTable[id_String,description:xmlPseudoPatternObject,
 		];
 
 GeneralDownValue@DocBookInformalTable;
-
-(*ExportDryRun*)
-
-Options@ExportDryRun=Options@ExportString;
-
-ExportDryRun[file_String,expr_,type_String,opts:
-	optionsOrNullPseudoPatternObject]:={file,ExportString[expr,type,opts]};
-
-(*file_String will trigger the ExportDryRun::chtype message in more cases than
-it should - such as when file is a stream and not a file name*)
-
-ExportDryRun[file_,expr_,type_String,opts:optionsOrNullPseudoPatternObject]:=
-	{Message[Export::chtype,file];file,ExportString[expr,type,opts]};
-
-GeneralDownValue@ExportDryRun;
 
 
 $ContextPath=old$ContextPath
