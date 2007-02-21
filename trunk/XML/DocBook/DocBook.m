@@ -134,31 +134,14 @@ DocBookFigure[...,Exports->ExportsOption[DocBookFigure,\"fo\",ExportType->\"PNG\
 ExportType::usage="This is the type of output that will be generated for the \
 expression being exported. It must be one of the types handled by Export.";
 
-FileBaseName::usage="FileBaseName[\"fileName\"] returns the name of the file "<>
-	"after the last path separator.";
-
 FirefoxMathMLCompatibility::usage="This is an option for the DocBook*Equation \
 functions that will set $FirefoxMathMLCompatibility=True at appropriate times \
 during \
 output generation. For more information, see the usage message for \
 $FirefoxMathMLCompatibility.";
 
-FromRelativePath::usage="FromRelativePath[\"relativeFileName\"] returns the "<>
-	"full path of the file if it exists under $Path";
-
 InlineMediaObjectElement::usage"InlineMediaObjectElement is the type of \
 element used to contain inlineequation media.";
-
-InputFileBaseName::usage="InputFileBaseName[] gives the base file name of "<>
-	"$Input. This is useful for copying the source file to an export "<>
-	"directory";
-
-InputDirectoryName::usage="InputDirectoryName[] will search the path in an "<>
-	"attempt to find the presently executing .m file.";
-
-InputFileName::usage="InputFileName[] will search $Path in an attempt to "<>
-	"find the presently executing $Input file. This does not work fo "<>
-	"interactive notebooks.";
 
 MediaObjectElement::usage="MediaObjectElement is the type of element used \
 to contain equation and informalequation media.";
@@ -173,9 +156,6 @@ inside the <mediaobject> element.";
 ObjectContainer::usage="ObjectContainer is an option for the DocBook*Equation \
 functions that allows one to specify the type of media object container for \
 the generated equations (inline or regular block level.";
-
-Overwrite::usage="Overwrite is an option for CopyFile that allows it to "<>
-	"safely overwrite the destination file";
 
 PrependDirectory::usage="PrependDirectory is an option for XMLDocument that \
 allows prepension of a directory name to each id in an XML chain. This option \
@@ -477,45 +457,6 @@ ExportsOption[
 
 GeneralDownValue[ExportsOption];
 
-toFileName[str_String]=str;
-
-toFileName[file_FrontEnd`FileName]:=ToFileName@file;
-
-Unprotect[CopyFile];
-
-Update[CopyFile];
-
-Options@CopyFile={Overwrite->True};
-
-(*I haven't decided how to make any of my file functions that use
-	the front end work when the front end and the kernel are using
-	different file systems.*)
-
-CopyFile[src:(_String|_FrontEnd`FileName),
-	dest:(_String|_FrontEnd`FileName),
-	Overwrite->True]:=
-	With[{srcFile=toFileName@src,
-			destFile=toFileName@dest},
-		Switch[FileType[destFile],
-			None,
-			CopyFile[srcFile,destFile],
-			File,
-			With[{tmpFile=Close[OpenTemporary[]]},
-				DeleteFile[tmpFile];
-				CopyFile[srcFile,tmpFile];
-				DeleteFile[destFile];
-				CopyFile[tmpFile,destFile];
-				DeleteFile[tmpFile]
-				],
-			Directory,
-			Abort[]
-			]
-		];
-
-Protect[CopyFile];
-
-Update[CopyFile];
-
 (*expression to string conversion*)
 
 removeRowBoxes[expr_]:=Module[{args},expr//.RowBox[{args__}]:>Sequence[args]];
@@ -625,52 +566,9 @@ System`ConvertersDump`fullPathNameExport*)
 
 BoxesToMathML["\[Beta]"];
 
-(*fromFileName is given in the function reference under ToFileName*)
-
-fromFileName[arg_FrontEnd`FileName]:=List@@arg[[{1,2}]]/.""->Sequence[];
-
-fromFileName[path_String]:=Module[{dir,file},(dir=Most[#];file=#[[-1]])&@
-	StringSplit[path,$PathnameSeparator|"/",All];
-	If[Length[dir]>0&&dir[[1]]=="",dir[[1]]=$PathnameSeparator];
-	If[Length[dir]==1,dir=dir[[1]]];If[file=="",{dir},{dir,file}]];
-
 (*fullPathNameExport requires a path and a file type from $ExportFormats*)
 
 fullPathNameExport=System`ConvertersDump`fullPathNameExport;
-
-FromRelativePath[relativeFileName_String]:=
-	Check[
-		If[relativeFileName==="",
-			"FileName"/.
-				NotebookInformation[EvaluationNotebook[]],
-			First[
-				(Pick[#,FileType/@#,File]&)[Prepend[
-					(#<>$PathnameSeparator<>relativeFileName&)/@
-						$Path,relativeFileName]]
-				]
-			],
-		$Failed
-		];
-
-GeneralDownValue@FromRelativePath;
-
-InputFileName[]:=FromRelativePath[$Input];
-
-GeneralDownValue@InputFileName;
-
-FileBaseName[arg_FrontEnd`FileName]:=arg[[2]];
-
-FileBaseName[fileName_String]:=fromFileName[fileName][[2]];
-
-GeneralDownValue@FileBaseName;
-
-InputFileBaseName[]:=FileBaseName@InputFileName[];
-
-GeneralDownValue@InputFileBaseName;
-
-InputDirectoryName[]:=ToFileName@@Most@fromFileName@InputFileName[];
-
-GeneralDownValue@InputDirectoryName;
 
 idLast[id_String]:=Last@fromFileName@fullPathNameExport[id,"XML"];
 
