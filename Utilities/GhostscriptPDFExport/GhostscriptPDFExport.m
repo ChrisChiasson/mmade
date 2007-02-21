@@ -10,6 +10,9 @@ System`ConvertersDump`exportFormatQ*)
 XML`MathML`BoxesToMathML["\[Beta]"]
 
 
+If[!ValueQ@OverloadExport,OverloadExport=True];
+
+
 If[OverloadExport&&$VersionNumber<6,
 Ghostscript`Executable::"notfound"="The Utilities`GhostscriptPDFExport` \
 package can't find \
