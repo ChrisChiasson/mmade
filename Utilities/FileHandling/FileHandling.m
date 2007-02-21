@@ -33,8 +33,7 @@ Begin["`Private`"]
 If[!NameQ[#<>"*"],Get@#]&/@{"Utilities`BadArgumentHandling`"}
 
 old$ContextPath=$ContextPath
-$ContextPath=Flatten@{$ContextPath,"XML`","XML`MathML`",
-	"Utilities`BadArgumentHandling`"}
+$ContextPath=Flatten@{$ContextPath,"Utilities`BadArgumentHandling`"}
 
 
 toFileName[str_String]=str;
