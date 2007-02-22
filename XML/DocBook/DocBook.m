@@ -27,7 +27,7 @@ AllowMathPhrase::usage="This is an option with a boolean value (True|False) \
 that controls wether the particular export will use <mathphrase> to represent \
 the subclass of expressions that can be represented by pure DocBook markup.";
 
-AlternateSizePacketMethod::usage="This is an option for the DocBook*Equation \
+AlternateSizePacketMethod::usage="This option for the DocBook*Equation \
 commands makes calculation of the baseline and bounding box of a particular \
 piece of typeset mathematics take Magnification into account after the call to \
 the front end - instead of before. Sometimes, this can result in a better \
@@ -783,29 +783,24 @@ imageObjectElement[
 			{XMLElement["imagedata",{Sequence@@imageDataAttributes,
 				fileRefAttribute[fileName]},{}]}]];
 
+
 Options@getBoundingBoxSizePacket={AlternateSizePacketMethod->False};
 
-getBoundingBoxSizePacket[expr:(_Notebook|_Cell),opts___?OptionQ]:=
-	If[AlternateSizePacketMethod/.{opts}/.Options@getBoundingBoxSizePacket,
-		getBoundingBoxSizePacketThenAdjustForMagnification[expr],
-		insertMagnificationThenGetBoundingBoxSizePacket[expr]
-		];
-
-getBoundingBoxSizePacket[expr_,___?OptionQ]:=
-	getBoundingBoxSizePacketThenAdjustForMagnification[expr];
-
-GeneralDownValue@getBoundingBoxSizePacket;
-
-getBoundingBoxSizePacketThenAdjustForMagnification[expr_]:=
+getBoundingBoxSizePacket[expr:(_Notebook|_Cell),
+	opts:optionsOrNullPseudoPatternObject]/;
+		(AlternateSizePacketMethod/.{opts}/.Options@getBoundingBoxSizePacket):=
 	FrontEndExecute[GetBoundingBoxSizePacket[expr]]/Magnification^2/.
-		AbsoluteOptions[$FrontEnd,Magnification];
+		AbsoluteOptions[$FrontEnd,Magnification]
 
-GeneralDownValue@getBoundingBoxSizePacketThenAdjustForMagnification;
+getBoundingBoxSizePacket[expr:(_Notebook|_Cell),
+	opts:optionsOrNullPseudoPatternObject]:=GetBoundingBoxSizePacket[expr]
 
+(*
 insertMagnificationThenGetBoundingBoxSizePacket[expr_]:=
 	FrontEndExecute[GetBoundingBoxSizePacket[Append[expr,Magnification->1]]];
 
 GeneralDownValue@insertMagnificationThenGetBoundingBoxSizePacket;
+*)
 
 
 prepareBaselineAdjustment[baseToBottom_?NumberQ,idExtension_String]:=
