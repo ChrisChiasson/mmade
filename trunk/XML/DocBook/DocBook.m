@@ -415,9 +415,9 @@ ExportsOption[
 			},
 		With[{exportPosition=First@First@rolePatternPositions},
 			ReplacePart[oldExportsRhs,
-				ruleFlatUnion[newExportsSubOptions,
+				{FilterOptions[newExportsSubOptions,
 					Extract[oldExportsRhs,exportPosition]
-					],
+					]},
 				exportPosition
 				]
 			]/;If[rolePatternPositions=!={},
