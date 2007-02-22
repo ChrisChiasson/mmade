@@ -1,7 +1,8 @@
 (* ::Package:: *)
 BeginPackage["XML`DocBook`",
 	{"Utilities`FilterOptions`","Utilities`FilterOptions`Extensions`",
-		"XML`MathML`Workarounds`","Utilities`GhostscriptPDFExport`"}];
+		"Utilities`FileHandling`","XML`MathML`Workarounds`",
+		"Utilities`GhostscriptPDFExport`"}];
 
 $ExportWidth::usage="$ExportWidth specifies the width at which to line \
 wrap exported expressions.";
@@ -544,7 +545,7 @@ GeneralDownValue@toString;
 
 fullPathNameExport=System`ConvertersDump`fullPathNameExport;
 
-idLast[id_String]:=Last@fromFileName@fullPathNameExport[id,"XML"];
+idLast[id_String]:=Last@FromFileName@fullPathNameExport[id,"XML"];
 
 GeneralDownValue@idLast;
 

@@ -2,29 +2,33 @@
 BeginPackage["Utilities`FileHandling`"]
 
 
-FileBaseName::usage="FileBaseName[\"fileName\"] returns the name of the file "<>
-	"after the last path separator.";
+FileBaseName::"usage"="FileBaseName[\"fileName\"] returns the name of the file \
+after the last path separator."
 
 
-FromRelativePath::usage="FromRelativePath[\"relativeFileName\"] returns the "<>
-	"full path of the file if it exists under $Path";
-
-InputDirectoryName::usage="InputDirectoryName[] will search the path in an "<>
-	"attempt to find the presently executing .m file.";
+FromFileName::"usage"="FromFileName[\"fileName\"] is an implementation of the \
+function of the same name as given in the help browser entry for ToFileName."
 
 
-InputFileBaseName::usage="InputFileBaseName[] gives the base file name of "<>
-	"$Input. This is useful for copying the source file to an export "<>
-	"directory";
+FromRelativePath::"usage"="FromRelativePath[\"relativeFileName\"] returns the \
+full path of the file if it exists under $Path."
 
 
-InputFileName::usage="InputFileName[] will search $Path in an attempt to "<>
-	"find the presently executing $Input file. This does not work fo "<>
-	"interactive notebooks.";
+InputDirectoryName::"usage"="InputDirectoryName[] will search the path in an \
+attempt to find the presently executing .m file."
 
 
-Overwrite::usage="Overwrite is an option for CopyFile that allows it to "<>
-	"safely overwrite the destination file";
+InputFileBaseName::"usage"="InputFileBaseName[] gives the base file name of \
+$Input. This is useful for copying the source file to an export directory."
+
+
+InputFileName::"usage"="InputFileName[] will search $Path in an attempt to \
+find the presently executing $Input file. This does not work fo interactive \
+notebooks."
+
+
+Overwrite::usage="Overwrite is an option for CopyFile that allows it to safely \
+overwrite the destination file."
 
 
 Begin["`Private`"]
@@ -77,11 +81,11 @@ Protect[CopyFile];
 Update[CopyFile];
 
 
-(*fromFileName is given in the function reference under ToFileName*)
+(*FromFileName is given in the function reference under ToFileName*)
 
-fromFileName[arg_FrontEnd`FileName]:=List@@arg[[{1,2}]]/.""->Sequence[];
+FromFileName[arg_FrontEnd`FileName]:=List@@arg[[{1,2}]]/.""->Sequence[];
 
-fromFileName[path_String]:=Module[{dir,file},(dir=Most[#];file=#[[-1]])&@
+FromFileName[path_String]:=Module[{dir,file},(dir=Most[#];file=#[[-1]])&@
 	StringSplit[path,$PathnameSeparator|"/",All];
 	If[Length[dir]>0&&dir[[1]]=="",dir[[1]]=$PathnameSeparator];
 	If[Length[dir]==1,dir=dir[[1]]];If[file=="",{dir},{dir,file}]];
@@ -111,7 +115,7 @@ GeneralDownValue@InputFileName;
 
 FileBaseName[arg_FrontEnd`FileName]:=arg[[2]];
 
-FileBaseName[fileName_String]:=fromFileName[fileName][[2]];
+FileBaseName[fileName_String]:=FromFileName[fileName][[2]];
 
 GeneralDownValue@FileBaseName;
 
@@ -121,7 +125,7 @@ InputFileBaseName[]:=FileBaseName@InputFileName[];
 GeneralDownValue@InputFileBaseName;
 
 
-InputDirectoryName[]:=ToFileName@@Most@fromFileName@InputFileName[];
+InputDirectoryName[]:=ToFileName@@Most@FromFileName@InputFileName[];
 
 GeneralDownValue@InputDirectoryName;
 
