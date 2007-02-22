@@ -266,7 +266,7 @@ unwantedBeneathScriptBoxes=
 
 rowBoxOrStringPatternObject=(_RowBox|_String)..;
 
-ruleOrRuleDelayedPatternObject=Rule|RuleDelayed;
+ruleHeadPatternObject=Rule|RuleDelayed;
 
 allSewingTags=xmlSewingTag|otherSewingTag;
 
@@ -302,8 +302,6 @@ multipleXmlOrNothingPseudoPatternObject=
 sequenceNullXmlPseudoPatternObject=xmlPseudoPatternObject...;
 
 multipleNullXmlPseudoPatternObject={sequenceNullXmlPseudoPatternObject};
-
-ruleHeadPatternObject=Rule|RuleDelayed;
 
 optionPseudoPatternObject=(ruleHeadPatternObject[_,_])?OptionQ;
 
@@ -404,9 +402,9 @@ ExportsOption[
 	With[
 		{rolePatternPositions=
 			Position[oldExportsRhs,
-				ruleOrRuleDelayedPatternObject[
+				ruleHeadPatternObject[
 					ObjectAttributes,
-					{___,ruleOrRuleDelayedPatternObject["role",role],___}
+					{___,ruleHeadPatternObject["role",role],___}
 					]
 				],
 			opts=Flatten@{newExportsSubOptions}
@@ -877,7 +875,7 @@ imageObjectElement[
 					epsBounds[
 						notebook,
 						ReleaseHold[Hold[opts]/.
-							ruleOrRuleDelayedPatternObject[
+							ruleHeadPatternObject[
 								"IncludeSpecialFonts",_]->
 									"IncludeSpecialFonts"->False
 							]
@@ -1514,7 +1512,7 @@ tableEntryToXML[id_String,arg_,position:{1,__Integer},
 	]:=
 	tableEntryToXML[id,StyleForm[arg,FontWeight->"Bold"],position,
 		Sequence@@
-			DeleteCases[{opts},ruleOrRuleDelayedPatternObject[BoldHeadings,__]]
+			DeleteCases[{opts},ruleHeadPatternObject[BoldHeadings,__]]
 		];
 
 tableEntryToXML[id_String,arg_,position:{__Integer},opts___?OptionQ]:=
@@ -1539,7 +1537,7 @@ Options@docBookTableGeneral={
 				Exports/.
 					(Options@
 						DocBookInlineEquation/.
-							ruleOrRuleDelayedPatternObject[
+							ruleHeadPatternObject[
 (*spacing altered*)	dimOpt:UseMinimumHeightDimension|UseMinimumWidthDimension,
 								_
 								]->dimOpt->False(*disabled for now*))
