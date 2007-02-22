@@ -1,7 +1,7 @@
 (* ::Package:: *)
 BeginPackage["XML`DocBook`",
-	{"Utilities`FilterOptions`Extensions`","XML`MathML`Workarounds`",
-		"Utilities`GhostscriptPDFExport`"}];
+	{"Utilities`FilterOptions`","Utilities`FilterOptions`Extensions`",
+		"XML`MathML`Workarounds`","Utilities`GhostscriptPDFExport`"}];
 
 $ExportWidth::usage="$ExportWidth specifies the width at which to line \
 wrap exported expressions.";
