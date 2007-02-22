@@ -738,7 +738,7 @@ imageObjectElement[id_String,expr_,boxes_,"MathML",idExtension_String,
 							]
 						],
 					"SymbolicXML"
-					]
+					][[2]]
 				]
 			}
 		];
