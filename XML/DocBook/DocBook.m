@@ -794,7 +794,8 @@ getBoundingBoxSizePacket[expr:(_Notebook|_Cell),
 		AbsoluteOptions[$FrontEnd,Magnification]
 
 getBoundingBoxSizePacket[expr:(_Notebook|_Cell),
-	opts:optionsOrNullPseudoPatternObject]:=GetBoundingBoxSizePacket[expr]
+	opts:optionsOrNullPseudoPatternObject]:=
+		FrontEndExecute@GetBoundingBoxSizePacket[expr]
 
 GeneralDownValue@getBoundingBoxSizePacket
 
