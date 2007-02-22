@@ -727,9 +727,12 @@ imageObjectElement[id_String,expr_,boxes_,"MathML",idExtension_String,
 		{Sequence@@imageObjectAttributes
 			(*,xmlIdAttributeRule[id<>idExtension,opts]*)},
 		{imageDataElement@
-			Block[{$SVGMathMathMLCompatibility=SVGMathMathMLCompatibility/.{opts},
-					$FirefoxMathMLCompatibility=FirefoxMathMLCompatibility/.{opts},
-					$CommonCompatibility=CommonCompatibility/.{opts}},
+			Block[{$SVGMathMathMLCompatibility=
+						SVGMathMathMLCompatibility/.{opts},
+					$FirefoxMathMLCompatibility=
+						FirefoxMathMLCompatibility/.{opts},
+					$CommonCompatibility=
+						CommonCompatibility/.{opts}},
 				ImportString[
 					BoxesToMathML[boxes,
 						FilterOptions[BoxesToMathML,
