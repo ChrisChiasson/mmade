@@ -805,6 +805,10 @@ GeneralDownValue@insertMagnificationThenGetBoundingBoxSizePacket;
 *)
 
 
+(*
+prepareBaslineAdjustment transforms the numeric basline height into a string,
+adding a zero after the decimal point for compatibility with other programs
+*)
 prepareBaselineAdjustment[baseToBottom_?NumberQ,idExtension_String]:=
 	prepareBaselineAdjustment[ToString[-baseToBottom],idExtension];
 
@@ -815,6 +819,7 @@ prepareBaselineAdjustment[negativeBaseToBottom_String,"html"|"xhtml"]/;
 prepareBaselineAdjustment[negativeBaseToBottom_String,_]:=negativeBaseToBottom;
 
 GeneralDownValue@prepareBaselineAdjustment;
+
 
 callFePdfCellToNotebook[cellExpr_Cell,notebookExpr_Notebook]:=
 	Module[{$trapCallFrontEnd=True},
