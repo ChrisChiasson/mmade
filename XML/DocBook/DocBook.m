@@ -871,6 +871,23 @@ imageObjectElement[
 		(*points are the units after these conversions*)
 		If[writeDimensions,{contentWidth,contentHeight,baseToBottom}=
 			First@getBoundingBoxSizePacket[notebook,opts]];
+(*old (more capable) code for obtaining the dimensions of typeset math*)
+(*
+		If[writeDimensions,
+			{contentWidth,contentHeight,baseToBottom}=
+				If[vectorGraphicsType||MatchQ[expr,graphicsPatternObject],
+					epsBounds[
+						notebook,
+						ReleaseHold[Hold[opts]/.
+							ruleHeadPatternObject[
+								"IncludeSpecialFonts",_]->
+									"IncludeSpecialFonts"->False
+							]
+						],
+					First@getBoundingBoxSizePacket[notebook,opts]
+					]
+			];
+*)
 		If[$VersionNumber>=6&&ToUpperCase@filetype==="PDF",
 			callFePdfCellToNotebook[cell,notebook];
 			notebook=cell
