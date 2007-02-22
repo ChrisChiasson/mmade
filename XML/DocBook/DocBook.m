@@ -795,6 +795,8 @@ getBoundingBoxSizePacket[expr:(_Notebook|_Cell),
 getBoundingBoxSizePacket[expr:(_Notebook|_Cell),
 	opts:optionsOrNullPseudoPatternObject]:=GetBoundingBoxSizePacket[expr]
 
+GeneralDownValue@getBoundingBoxSizePacket
+
 (*
 insertMagnificationThenGetBoundingBoxSizePacket[expr_]:=
 	FrontEndExecute[GetBoundingBoxSizePacket[Append[expr,Magnification->1]]];
