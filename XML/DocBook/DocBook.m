@@ -217,6 +217,13 @@ $ContextPath=Flatten@{$ContextPath,"XML`","XML`MathML`",
 	"Utilities`BadArgumentHandling`"}
 
 
+(*the BoxesToMathML call on the greek character is needed to define
+System`ConvertersDump`fullPathNameExport, System`Convert`XMLDump`$XMLNamesNS,
+and System`Convert`MathMLDump`$MathMLNS*)
+
+BoxesToMathML["\[Beta]"];
+
+
 $MultipleGraphicsExportTypes=Alternatives@"GIF";
 
 vectorGraphicsTypes="EPS"|"PDF"|"SVG";
@@ -340,8 +347,6 @@ graphicsOrMultipleGraphicsPatternObject=graphicsPatternObject|
 
 xmlNameSpace="http://www.w3.org/XML/1998/namespace";
 
-mathMlNameSpace="http://www.w3.org/1998/Math/MathML";
-
 quoteCharStringPatternObject="\""|"'";
 
 xmlIdAttribute={xmlNameSpace,"id"};
@@ -352,9 +357,7 @@ docBookEquationVersionAttributeRule="version"->docBookEquationVersion;
 
 docBookNameSpace="http://docbook.org/ns/docbook";
 
-xmlnsNameSpace="http://www.w3.org/2000/xmlns/";
-
-xmlnsNameSpaceAttribute={xmlnsNameSpace,"xmlns"};
+xmlnsNameSpaceAttribute={System`Convert`XMLDump`$XMLNamesNS,"xmlns"};
 
 docBookNameSpaceAttributeRule=xmlnsNameSpaceAttribute->docBookNameSpace;
 
@@ -365,7 +368,7 @@ symbolicMLConversionOptions=ConversionOptions->{"ElementFormatting"->None};
 (*it also messes up the export of NumberForm[xpr] in annotations*)
 
 mathMLConversionOptions=Sequence["Formats"->{"PresentationMathML"},
-	"NamespacePrefixes"->{mathMlNameSpace->"mml"},
+	"NamespacePrefixes"->{System`Convert`MathMLDump`$MathMLNS->"mml"},
 	"IncludeMarkupAnnotations"->False];
 
 xmlAttributePatternObject=ruleHeadPatternObject[_String,_String];
@@ -494,8 +497,8 @@ GeneralDownValue@removeUnwantedBoxes;
 unStringableBoxesQ[boxes_/;FreeQ[boxes,notBoxExpressionPatternObject]]:=False;
 
 (*This should always give False. If it doesn't, either the toString routine
-is broken, or a MakeBoxes definition that created something that isn't
-a box or a string*)
+is broken, or a MakeBoxes definition created something that isn't a box or a
+string*)
 
 unStringableBoxesQ[boxes_]:=True;
 
@@ -536,10 +539,6 @@ toString[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
 
 GeneralDownValue@toString;
 
-(*the BoxesToMathML call on the greek character is needed to define
-System`ConvertersDump`fullPathNameExport*)
-
-BoxesToMathML["\[Beta]"];
 
 (*fullPathNameExport requires a path and a file type from $ExportFormats*)
 
