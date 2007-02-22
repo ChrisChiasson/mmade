@@ -838,6 +838,9 @@ callFePdfCellToNotebook[cellExpr_Cell,notebookExpr_Notebook]:=
 
 GeneralDownValue@callFePdfCellToNotebook
 
+
+(*I need to take into account that my callFePdfCellToNotebook
+workaround does not work on getBoundingBoxSizePacket*)
 imageObjectElement[
 	id_String,
 	expr_,
@@ -850,7 +853,7 @@ imageObjectElement[
 	Module[
 		{contentHeight,contentWidth,baseToBottom,notebook,cell,
 			fileName=StringJoin[id,idExtension,".",fileExtension@filetype],
-			writeDimensions=If[(WriteDimensions/.{opts})===True,True,False],
+			writeDimensions=TrueQ[WriteDimensions/.{opts}],
 			vectorGraphicsType=
 				StringMatchQ[filetype,
 					vectorGraphicsTypes,
@@ -861,31 +864,18 @@ imageObjectElement[
 			Notebook[
 				{cell=Cell[
 					StripBoxes[boxes],
-					Sequence@@Rule@@@(CellOptions/.{opts})	
+					Sequence@@Rule@@@(CellOptions/.{opts})
 					]},
 				Sequence@@Rule@@@(NotebookOptions/.{opts})
 				];
+		(*points are the units after these conversions*)
+		If[writeDimensions,{contentWidth,contentHeight,baseToBottom}=
+			First@getBoundingBoxSizePacket[notebook,opts]];
 		If[$VersionNumber>=6&&ToUpperCase@filetype==="PDF",
 			callFePdfCellToNotebook[cell,notebook];
 			notebook=cell
 			];
-		(*points are the units after these conversions*)
-		If[writeDimensions,
-			{contentWidth,contentHeight,baseToBottom}=
-				If[vectorGraphicsType||MatchQ[expr,graphicsPatternObject],
-					epsBounds[
-						notebook,
-						ReleaseHold[Hold[opts]/.
-							ruleHeadPatternObject[
-								"IncludeSpecialFonts",_]->
-									"IncludeSpecialFonts"->False
-							]
-						],
-					First@getBoundingBoxSizePacket[notebook,opts]
-					]
-			];
-		Sow[
-			ExportDelayed[
+		Sow[ExportDelayed[
 				fileName,
 				notebook,
 				filetype,
