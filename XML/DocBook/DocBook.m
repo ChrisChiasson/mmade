@@ -913,6 +913,7 @@ imageObjectElement[
 
 GeneralDownValue@imageObjectElement;
 
+
 InlineMediaObjectElement[imageObjects:sequenceXmlPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	noAttributeXmlElement["inlinemediaobject",imageObjects,opts];
@@ -1082,7 +1083,7 @@ $cellExportOptions={
 	ShowCellBracket->False
 	};
 
-$notebookExportOptions={WindowWidth->Infinity};
+$notebookExportOptions={WindowWidth->Infinity,Magnification->1};
 
 $mathMlXhtmlExpressionExportOptions={
 	AllowMathPhrase->False,
@@ -1152,6 +1153,101 @@ Options@docBookEquationGeneral={
 	SetIdAttribute->True,
 	TitleAbbrev->Automatic
 	};
+
+Options@DocBookEquation:=Options@docBookEquationGeneral;
+
+Options@DocBookInformalEquation:=Options@docBookEquationGeneral;
+
+$docBookInlineEquationAdditionalExportOptions=
+	{CellOptions->$cellExportOptions,
+		NotebookOptions->$notebookExportOptions
+		};
+
+Options@DocBookInlineEquation:=
+	DeleteCases[
+		Options@docBookEquationGeneral,
+		Rule[Caption,_]
+		];
+
+SetOptions[DocBookInlineEquation,
+	ObjectContainer->InlineMediaObjectElement,
+	Exports->
+		{$mathMlXhtmlExpressionExportOptions,
+			Flatten@{$pngHtmlExpressionExportOptions,
+				AllowMathPhrase->True,
+				$docBookInlineEquationAdditionalExportOptions
+				},
+			Flatten@{$mathMlPdfExpressionExportOptions,
+				SVGMathMathMLCompatibility->True,AllowMathPhrase->False
+				(*$epsPdfExpressionExportOptions,AllowMathPhrase->False,
+				ReplaceBoundingBox->True,WriteDimensions->True,
+				UseMinimumWidthDimension->False,
+				UseMinimumHeightDimension->False,
+				$docBookInlineEquationAdditionalExportOptions*)
+				},
+			$textAllAlternateExpressionExportOptions	
+			}
+	];
+
+$docBookFigureGeneralAdditionalOptions={AllowMathPhrase->False};
+
+Options@docBookFigureGeneral={
+	Attributes->
+		{docBookNameSpaceAttributeRule,
+			docBookEquationVersionAttributeRule},
+	Caption->None,
+	Exports->
+		{
+			Fold[
+				Append,
+				$pngHtmlExpressionExportOptions,
+				$docBookFigureGeneralAdditionalOptions
+				],
+			Fold[
+				Append,
+				$epsPdfExpressionExportOptions,
+				$docBookFigureGeneralAdditionalOptions
+				]
+			},
+	GraphicsListPart->-1,
+	ObjectContainer->MediaObjectElement,
+	SetIdAttribute->True,
+	TitleAbbrev->Automatic
+	};
+
+Options@DocBookFigure=Options@docBookFigureGeneral;
+
+Options@DocBookInformalFigure=Options@docBookFigureGeneral;
+
+Options@DocBookInlineMediaObject=DeleteCases[Options@docBookFigureGeneral,
+	Rule[Caption,_]];
+
+(*option maintencance needed*)
+Options@docBookTableGeneral={
+	Attributes->{docBookNameSpaceAttributeRule,
+	docBookEquationVersionAttributeRule},
+	TitleAbbrev->Automatic,
+	BoldHeadings->True,
+	Caption->None,
+	DocBookInlineEquationOptions->
+		{Attributes->{},
+			SetIdAttribute->False,
+			Rule[Exports,
+				Exports/.
+					(Options@
+						DocBookInlineEquation/.
+							ruleHeadPatternObject[
+(*spacing altered*)	dimOpt:UseMinimumHeightDimension|UseMinimumWidthDimension,
+								_
+								]->dimOpt->False(*disabled for now*))
+				]
+			}
+	};
+
+Options@DocBookTable=Options@docBookTableGeneral;
+
+Options@DocBookInformalTable=Options@docBookTableGeneral;
+
 
 docBookEquationGeneralKernel[id_String,expressions_DocBookEquationSequence,
 	options:optionsOrNullPseudoPatternObject]:=
@@ -1227,8 +1323,6 @@ docBookEquationGeneral[id_String,
 
 GeneralDownValue@docBookEquationGeneral;
 
-Options@DocBookEquation:=Options@docBookEquationGeneral;
-
 DocBookEquation[id_String,title:
 	xmlOrExportXmlChainPseudoPatternObject,expr_,opts:
 	optionsOrNullPseudoPatternObject]:=Module[{options=Sequence[opts,Sequence@@
@@ -1237,45 +1331,12 @@ DocBookEquation[id_String,title:
 
 GeneralDownValue@DocBookEquation;
 
-Options@DocBookInformalEquation:=Options@docBookEquationGeneral;
-
 DocBookInformalEquation[id_String,expr_,opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@
 		DocBookInformalEquation]},docBookEquationGeneral[id,"informalequation",
 		False,None,expr,Caption/.{options},options]];
 
 GeneralDownValue@DocBookInformalEquation;
-
-$docBookInlineEquationAdditionalExportOptions=
-	{CellOptions->$cellExportOptions,
-		NotebookOptions->$notebookExportOptions
-		};
-
-Options@DocBookInlineEquation:=
-	DeleteCases[
-		Options@docBookEquationGeneral,
-		Rule[Caption,_]
-		];
-
-SetOptions[DocBookInlineEquation,
-	ObjectContainer->InlineMediaObjectElement,
-	Exports->
-		{$mathMlXhtmlExpressionExportOptions,
-			Flatten@{$pngHtmlExpressionExportOptions,
-				AllowMathPhrase->True,
-				$docBookInlineEquationAdditionalExportOptions
-				},
-			Flatten@{$mathMlPdfExpressionExportOptions,
-				SVGMathMathMLCompatibility->True,AllowMathPhrase->False
-				(*$epsPdfExpressionExportOptions,AllowMathPhrase->False,
-				ReplaceBoundingBox->True,WriteDimensions->True,
-				UseMinimumWidthDimension->False,
-				UseMinimumHeightDimension->False,
-				$docBookInlineEquationAdditionalExportOptions*)
-				},
-			$textAllAlternateExpressionExportOptions	
-			}
-	];
 
 DocBookInlineEquation[id_String,expr_,opts:optionsOrNullPseudoPatternObject]:=
 	docBookEquationGeneral[id,"inlineequation",False,None,expr,None,Sequence[
@@ -1285,31 +1346,6 @@ GeneralDownValue@DocBookInlineEquation;
 
 (*graphics*)
 
-$docBookFigureGeneralAdditionalOptions={AllowMathPhrase->False};
-
-Options@docBookFigureGeneral={
-	Attributes->
-		{docBookNameSpaceAttributeRule,
-			docBookEquationVersionAttributeRule},
-	Caption->None,
-	Exports->
-		{
-			Fold[
-				Append,
-				$pngHtmlExpressionExportOptions,
-				$docBookFigureGeneralAdditionalOptions
-				],
-			Fold[
-				Append,
-				$epsPdfExpressionExportOptions,
-				$docBookFigureGeneralAdditionalOptions
-				]
-			},
-	GraphicsListPart->-1,
-	ObjectContainer->MediaObjectElement,
-	SetIdAttribute->True,
-	TitleAbbrev->Automatic
-	};
 
 exportGraphicsObjectList[
 	id_String,
@@ -1388,8 +1424,6 @@ docBookFigureGeneral[
 
 GeneralDownValue@docBookFigureGeneral;
 
-Options@DocBookFigure=Options@docBookFigureGeneral;
-
 DocBookFigure[id_String,title:xmlOrExportXmlChainPseudoPatternObject,
 	description:xmlPseudoPatternObject,
 	graphics:graphicsOrMultipleGraphicsPatternObject,
@@ -1400,8 +1434,6 @@ DocBookFigure[id_String,title:xmlOrExportXmlChainPseudoPatternObject,
 
 GeneralDownValue@DocBookFigure;
 
-Options@DocBookInformalFigure=Options@docBookFigureGeneral;
-
 DocBookInformalFigure[id_String,description:xmlPseudoPatternObject,graphics:
 	graphicsOrMultipleGraphicsPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=Module[{options=Sequence[opts,Sequence@@
@@ -1410,11 +1442,6 @@ DocBookInformalFigure[id_String,description:xmlPseudoPatternObject,graphics:
 			options]];
 
 GeneralDownValue@DocBookInformalFigure;
-
-Options@DocBookInlineMediaObject=DeleteCases[Options@docBookFigureGeneral,
-	Rule[Caption,_]];
-
-(*option maintencance needed*)
 
 DocBookInlineMediaObject[
 	id_String,
@@ -1515,29 +1542,6 @@ tableEntryToXML[id_String,arg_,position:{__Integer},opts___?OptionQ]:=
 
 GeneralDownValue@tableEntryToXML;
 
-Options@docBookTableGeneral={
-	Attributes->{docBookNameSpaceAttributeRule,
-	docBookEquationVersionAttributeRule},
-	TitleAbbrev->Automatic,
-	BoldHeadings->True,
-	Caption->None,
-	DocBookInlineEquationOptions->
-		{Attributes->{},
-			SetIdAttribute->False,
-			Rule[Exports,
-				Exports/.
-					(Options@
-						DocBookInlineEquation/.
-							ruleHeadPatternObject[
-(*spacing altered*)	dimOpt:UseMinimumHeightDimension|UseMinimumWidthDimension,
-								_
-								]->dimOpt->False(*disabled for now*))
-				]
-			}
-	};
-
-(*change the table code so that strings don't pass through inlineequation*)
-
 docBookTableGeneral[id_String,
 	tableTag:tableElementNameStringsPatternObject,
 	hasTitle:booleanPatternObject,
@@ -1579,8 +1583,6 @@ docBookTableGeneral[id_String,
 
 GeneralDownValue@docBookTableGeneral;
 
-Options@DocBookTable=Options@docBookTableGeneral;
-
 DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	description:xmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
@@ -1591,8 +1593,6 @@ DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 		];
 
 GeneralDownValue@DocBookTable;
-
-Options@DocBookInformalTable=Options@docBookTableGeneral;
 
 DocBookInformalTable[id_String,description:xmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
