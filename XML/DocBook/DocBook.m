@@ -396,6 +396,12 @@ pdfScaleAttribute="scale":>ToString@N[$ScreenResolution/$PrintResolution*100];
 
 (*functions*)
 
+If[$VersionNumber<6,
+	exportOptionsFiltering[opts:optionsOrNullPseudoPatternObject]:=
+		FilterOptions[Export,opts],
+	exportOptionsFiltering[opts:optionsOrNullPseudoPatternObject]:=
+		Sequence@@(ConversionOptions/.{opts}/.ConversionOptions->{})
+	]
 
 (*option switching by role*)
 
@@ -776,7 +782,7 @@ imageObjectElement[
 						All]
 					]],
 				filetype,
-				FilterOptions[Export,opts]
+				exportOptionsFiltering[opts]
 				],
 			otherSewingTag];
 		XMLElement["imageobject",{Sequence@@
@@ -898,7 +904,7 @@ imageObjectElement[
 				fileName,
 				notebook,
 				filetype,
-				FilterOptions[Export,opts]
+				exportOptionsFiltering[opts]
 				],
 			otherSewingTag
 			];
@@ -966,7 +972,7 @@ XMLChain[id:stringOrNothingPatternObject,
 	xmlexpr:xmlElementPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Flatten@Reap[Sow[ExportDelayed[id,xmlexpr,xmlFileType,
-		FilterOptions[Export,opts]],xmlSewingTag],allSewingTags][[2]];
+		exportOptionsFiltering[opts]],xmlSewingTag],allSewingTags][[2]];
 
 (*consider removing this definition below -
 it can cause problems with user input
@@ -1035,7 +1041,7 @@ XMLDocument[file_String,
 								{}
 								],
 							xmlFileType,
-							FilterOptions[Export,options]
+							exportOptionsFiltering[options]
 							]/.string_String:>
 								StringReplace[
 									string,
@@ -1336,7 +1342,7 @@ docBookEquationGeneral[id_String,
 					captionElement@caption
 					}
 				],
-			xmlFileType,FilterOptions[Export,options]],xmlSewingTag],
+			xmlFileType,exportOptionsFiltering[options]],xmlSewingTag],
 			allSewingTags][[2]]
 		];
 
@@ -1434,7 +1440,7 @@ docBookFigureGeneral[
 								}
 							],
 						xmlFileType,
-						FilterOptions[Export,options]
+						exportOptionsFiltering[options]
 						],
 					xmlSewingTag
 					],
@@ -1493,7 +1499,7 @@ DocBookInlineMediaObject[
 						}
 					],
 				xmlFileType,
-				FilterOptions[Export,opts]
+				exportOptionsFiltering[opts]
 				],
 			xmlSewingTag
 			],
@@ -1596,7 +1602,7 @@ docBookTableGeneral[id_String,
 					],
 				captionElement@caption
 				}
-			],xmlFileType,FilterOptions[Export,options]],xmlSewingTag],
+			],xmlFileType,exportOptionsFiltering[options]],xmlSewingTag],
 				allSewingTags][[2]]
 		];
 
