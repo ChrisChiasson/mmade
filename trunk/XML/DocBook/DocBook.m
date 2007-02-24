@@ -1116,6 +1116,7 @@ $mathMlXhtmlExpressionExportOptions={
 	DataAttributes->{},
 	ExportType->"MathML",
 	ObjectAttributes->{"role"->"xhtml"},
+	FirefoxMathMLCompatibility->True,
 	Sequence@@$boxExportOptions
 	};
 
@@ -1142,6 +1143,7 @@ $mathMlPdfExpressionExportOptions={
 	DataAttributes->{},
 	ExportType->"MathML",
 	ObjectAttributes->{"role"->"fo"},
+	SVGMathMathMLCompatibility->True,
 	Sequence@@$boxExportOptions
 	};
 
@@ -1167,8 +1169,7 @@ Options@docBookEquationGeneral={
 				$docBookEquationGeneralAdditionalExportOptions,
 				AllowMathPhrase->True
 				},
-			Flatten@{(*$mathMlPdfExpressionExportOptions*)
-				$epsPdfExpressionExportOptions,
+			Flatten@{$epsPdfExpressionExportOptions,
 				$docBookEquationGeneralAdditionalExportOptions,
 				AllowMathPhrase->False
 				},
@@ -1203,12 +1204,7 @@ SetOptions[DocBookInlineEquation,
 				$docBookInlineEquationAdditionalExportOptions
 				},
 			Flatten@{$mathMlPdfExpressionExportOptions,
-				SVGMathMathMLCompatibility->True,AllowMathPhrase->False
-				(*$epsPdfExpressionExportOptions,AllowMathPhrase->False,
-				ReplaceBoundingBox->True,WriteDimensions->True,
-				UseMinimumWidthDimension->False,
-				UseMinimumHeightDimension->False,
-				$docBookInlineEquationAdditionalExportOptions*)
+				AllowMathPhrase->False
 				},
 			$textAllAlternateExpressionExportOptions	
 			}
