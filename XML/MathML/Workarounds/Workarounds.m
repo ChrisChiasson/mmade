@@ -53,6 +53,19 @@ XML`MathML`BoxesToMathML once
 BoxesToMathML["\[Beta]"];
 
 
+(*take care of nobreak spacing handling
+the built in BoxesToSSML rule to avoid this situation around matrices doesn't
+"see past" TagBox:
+XML`MathML`ExpressionToMathML[MatrixForm[{a,b}],
+	"Formats"->{"PresentationMathML"},"IncludeMarkupAnnotations"->False]
+*)
+System`Convert`MathMLDump`BoxesToSMML[char:"\[NoBreak]"]:=
+	XMLElement["mspace",
+		{System`Convert`MathMLDump`baseCharacterToLinebreak[char]},
+		{}
+		]
+
+
 (*take care of missing invisible times for ExpressionToMathML[0.2*a]*)
 System`Convert`MathMLDump`operandQ[token_String]/;
 	AtomQ@Unevaluated@token&&SyntaxQ@token&&
@@ -171,10 +184,11 @@ XML`MathML`ExpressionToMathML[StyleForm[NumberForm[5.3``0.7*a],FontSize->11],
 *)
 
 
-containsMtextPatternObject=(_List|_String)?(!FreeQ[#,"mtext"]&);
-
-containsMoPatternObject=(_List|_String)?(!FreeQ[#,"mo"]&);
-
+(*handle parenthesis being drawn too low for contents when the head of an
+expression has a subscript*)
+(*remove extra mspace elements resulting from nobreak characters just inside
+parenthesis*)
+(*replace characters SVGMath can't handle*)
 sVGMathCompatibilityFunction[xml_]:=
 	xml//.
 		{XMLElement[
@@ -182,32 +196,33 @@ sVGMathCompatibilityFunction[xml_]:=
 			containerAttributes_,
 			{pre___,
 				XMLElement[
-					moHead:containsMoPatternObject,
+					"mo",
 					moAttributes_,
 					{"("}
 					],
-				mid__,
+				spaces:XMLElement["mspace",__]...,
+				mid:XMLElement[Except["mspace"],__]..,
+				spaces___,
 				XMLElement[
-					moHead_,
+					"mo",
 					moAttributes_,
 					{")"}
 					],
 				post___
 				}
-			]:>With[{mfenced=moHead/."mo"->"mfenced"},
-					XMLElement[
-						containerElement,
-						containerAttributes,
-						{pre,
-							XMLElement[mfenced,moAttributes,{mid}],
-							post
-							}
-						]
+			]:>XMLElement[
+					containerElement,
+					containerAttributes,
+					{pre,
+						XMLElement["mfenced",moAttributes,{mid}],
+						post
+						}
 					],
+			XMLElement["semanitcs",_,{bodyElements___}]->bodyElements,
 			XMLElement["annotation-xml",
 				{___,"encoding"->"MathML-Content",___},_]->Sequence[](*,
 			XMLElement[
-				containsMtextPatternObject,
+				"mtext",
 				_,
 				{"\[NoBreak]"|"\[InvisibleSpace]"}
 				]->
@@ -221,6 +236,7 @@ sVGMathCompatibilityFunction[xml_]:=
 			}
 
 
+(*replace characters Firefox can't handle*)
 firefoxCompatibilityFunction[xml_]:=
 	xml/.
 		{str_String/;StringQ@Unevaluated@str:>
@@ -259,6 +275,8 @@ EndPackage[]
 
 
 (*patterns
+containsMtextPatternObject=(_List|_String)?(!FreeQ[#,"mtext"]&);
+containsMoPatternObject=(_List|_String)?(!FreeQ[#,"mo"]&);
 containsMsPatternObject=(_List|_String)?(!FreeQ[#,"ms"]&);
 *)
 (*questionable old workarounds (for reference in writing new functionality)
