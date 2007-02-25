@@ -178,6 +178,17 @@ System`Convert`MathMLDump`convertOptionToAttribute[_,FontSize,val_?NumberQ]:=
 	"mathsize"->ToString@SequenceForm[val,"pt"]
 
 
+(*take care of NumberForm numbers (when using two arguments to NumberForm)
+since this is difficult to demonstrate from the standard (non-workaround)
+operation of ExpressionToMathML, I show a case from BoxesToMathML
+XML`MathML`BoxesToMathML["0.065420","Formats"->{"PresentationMathML"},
+	"IncludeMarkupAnnotations"->False]
+note the trailing zero
+*)
+System`Convert`MathMLDump`toStandardizedStringNumber[s_String?DigitQ]=.;
+System`Convert`MathMLDump`toStandardizedStringNumber[s_String]=s;
+
+
 (*a good example ExpressionToMathML call that showcases fixes from this file:
 XML`MathML`ExpressionToMathML[StyleForm[NumberForm[5.3``0.7*a],FontSize->11],
 	"Formats"->{"PresentationMathML"},"IncludeMarkupAnnotations"->False]
