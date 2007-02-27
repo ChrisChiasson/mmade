@@ -100,6 +100,16 @@ DocBookInlineMediaObject::usage="DocBookInlineMediaObject[\"id\",\
 
 DocBookTable::usage="DocBookTable[\"id\",\"title\",\"alt text\",table,opts]";
 
+
+EntryAttributes::"usage"="EntryAttributes is an option for the DocBook*Table \
+functions that gives a function to apply to the positions of entries to derive \
+lists of \"entry\" XMLElement attributes. The forms of the positions are the \
+same as those accepted by Extract. Specifically, they are a list of two \
+integers greater than or equal to 1 that indicate {row,column} position. As \
+previously stated, the result of the function must be a List of Rules suitable \
+for the second argument of XMLElement."
+
+
 ExportDelayed::usage="This is an inert version of Export. When one is ready \
 to actually perform the Export, Replace ExportDelayed with Export. These \
 ExportDelayed objects are handled differently by this package depending \
@@ -1244,9 +1254,10 @@ Options@DocBookInlineMediaObject=DeleteCases[Options@docBookFigureGeneral,
 	Rule[Caption,_]];
 
 (*option maintencance needed*)
-Options@docBookTableGeneral={
+Options@docBookTableGeneral=Sort@{
 	Attributes->{docBookNameSpaceAttributeRule,
 	docBookEquationVersionAttributeRule},
+	EntryAttributes->({}&),
 	TitleAbbrev->Automatic,
 	BoldHeadings->True,
 	Caption->None,
@@ -1530,12 +1541,6 @@ rowElement[entries:sequenceXmlPseudoPatternObject,
 
 GeneralDownValue@rowElement;
 
-entryElement[entryContent:sequenceXmlPseudoPatternObject,
-	opts:optionsOrNullPseudoPatternObject]:=
-	noAttributeXmlElement["entry",entryContent,opts];
-
-GeneralDownValue@rowElement;
-
 tableEntryToXML[id_String,arg_SequenceForm,position:{__Integer},
 	opts___?OptionQ
 	]:=
@@ -1563,6 +1568,10 @@ tableEntryToXML[id_String,arg_,position:{__Integer},opts___?OptionQ]:=
 
 GeneralDownValue@tableEntryToXML;
 
+
+attributesCheck[args__]=args;
+
+
 docBookTableGeneral[id_String,
 	tableTag:tableElementNameStringsPatternObject,
 	hasTitle:booleanPatternObject,
@@ -1573,12 +1582,13 @@ docBookTableGeneral[id_String,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[
 		{options=Sequence[opts,Sequence@@Options@docBookTableGeneral],
-			boldHeadings},
+			boldHeadings,entryAttributes},
 		Flatten@Reap[Sow[ExportDelayed[id,XMLElement[tableTag,
 			{Sequence@@(Attributes/.{options}),
 				xmlIdAttributeRule[id,options]
 				},
 			boldHeadings=If[(BoldHeadings/.{options})===True,True,False];
+			entryAttributes=EntryAttributes/.{options};
 			{titleElements[hasTitle,title,TitleAbbrev/.{options}],
 				textObjectElement@processDescriptionPart@description,
 				Apply[
@@ -1588,9 +1598,9 @@ docBookTableGeneral[id_String,
 						]&,
 					rowElement@@@
 						MapIndexed[
-							entryElement[
-								tableEntryToXML[id,##,options],
-								options
+							XMLElement["entry",
+								attributesCheck@entryAttributes@#2,
+								List@tableEntryToXML[id,##,options]
 								]&,
 							tablexpr,
 							{2}
