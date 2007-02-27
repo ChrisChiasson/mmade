@@ -224,7 +224,7 @@ System`Convert`MathMLDump`BoxesToSMML[" "]=
 					InputForm]<>"em"
 			},
 		{}
-		](*experimental*)
+		](*experimental en space*)
 	(*XMLElement["mtext",{},List@FromCharacterCode[8194]]*)
 
 
