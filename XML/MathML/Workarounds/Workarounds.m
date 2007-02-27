@@ -108,6 +108,26 @@ If[$Notebooks,
 	]
 
 
+(*assumes a regular string*)
+leadingAndTrailingWhitespaceHandler[str_String]:=
+	With[{result=Sequence@@StringCases[str,wlhs:Whitespace|""~~sign:"-"|""~~
+		mid:(__~~Except@WhitespaceCharacter)~~wrhs:Whitespace|"":>
+			RowBox[Flatten@
+				{Characters@wlhs,Characters@sign,mid,Characters@wrhs}
+				]
+		]},
+		result/;Length@Unevaluated@result>=1&&Length@First@result>=2]
+
+leadingAndTrailingWhitespaceHandler[str_String]=str;
+
+(*
+leadingAndTrailingWhitespaceHandler[boxes_]:=boxes/.str_String/;AtomQ@
+	Unevaluated@str&&SyntaxQ@str:>leadingAndTrailingWhitespaceHandler@str
+*)
+	
+GeneralDownValue@leadingAndTrailingWhitespaceHandler
+
+
 (*If the front end isn't showing string characters, then the MathML box
 processing should ignore those string characters.*)
 boxesToMathMLBoxes::"usage"=
@@ -130,10 +150,10 @@ boxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
 				intBoxesPos,
 				HoldComplete
 				]},
-			With[{intReplacedBoxes=intFirstBoxes/.str_String:>
-					With[{result=StringReplace[str,"\""->""]},
-						result/;AtomQ@Unevaluated@str&&SyntaxQ@str
-						]
+			With[{intReplacedBoxes=intFirstBoxes/.str_String/;AtomQ@Unevaluated@
+						str&&SyntaxQ@str:>
+					With[{result=leadingAndTrailingWhitespaceHandler@
+							StringReplace[str,"\""->""]},result/;True]
 					},
 				ReplacePart[Unevaluated@boxes,
 					intReplacedBoxes,
@@ -146,7 +166,7 @@ boxesToMathMLBoxes[boxes_]/;dontShowStringCharacters&&
 
 boxesToMathMLBoxes[boxes_]=boxes
 
-GeneralDownValue@boxesToMathMLBoxes;
+GeneralDownValue@boxesToMathMLBoxes
 
 
 (*
@@ -187,6 +207,25 @@ note the trailing zero
 *)
 System`Convert`MathMLDump`toStandardizedStringNumber[s_String?DigitQ]=.;
 System`Convert`MathMLDump`toStandardizedStringNumber[s_String]=s;
+
+
+(*handle single space characters that aren't properly handled by the catch-all
+_String to mtext (default) definition as in:
+XML`MathML`BoxesToMathML[" "]
+whitespace is collapsed to nothing by compliant presentation renderers
+*)
+System`Convert`MathMLDump`BoxesToSMML[" "]=
+	XMLElement["mspace",
+		{"width"->ToString[System`Convert`MathMLDump`choppedNumber[
+						System`Convert`MathMLDump`convertUnits[
+							"mediummathspace","em",-200,200
+							]
+						],
+					InputForm]<>"em"
+			},
+		{}
+		](*experimental*)
+	(*XMLElement["mtext",{},List@FromCharacterCode[8194]]*)
 
 
 (*a good example ExpressionToMathML call that showcases fixes from this file:
@@ -305,12 +344,12 @@ reformatMtext[
 	]/;AtomQ[Unevaluated[str]]&&StringLength[str]>=1&&
 		StringMatchQ[StringTake[str,-1],Whitespace]:=
 	Sequence[
-		reformatMtext[XMLElement[mtextHead,{attributes},{StringDrop[str,-1]}]](*,
+		reformatMtext[XMLElement[mtextHead,{attributes},{StringDrop[str,-1]}]],
 		XMLElement[
 			mtextHead/."mtext"->"mspace",
 			{"width"->$mspaceWidth,attributes},
 			{}
-			]*)
+			]
 		];
 
 reformatMtext[
