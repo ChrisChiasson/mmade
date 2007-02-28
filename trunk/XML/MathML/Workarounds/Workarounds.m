@@ -92,7 +92,11 @@ insertDownValueByFirstPositionOf[symb_Symbol/;AtomQ@Unevaluated@symb,
 			]
 
 
-(*_at least_ one of the FontVariations can be supported: "StrikeThrough"*)
+(*_at least_ one of the FontVariations can be supported: "StrikeThrough"
+reference:
+XML`MathML`ExpressionToMathML[StyleForm[V,FontVariations->{"StrikeThrough"->
+	True},FontFamily->"Times New Roman",FontSize->14,ShowContents->False]]
+*)
 System`Convert`MathMLDump`optionOfBoxIsLiftableQ[FontVariations,StyleBox]=False
 
 insertDownValueByFirstPositionOf[System`Convert`MathMLDump`BoxesToSMML,
