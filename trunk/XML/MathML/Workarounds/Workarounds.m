@@ -53,6 +53,60 @@ XML`MathML`BoxesToMathML once
 BoxesToMathML["\[Beta]"];
 
 
+(*exploreDVs and matchingDVs: code for looking at DownValues
+practical calls:
+exploreDVs[Names["System`Convert`MathMLDump`*"],symb_Symbol/;AtomQ@Unevaluated@
+	symb:>With[{result=ToString@Unevaluated@symb},result/;True],str_String/;
+		AtomQ@Unevaluated@str&&StringMatchQ[str,___~~"ShowContents"~~___,
+			IgnoreCase->True]]
+matchingDVs[System`Convert`MathMLDump`BoxesToSMML[TagBox[StyleBox["V",
+	FontVariations->{"StrikeThrough"->True},FontFamily->"Times New Roman",
+		FontSize->14],"MathMLPresentationTag",AutoDelete->True]]]
+*)
+exploreDVs[nameSet:{__String},selectionTransform:_List|_Rule|_RuleDelayed,
+	selectionPattern_]:=
+	Select[ToExpression[#,InputForm,DownValues],
+		!FreeQ[#/.selectionTransform,selectionPattern]&
+		]&/@Select[nameSet,
+				!FreeQ[ToExpression[#,InputForm,DownValues]/.selectionTransform,
+					selectionPattern]&
+				]
+
+Attributes@matchingDVs={HoldAllComplete}
+
+matchingDVs[symb_Symbol,call_]:=
+	Select[DownValues@Unevaluated@symb,MatchQ[Unevaluated@call,#[[1]]]&]
+
+matchingDVs[call_]:=matchingDVs[Head@Unevaluated@call,Unevaluated@call]
+
+
+(*insert DownValues*)
+Attributes@insertDownValueByFirstPositionOf={HoldFirst}
+
+insertDownValueByFirstPositionOf[symb_Symbol/;AtomQ@Unevaluated@symb,
+	downValue_,pattern_,offset:_:0]:=
+	DownValues@Unevaluated@symb=
+		With[{oDv=DownValues@Unevaluated@symb},
+			Insert[oDv,Unevaluated@downValue,
+				Position[oDv,Unevaluated@pattern,Infinity,1][[1,1]]+offset]
+			]
+
+
+(*_at least_ one of the FontVariations can be supported: "StrikeThrough"*)
+System`Convert`MathMLDump`optionOfBoxIsLiftableQ[FontVariations,StyleBox]=False
+
+insertDownValueByFirstPositionOf[System`Convert`MathMLDump`BoxesToSMML,
+	HoldPattern[System`Convert`MathMLDump`BoxesToSMML[
+		StyleBox[content_,l___,FontVariations->{___,"StrikeThrough"->True,___},
+			r___]]
+		]:>XMLElement["menclose",{"notation"->"horizontalstrike"},
+			{System`Convert`MathMLDump`BoxesToSMML[StyleBox[content,l,r]]}
+			],
+	ShowContents,
+	1
+	]
+
+
 (*take care of nobreak spacing handling
 the built in BoxesToSSML rule to avoid this situation around matrices doesn't
 "see past" TagBox:
@@ -81,23 +135,20 @@ XML`MathML`ExpressionToSymbolicMathML[
 	"MathAttributes"->{}
 	]
 *)
-DownValues@System`Convert`MathMLDump`BoxesToSMML=
-	With[{oDv=DownValues@System`Convert`MathMLDump`BoxesToSMML},
-		Insert[oDv,
-			HoldPattern[
-				System`Convert`MathMLDump`BoxesToSMML[
-					TagBox[boxes_,
-						"AnnotationsTagWrapper"[
-							TagBox[_,"MathMLContentTag",___]
-							],
-						___
-						]
-					]
-				]/;!MemberQ[System`Convert`MathMLDump`formats,"ContentMathML"]:>
-				System`Convert`MathMLDump`BoxesToSMML@boxes,
-			Position[oDv,"AnnotationsTagWrapper",Infinity,1][[1,1]]
+insertDownValueByFirstPositionOf[System`Convert`MathMLDump`BoxesToSMML,
+	HoldPattern[
+		System`Convert`MathMLDump`BoxesToSMML[
+			TagBox[boxes_,
+				"AnnotationsTagWrapper"[
+					TagBox[_,"MathMLContentTag",___]
+					],
+				___
+				]
 			]
-		];
+		]/;!MemberQ[System`Convert`MathMLDump`formats,"ContentMathML"]:>
+		System`Convert`MathMLDump`BoxesToSMML@boxes,
+	"AnnotationsTagWrapper"
+	]
 
 
 (*Boolean opposite of current value of ShowStringCharacters from the front end*)
@@ -234,13 +285,51 @@ XML`MathML`ExpressionToMathML[StyleForm[NumberForm[5.3``0.7*a],FontSize->11],
 *)
 
 
+(*
+add strikethrough characters if the target system does not support
+menclose notation->"horizontalstrike"
+*)
+(*I don't think I need this top level XMLObject rule.*)
+horizontalStrikeThroughCharacters[
+	start:XMLObject["Document"][_,_XMLElement,_]]:=
+	MapAt[horizontalStrikeThroughCharacters,start,{2}]
+
+horizontalStrikeThroughCharacters[
+	XMLElement["menclose",attributes_List/;
+			MemberQ[attributes,"notation"->str_String/;
+				StringMatchQ[str,___~~"horizontalstrike"~~___]
+				],
+		body_]]:=
+	Block[{doHorizontalStrike=True},
+		XMLElement["menclose",attributes,
+			horizontalStrikeThroughCharacters/@body]
+			]
+
+horizontalStrikeThroughCharacters[XMLElement["menclose",attributes_,body_]]:=
+	Block[{doHorizontalStrike=False},
+		XMLElement["menclose",attributes,
+			horizontalStrikeThroughCharacters/@body]
+			]
+
+horizontalStrikeThroughCharacters[XMLElement[element_,attributes_,body_]]:=
+	XMLElement[element,attributes,horizontalStrikeThroughCharacters/@body]
+
+(*strikethrough combining diacritical mark*)
+horizontalStrikeThroughCharacters[str_String]/;doHorizontalStrike:=
+	StringReplace[str,char_->char~~"\:0336"]
+
+horizontalStrikeThroughCharacters[str_String]=str
+
+horizontalStrikeThroughCharacters[other_]=other
+
+
 (*handle parenthesis being drawn too low for contents when the head of an
 expression has a subscript*)
 (*remove extra mspace elements resulting from nobreak characters just inside
 parenthesis*)
 (*replace characters SVGMath can't handle*)
 sVGMathCompatibilityFunction[xml_]:=
-	xml//.
+	horizontalStrikeThroughCharacters/@ReplaceRepeated[xml,
 		{XMLElement[
 			containerElement_,
 			containerAttributes_,
@@ -283,12 +372,12 @@ sVGMathCompatibilityFunction[xml_]:=
 						"\[LeftBracketingBar]"|"\[RightBracketingBar]"|
 							"\[VerticalSeparator]"->"|"
 						*)}]
-			}
+			}]
 
 
 (*replace characters Firefox can't handle*)
 firefoxCompatibilityFunction[xml_]:=
-	xml/.
+	horizontalStrikeThroughCharacters/@(xml/.
 		{str_String/;StringQ@Unevaluated@str:>
 				StringReplace[str,
 					{"\[LongEqual]"->"\:ff1d"(*FULL WIDTH EQUALS SIGN*),
@@ -299,7 +388,7 @@ firefoxCompatibilityFunction[xml_]:=
 						"\[Rule]"->"\[RightArrow]"
 						"\[InvisibleSpace]"->"\:200b"
 						*)}]
-			}
+			})
 
 
 PrependTo[DownValues@System`Convert`MathMLDump`BoxesToSMMLPostProcess,
