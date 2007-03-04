@@ -59,8 +59,9 @@ exploreDVs[Names["System`Convert`MathMLDump`*"],symb_Symbol/;AtomQ@Unevaluated@
 	symb:>With[{result=ToString@Unevaluated@symb},result/;True],str_String/;
 		AtomQ@Unevaluated@str&&StringMatchQ[str,___~~"ShowContents"~~___,
 			IgnoreCase->True]]
-matchingDVs[System`Convert`MathMLDump`BoxesToSMML[TagBox[StyleBox["V",
-	FontVariations->{"StrikeThrough"->True},FontFamily->"Times New Roman",
+matchingDVs[Unevaluated@
+	System`Convert`MathMLDump`BoxesToSMML[TagBox[StyleBox["V",
+		FontVariations->{"StrikeThrough"->True},FontFamily->"Times New Roman",
 		FontSize->14],"MathMLPresentationTag",AutoDelete->True]]]
 *)
 exploreDVs[nameSet:{__String},selectionTransform:_List|_Rule|_RuleDelayed,
@@ -71,8 +72,6 @@ exploreDVs[nameSet:{__String},selectionTransform:_List|_Rule|_RuleDelayed,
 				!FreeQ[ToExpression[#,InputForm,DownValues]/.selectionTransform,
 					selectionPattern]&
 				]
-
-Attributes@matchingDVs={HoldAllComplete}
 
 matchingDVs[symb_Symbol,call_]:=
 	Select[DownValues@Unevaluated@symb,MatchQ[Unevaluated@call,#[[1]]]&]
@@ -116,12 +115,17 @@ the built in BoxesToSSML rule to avoid this situation around matrices doesn't
 "see past" TagBox:
 XML`MathML`ExpressionToMathML[MatrixForm[{a,b}],
 	"Formats"->{"PresentationMathML"},"IncludeMarkupAnnotations"->False]
+in MMA 5, this needs to be inserted before the DownValue for mtext
 *)
-System`Convert`MathMLDump`BoxesToSMML[char:"\[NoBreak]"]:=
-	XMLElement["mspace",
-		{System`Convert`MathMLDump`baseCharacterToLinebreak[char]},
-		{}
-		]
+insertDownValueByFirstPositionOf[System`Convert`MathMLDump`BoxesToSMML,
+	HoldPattern[
+		System`Convert`MathMLDump`BoxesToSMML[char:"\[NoBreak]"]
+		]:>XMLElement["mspace",
+			{System`Convert`MathMLDump`baseCharacterToLinebreak[char]},
+			{}
+			],
+	XMLElement["mtext",{},{System`Convert`MathMLDump`token}]
+	]
 
 
 (*take care of missing invisible times for ExpressionToMathML[0.2*a]*)
