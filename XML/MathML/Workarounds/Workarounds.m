@@ -163,6 +163,32 @@ If[$Notebooks,
 	]
 
 
+(*take care of strings so that they display as they would in the front end
+XML`MathML`ExpressionToSymbolicMathML["a",
+	"IncludeMarkupAnnotations"->False,"Formats"->{"PresentationMathML"}
+	]//FullForm
+
+XML`MathML`ExpressionToSymbolicMathML[Method->"\"Unimodal\"",
+	"IncludeMarkupAnnotations"->False,"Formats"->{"PresentationMathML"}
+	]//FullForm
+*)
+
+insertDownValueByFirstPositionOf[System`Convert`MathMLDump`BoxesToSMML,
+	HoldPattern[
+		System`Convert`MathMLDump`BoxesToSMML[
+			str_String/;dontShowStringCharacters&&
+				StringMatchQ[str,"\"*\""]
+			]
+		]:>XMLElement["mtext",
+			{},
+			{System`Convert`CommonDump`UnescapeLinearSyntax@
+				StringTake[str,{2,-2}]
+				}
+			],
+	"\"*\""
+	]
+
+
 (*assumes a regular string*)
 leadingAndTrailingWhitespaceHandler[str_String]:=
 	With[{result=Sequence@@StringCases[str,wlhs:Whitespace|""~~sign:"-"|""~~
