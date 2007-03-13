@@ -1273,7 +1273,8 @@ Options@docBookTableGeneral=Sort@{
 								_
 								]->dimOpt->False(*disabled for now*))
 				]
-			}
+			},
+	PageBreakWithin->False
 	};
 
 Options@DocBookTable=Options@docBookTableGeneral;
@@ -1541,25 +1542,20 @@ rowElement[entries:sequenceXmlPseudoPatternObject,
 
 GeneralDownValue@rowElement;
 
-tableEntryToXML[id_String,arg_SequenceForm,position:{__Integer},
-	opts___?OptionQ
-	]:=
+tableEntryToXML[id_String,arg_SequenceForm,position:{__Integer},opts___]:=
 	Sequence@@MapIndexed[tableEntryToXML[id,#,Join[position,#2],opts]&,arg];
 
 tableEntryToXML[id_String,"",__]:="";
 
-tableEntryToXML[id_String,arg_String/;StringQ@arg,_,opts___?OptionQ]:=
+tableEntryToXML[id_String,arg_String/;StringQ@arg,_,opts___]:=
 	Sequence@@StringSplit[arg,{"\n"->XMLObject["ProcessingInstruction"]["lb"]}];
 
-tableEntryToXML[id_String,arg_,position:{1,__Integer},
-	opts___?OptionQ/;(BoldHeadings/.{opts})
-	]:=
-	tableEntryToXML[id,StyleForm[arg,FontWeight->"Bold"],position,
-		Sequence@@
-			DeleteCases[{opts},ruleHeadPatternObject[BoldHeadings,__]]
+tableEntryToXML[id_String,arg_,position:{1,__Integer},opts___]/;boldHeadings:=
+	Block[{boldHeadings=False},
+		tableEntryToXML[id,StyleForm[arg,FontWeight->"Bold"],position,opts]
 		];
 
-tableEntryToXML[id_String,arg_,position:{__Integer},opts___?OptionQ]:=
+tableEntryToXML[id_String,arg_,position:{__Integer},opts___]:=
 	ToXML[
 		DocBookInlineEquation[id<>StringJoin@@("_"<>ToString[#1]&)/@position,
 			arg,Sequence@@(DocBookInlineEquationOptions/.{opts})
@@ -1580,16 +1576,24 @@ docBookTableGeneral[id_String,
 	tablexpr:tablePseudoPatternObject,
 	caption:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
-	Module[
+	Block[
 		{options=Sequence[opts,Sequence@@Options@docBookTableGeneral],
-			boldHeadings,entryAttributes},
+			boldHeadings,pageBreakWithin,entryAttributes},
 		Flatten@Reap[Sow[ExportDelayed[id,XMLElement[tableTag,
 			{Sequence@@(Attributes/.{options}),
 				xmlIdAttributeRule[id,options]
 				},
-			boldHeadings=If[(BoldHeadings/.{options})===True,True,False];
-			entryAttributes=EntryAttributes/.{options};
+			{boldHeadings,pageBreakWithin,entryAttributes}=
+				{BoldHeadings,PageBreakWithin,EntryAttributes}/.{options};
 			{titleElements[hasTitle,title,TitleAbbrev/.{options}],
+				If[pageBreakWithin,
+					XMLObject["ProcessingInstruction"][
+						"dbfo",
+						"keep-together=\"auto\""
+						],
+					Identity[Sequence][],
+					(*FIXME (warning message here)*)Identity[Sequence][]
+					],
 				textObjectElement@processDescriptionPart@description,
 				Apply[
 					tGroupElement[
@@ -1611,6 +1615,8 @@ docBookTableGeneral[id_String,
 			],xmlFileType,exportOptionsFiltering[options]],xmlSewingTag],
 				allSewingTags][[2]]
 		];
+
+
 
 GeneralDownValue@docBookTableGeneral;
 
