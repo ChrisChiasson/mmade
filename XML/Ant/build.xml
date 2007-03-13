@@ -221,10 +221,16 @@
 	<target name="to-pdf-unless-ps-intermediate"
 			unless="ps-intermediate"
 			depends="SVGMath-if-foMathMLIntermediate,skip-SVGMath-unless-foMathMLIntermediate,init-xep">
-		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.pdf"
+		<!--xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.pdf"
 			format="PDF">
 			<sysproperty key="com.renderx.xep.CONFIG" value="${xep.xml}"/>
-		</xep>
+		</xep-->
+		<exec executable="${XEP-executable}" dir="${build}">
+			<arg value="-fo"/>
+			<arg value="${xml-stem}.fo"/>
+			<arg value="-pdf"/>
+			<arg value="${xml-stem}.pdf"/>
+		</exec>
 		<available property="fo-pdf-available" file="${build}/${xml-stem}.pdf"/>
 		<fail message="${build}/${xml-stem}.pdf not created from fo"
 			unless="fo-pdf-available"/>

@@ -22,6 +22,7 @@
 	<!--RenderX's XEP location-->
 	<property name="XEP-path"
 		location="C:\Program Files\RenderX\XEP"/>
+	<property name="XEP-executable" location="${XEP-path}\xep.bat"/>
 	<!--ghostscript's location-->
 	<property name="ghostscript"
 		location="C:\Program Files\gs\gs8.54\bin\gswin32c"/>			
