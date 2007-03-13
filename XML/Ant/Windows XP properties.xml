@@ -22,6 +22,9 @@
 	<!--RenderX's XEP location-->
 	<property name="XEP-path"
 		location="C:\Program Files\RenderX\XEP"/>
+	<!--FOP's location-->
+	<property name="fop.home"
+		location="C:\Program Files\fop\fop-0.93"/>
 	<!--ghostscript's location-->
 	<property name="ghostscript"
 		location="C:\Program Files\gs\gs8.54\bin\gswin32c"/>			

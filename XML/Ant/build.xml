@@ -167,8 +167,8 @@
 		<copy file="${build}/${xml-stem}.fo-intermediate"
 			tofile="${build}/${xml-stem}.fo"/>
 	</target>
-	<!--xep initialization-->
-	<target name="init-xep" depends="init-xsl">
+	<!--fo initialization-->
+	<target name="init-fo" depends="init-xsl">
 		<path id="xep-classpath">
 			<fileset dir="${env.JAVA_HOME}/lib">
 				<include name="tools.jar"/>
@@ -183,11 +183,23 @@
 		<!--xep task definition-->
 		<taskdef name="xep" classname="com.renderx.xepx.ant.XEPTask"
 			classpathref="xep-classpath"/>
+		<taskdef name="fop" 
+		         classname="org.apache.fop.tools.anttasks.Fop">
+		  <classpath>
+		    <fileset dir="${fop.home}/lib">
+		      <include name="*.jar"/>
+		    </fileset>
+		    <fileset dir="${fop.home}/build">
+		      <include name="fop.jar"/>
+		      <include name="fop-hyph.jar" />
+		    </fileset>
+		  </classpath>
+		</taskdef>
 	</target>
 	<!--transformation to post script if specified by ps-intermediate-->
 	<target name="to-ps-if-ps-intermediate"
 		if="ps-intermediate"
-		depends="SVGMath-if-foMathMLIntermediate,skip-SVGMath-unless-foMathMLIntermediate,init-xep">
+		depends="SVGMath-if-foMathMLIntermediate,skip-SVGMath-unless-foMathMLIntermediate,init-fo">
 		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.ps"
 			format="PostScript">
 			<sysproperty key="com.renderx.xep.CONFIG" value="${xep.xml}"/>
@@ -220,11 +232,14 @@
 	<!--transformation to pdf if post script isn't desired-->
 	<target name="to-pdf-unless-ps-intermediate"
 			unless="ps-intermediate"
-			depends="SVGMath-if-foMathMLIntermediate,skip-SVGMath-unless-foMathMLIntermediate,init-xep">
-		<xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.pdf"
+			depends="SVGMath-if-foMathMLIntermediate,skip-SVGMath-unless-foMathMLIntermediate,init-fo">
+		<!--xep in="${build}/${xml-stem}.fo" out="${build}/${xml-stem}.pdf"
 			format="PDF">
 			<sysproperty key="com.renderx.xep.CONFIG" value="${xep.xml}"/>
-		</xep>
+		</xep-->
+		<fop format="application/pdf"
+			fofile="${build}/${xml-stem}.fo"
+			outfile="${build}/${xml-stem}.pdf"/>
 		<available property="fo-pdf-available" file="${build}/${xml-stem}.pdf"/>
 		<fail message="${build}/${xml-stem}.pdf not created from fo"
 			unless="fo-pdf-available"/>
