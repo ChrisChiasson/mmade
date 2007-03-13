@@ -2,8 +2,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	xmlns:fo="http://www.w3.org/1999/XSL/Format"
 	xmlns:mml="http://www.w3.org/1998/Math/MathML"
-	xmlns:mathematica="http://www.wolfram.com/XML/"
-	version="1.0">
+	xmlns:mathematica="http://www.wolfram.com/XML/" version="1.0">
 	<xsl:import
 		href="http://docbook.sourceforge.net/release/xsl/current/fo/docbook.xsl"/>
 	<xsl:import href="common.xsl"/>
@@ -19,22 +18,42 @@
 	<xsl:param name="xep.extensions">1</xsl:param>
 	<!--we need to enable some symbol fonts-->
 	<xsl:param name="symbol.font.family"
-	select="'Symbol,ZapfDingbats,Arial Unicode MS, Lucida Sans Unicode'"/>
+		select="'Symbol,ZapfDingbats,Arial Unicode MS, Lucida Sans Unicode'"/>
 	<!--included Mathematica source is usually 80 characters wide
 	    so having a small font size is probably necessary-->
 	<xsl:attribute-set name="monospace.verbatim.properties">
 		<xsl:attribute name="font-size">8pt</xsl:attribute>
 	</xsl:attribute-set>
 	<xsl:attribute-set name="root.properties">
-		<xsl:attribute
-			name="line-height-shift-adjustment">consider-shifts</xsl:attribute>
+		<xsl:attribute name="line-height-shift-adjustment"
+		>consider-shifts</xsl:attribute>
 	</xsl:attribute-set>
+	<!--add support for tightfofit style tables-->
+	<xsl:attribute-set name="table.properties">
+		<xsl:attribute name="start-indent">
+			<xsl:choose>
+				<xsl:when test="@tabstyle='tightfofit'">0pt</xsl:when>
+				<xsl:otherwise>inherit</xsl:otherwise>
+			</xsl:choose>
+		</xsl:attribute>
+	</xsl:attribute-set>
+	<xsl:template name="table.cell.block.properties">
+		<xsl:if test="ancestor::thead or ancestor::tfoot">
+			<xsl:attribute name="font-weight">bold</xsl:attribute>
+		</xsl:if>
+		<xsl:if
+			test="ancestor-or-self::table[1]/@tabstyle='tightfofit' or
+			ancestor-or-self::informaltable[1]/@tabstyle='tightfofit'">
+			<xsl:attribute name="font-size">8pt</xsl:attribute>
+		</xsl:if>
+	</xsl:template>
 	<!--this stylesheet is different than the "main" mathml.xsl because
 		I am trying to work around a problem where SVGMath seems to ignore
 		the fallback fonts when fontfamily is specified-->
 	<xsl:template match="mml:*">
 		<xsl:element name="{local-name(.)}" namespace="{namespace-uri(.)}">
-			<xsl:for-each select="@*[local-name()!='fontfamily' and (namespace-uri()='' or namespace-uri()=namespace-uri(parent::*))]">
+			<xsl:for-each
+				select="@*[local-name()!='fontfamily' and (namespace-uri()='' or namespace-uri()=namespace-uri(parent::*))]">
 				<xsl:copy/>
 			</xsl:for-each>
 			<xsl:apply-templates/>
@@ -54,7 +73,8 @@
 	<xsl:template name="table.footnote.block">
 		<xsl:if test=".//footnote">
 			<fo:block keep-with-previous.within-column="always">
-				<xsl:apply-templates select=".//footnote" mode="table.footnote.mode"/>
+				<xsl:apply-templates select=".//footnote"
+					mode="table.footnote.mode"/>
 			</fo:block>
 		</xsl:if>
 		<xsl:apply-templates select="./caption"/>
@@ -72,7 +92,8 @@
 					<xsl:apply-templates/>
 				</fo:instream-foreign-object>
 			</xsl:when>
-			<xsl:when xmlns:mml="http://www.w3.org/1998/Math/MathML" test="mml:*">
+			<xsl:when xmlns:mml="http://www.w3.org/1998/Math/MathML"
+				test="mml:*">
 				<fo:instream-foreign-object>
 					<xsl:apply-templates/>
 				</fo:instream-foreign-object>
