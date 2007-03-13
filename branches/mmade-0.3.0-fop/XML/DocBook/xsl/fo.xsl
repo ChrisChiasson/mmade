@@ -14,9 +14,9 @@
 	</xsl:template>
 	<!--xsl:param name="ulink.show">0</xsl:param-->
 	<!--xsl:param name="alignment">left</xsl:param-->
-	<!--xsl:param name="fop1.extensions">1</xsl:param-->
-	<!--<xsl:param name="fop.extensions">1</xsl:param>-->
-	<xsl:param name="xep.extensions">1</xsl:param>
+	<xsl:param name="fop1.extensions">1</xsl:param>
+	<!--xsl:param name="fop.extensions">1</xsl:param-->
+	<!--xsl:param name="xep.extensions">1</xsl:param-->
 	<!--we need to enable some symbol fonts-->
 	<xsl:param name="symbol.font.family"
 	select="'Symbol,ZapfDingbats,Arial Unicode MS, Lucida Sans Unicode'"/>
