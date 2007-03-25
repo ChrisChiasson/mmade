@@ -1,5 +1,7 @@
 (* ::Package:: *)
-BeginPackage["Utilities`ExportDryRun`",{"Utilities`FilterOptions`Extensions`"}]
+BeginPackage["Utilities`ExportDryRun`",
+	{"Utilities`FilterOptions`",
+		"Utilities`FilterOptions`Extensions`"}]
 
 
 ExportDryRun::chtype=StringReplace[Export::chtype,"Export"->"ExportDryRun"];
@@ -23,14 +25,14 @@ $ContextPath=Flatten@{$ContextPath,"Utilities`BadArgumentHandling`"}
 
 Options@ExportDryRun=Options@Export;
 
-ExportDryRun[file_String,expr_,type_String,opts:
-	optionsOrNullPseudoPatternObject]:={file,ExportString[expr,type,
+ExportDryRun[file_String,expr_,type_String,opts___]:=
+	{file,ExportString[expr,type,
 		FilterOptions[ExportString,opts]]};
 
 (*file_String will trigger the ExportDryRun::chtype message in more cases than
 it should - such as when file is a stream and not a file name*)
 
-ExportDryRun[file_,expr_,type_String,opts:optionsOrNullPseudoPatternObject]:=
+ExportDryRun[file_,expr_,type_String,opts___]:=
 	{Message[Export::chtype,file];file,ExportString[expr,type,
 		FilterOptions[ExportString,opts]]};
 
