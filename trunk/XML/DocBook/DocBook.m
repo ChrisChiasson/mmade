@@ -303,10 +303,12 @@ figureElementNameStringsPatternObject="figure"|"informalfigure";
 
 tableElementNameStringsPatternObject="table"|"informaltable";
 
-xmlElementPseudoPatternObject=(_XMLElement|XMLObject[_String][__])(*?(Function[
-	SymbolicXMLQ[#,True]])*);
+xmlElementPseudoPatternObject=(_XMLElement|XMLObject[_String][__]);
 
-xmlPseudoPatternObject:=_String|xmlElementPseudoPatternObject;
+xmlPseudoPatternObject=_String|xmlElementPseudoPatternObject;
+
+verifiedXmlPseudoPatternObject=_String|
+	xmlElementPseudoPatternObject?(Function[SymbolicXMLQ[#,True]]);
 
 xmlOrNothingPseudoPatternObject=xmlPseudoPatternObject|nothing;
 
@@ -345,8 +347,14 @@ exportXmlChainPseudoPatternObject={exportDelayedPseudoPatternObject...,
 xmlOrExportXmlChainPseudoPatternObject=xmlPseudoPatternObject|
 	exportXmlChainPseudoPatternObject;
 
+verifiedXmlOrExportXmlChainPseudoPatternObject=verifiedXmlPseudoPatternObject|
+	exportXmlChainPseudoPatternObject;
+
 xmlOrExportXmlChainOrNothingPseudoPatternObject=
 	xmlOrExportXmlChainPseudoPatternObject|nothing;
+
+verifiedXmlOrExportXmlChainOrNothingPseudoPatternObject=
+	verifiedXmlOrExportXmlChainPseudoPatternObject|nothing;
 
 graphicsPatternObject=(Graphics|Graphics3D|SurfaceGraphics|ContourGraphics|
 	DensityGraphics)[__];
@@ -1337,7 +1345,7 @@ docBookEquationGeneral[id_String,
 	hasTitle:booleanPatternObject,
 	title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	expr_,
-	caption:xmlOrExportXmlChainOrNothingPseudoPatternObject,
+	caption:verifiedXmlOrExportXmlChainOrNothingPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@docBookEquationGeneral]},
 		Flatten@Reap[Sow[ExportDelayed[id,
@@ -1357,7 +1365,7 @@ docBookEquationGeneral[id_String,
 GeneralDownValue@docBookEquationGeneral;
 
 DocBookEquation[id_String,title:
-	xmlOrExportXmlChainPseudoPatternObject,expr_,opts:
+	verifiedXmlOrExportXmlChainPseudoPatternObject,expr_,opts:
 	optionsOrNullPseudoPatternObject]:=Module[{options=Sequence[opts,Sequence@@
 		Options@DocBookEquation]},docBookEquationGeneral[id,"equation",True,
 			title,expr,Caption/.{options},options]];
@@ -1417,7 +1425,7 @@ docBookFigureGeneral[
 	title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	description:xmlPseudoPatternObject,
 	graphics:graphicsOrMultipleGraphicsPatternObject,
-	caption:xmlOrExportXmlChainOrNothingPseudoPatternObject,
+	caption:verifiedXmlOrExportXmlChainOrNothingPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject
 	]:=
 	Module[{options=Sequence[opts,Sequence@@Options@docBookFigureGeneral]},
@@ -1457,7 +1465,7 @@ docBookFigureGeneral[
 
 GeneralDownValue@docBookFigureGeneral;
 
-DocBookFigure[id_String,title:xmlOrExportXmlChainPseudoPatternObject,
+DocBookFigure[id_String,title:verifiedXmlOrExportXmlChainPseudoPatternObject,
 	description:xmlPseudoPatternObject,
 	graphics:graphicsOrMultipleGraphicsPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
@@ -1467,7 +1475,8 @@ DocBookFigure[id_String,title:xmlOrExportXmlChainPseudoPatternObject,
 
 GeneralDownValue@DocBookFigure;
 
-DocBookInformalFigure[id_String,description:xmlPseudoPatternObject,graphics:
+DocBookInformalFigure[id_String,
+	description:verifiedXmlPseudoPatternObject,graphics:
 	graphicsOrMultipleGraphicsPatternObject,opts:
 	optionsOrNullPseudoPatternObject]:=Module[{options=Sequence[opts,Sequence@@
 		Options@DocBookInformalFigure]},docBookFigureGeneral[id,
@@ -1478,7 +1487,7 @@ GeneralDownValue@DocBookInformalFigure;
 
 DocBookInlineMediaObject[
 	id_String,
-	description:xmlPseudoPatternObject,
+	description:verifiedXmlPseudoPatternObject,
 	graphics:graphicsOrMultipleGraphicsPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Flatten@
@@ -1574,7 +1583,7 @@ docBookTableGeneral[id_String,
 	title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 	description:xmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
-	caption:xmlOrExportXmlChainOrNothingPseudoPatternObject,
+	caption:verifiedXmlOrExportXmlChainOrNothingPseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Block[
 		{options=Sequence[opts,Sequence@@Options@docBookTableGeneral],
@@ -1620,8 +1629,9 @@ docBookTableGeneral[id_String,
 
 GeneralDownValue@docBookTableGeneral;
 
-DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
-	description:xmlPseudoPatternObject,
+DocBookTable[id_String,
+	title:verifiedXmlOrExportXmlChainOrNothingPseudoPatternObject,
+	description:verifiedXmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@DocBookTable]},
@@ -1631,7 +1641,7 @@ DocBookTable[id_String,title:xmlOrExportXmlChainOrNothingPseudoPatternObject,
 
 GeneralDownValue@DocBookTable;
 
-DocBookInformalTable[id_String,description:xmlPseudoPatternObject,
+DocBookInformalTable[id_String,description:verifiedXmlPseudoPatternObject,
 	tablexpr:tablePseudoPatternObject,
 	opts:optionsOrNullPseudoPatternObject]:=
 	Module[{options=Sequence[opts,Sequence@@Options@DocBookTable]},
