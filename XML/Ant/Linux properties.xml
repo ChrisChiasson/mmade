@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Windows_XP_properties">
+<project name="Linux_properties">
 	<!--<path> is used for anything that might eventually contain more than one file reference-->
 	<!--the path statement below isn't needed because we use xsltproc by default-->
 	<!--path id="xsltclasspath"-->
@@ -22,6 +22,7 @@
 	<!--RenderX's XEP location-->
 	<property name="XEP-path"
 		location="/var/xml/XEP"/>
+	<property name="XEP-executable" location="${XEP-path}\xep"/>
 	<!--ghostscript's location-->
 	<property name="ghostscript"
 		location="/usr/bin/gs"/>			
@@ -33,14 +34,14 @@
 	<!--XVNC/tightvnc-->
 	<!--remember, in order for ant to not use xvnc, the usexnc paramter must be
 		commented out instead of set to false-->
-	<property name="usexvnc" value="true"/>
+	<!--property name="usexvnc" value="true"/-->
 	<property name="vncserver" location="/usr/bin/vncserver"/>
 	<property name="xvncgeometry" value="1024x768"/>
 	<property name="xvncdepth" value="24"/>
 	<!--python location-->
-	<!--property name="python" location=""/-->
+	<property name="python" location="/usr/bin/python"/>
 	<!--SVGMath-->
-	<!--property name="svgmathpath" location=""/-->
+	<property name="svgmathpath" location="/var/xml/SVGMath/SVGMath-0.3.1/"/>
 </project>
 <!--
 	MMADE, a Mathematica DocBook Exporter
