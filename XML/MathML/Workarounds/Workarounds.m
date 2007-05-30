@@ -415,9 +415,9 @@ firefoxCompatibilityFunction[xml_]:=
 		{str_String/;StringQ@Unevaluated@str:>
 				StringReplace[str,
 					{"\[LongEqual]"->"\:ff1d"(*FULL WIDTH EQUALS SIGN*),
-						"\[Piecewise]"->"{"(*,
+						"\[Piecewise]"->"{",
+						"\[Cross]"->"\[Times]"(*,
 						"\[InvisibleApplication]"->"",
-						"\[Cross]"->"\[Times]",
 						"\[Equal]"->"=",
 						"\[Rule]"->"\[RightArrow]"
 						"\[InvisibleSpace]"->"\:200b"
