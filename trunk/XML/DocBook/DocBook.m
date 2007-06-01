@@ -539,8 +539,25 @@ GeneralDownValue@toBoxes;
 
 toString::"usb"="Can't convert `1` into a string.";
 
+(*toString command also must change string characters that can't be
+handled in Firefox because that rendering target is the one most likely
+to need/use toString (and does so by default)*)
+
+fixToStringCharacters[xpr__]:=
+	Unevaluated@Sequence@xpr/.str_String/;AtomQ@Unevaluated@str:>
+		StringReplace[str,
+			{"\[LongEqual]"->"\:ff1d"(*FULL WIDTH EQUALS SIGN*),
+				"\[Piecewise]"->"{",
+				"\[InvisibleApplication]"->"",
+				"\[Cross]"->"\[Times]",
+				"\[Equal]"->"=",
+				"\[Rule]"->"\[RightArrow]",
+				"\[InvisibleSpace]"->"\:200b"
+				}
+		]
+
 toStringKernel[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
-	Module[{strippedBoxes},
+	fixToStringCharacters@Module[{strippedBoxes},
 		strippedBoxes=removeUnwantedBoxes[boxes]/.str_String:>formatString@str/.
 			optionPseudoPatternObject->Sequence[];
 		If[unStringableBoxesQ[strippedBoxes],
@@ -557,7 +574,7 @@ toString[expr_,boxes_/;stringFormattableQ[boxes],
 	toStringKernel[expr,boxes,opts];
 
 toString[expr_,boxes_,opts:optionsOrNullPseudoPatternObject]:=
-	ToString[
+	fixToStringCharacters@ToString[
 		expr,
 		Sequence@@Rule@@@{FilterOptions[ToString,TextOptions/.{opts},opts]}
 		];
