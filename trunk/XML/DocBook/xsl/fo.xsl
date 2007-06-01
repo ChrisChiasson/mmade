@@ -131,7 +131,7 @@
 		</fo:block>
 	</xsl:template>
 	<!--this template is originally from the DocBook project; it has been
-		modified to put title content instead of titleabbrev content in the toc-->
+		modified to put title content instead of titleabbrev content in the toc->
 	<xsl:template name="toc.line">
 		<xsl:param name="toc-context" select="NOTANODE"/>
 
@@ -152,7 +152,7 @@
 						<xsl:copy-of select="$label"/>
 						<xsl:value-of select="$autotoc.label.separator"/>
 					</xsl:if>
-					<!--changed to title.markup-->
+					<!-changed to title.markup->
 					<xsl:apply-templates select="." mode="title.markup"/>
 				</fo:basic-link>
 			</fo:inline>
@@ -167,7 +167,7 @@
 				</fo:basic-link>
 			</fo:inline>
 		</fo:block>
-	</xsl:template>
+	</xsl:template-->
 </xsl:stylesheet>
 <!--
 	MMADE, a Mathematica DocBook Exporter
