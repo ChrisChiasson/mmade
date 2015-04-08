@@ -1,0 +1,7 @@
+This package helps ease the pain of exporting DocBook XML equations, figures, and tables from Mathematica. DocBook is a file format that can be transformed into PDF, HTML, and other formats. DocBook accepts many different formats for equations and figures. Among them are MathML, PNG, and PDF. Manually creating all these different versions of a figure or equation would be time consuming. Tables containing symbolic math considerably multiply the magnitude of the problem. This Mathematica package is designed to speed up the common cases of equation, figure and table exports. Also, it includes an Ant build file that can be used to make Mathematica export in batch mode and build documentation in PDF, HTML, and XHTML formats. This is a complete rewrite of the package for DocBook 5 Beta 8 or greater with DocBook XSL 1.71.0 or greater. The unsupported old version that exports against DocBook 4 is included as exDBML.m.
+
+IMPORTANT NOTICE(S):
+
+The downloads and wiki tabs at the top of this page are part of new functionality added to Google Code on Saturday, December 17th 2006. However, I'm not yet ready to use the Google Code download area, so you should use the download link on the right to go to the Google Groups download area instead. Additionally, I don't yet have any content for the wiki, so it is blank.
+
+©2007 Chris Chiasson
